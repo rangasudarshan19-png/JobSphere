@@ -5,7 +5,7 @@
 
 const API_BASE = (() => {
     const h = window.location.hostname;
-    if (h === 'localhost' || h === '127.0.0.1') return 'http://127.0.0.1:8000';
+    if (!h || h === 'localhost' || h === '127.0.0.1') return 'http://127.0.0.1:8000';
     return window.location.origin;
 })();
 

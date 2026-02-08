@@ -10,20 +10,53 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/components.css">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>◆</text></svg>">
+    <link rel="icon" href="images/logo.svg">
+    <style>
+        /* Floating particles behind auth */
+        .auth-particles{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+        .auth-particle{
+            position:absolute;border-radius:50%;
+            background:radial-gradient(circle,rgba(99,102,241,0.12),transparent 70%);
+            animation:particleFloat linear infinite;
+        }
+        @keyframes particleFloat{
+            0%{transform:translateY(100vh) scale(0);opacity:0}
+            10%{opacity:1}
+            90%{opacity:1}
+            100%{transform:translateY(-20vh) scale(1);opacity:0}
+        }
+        .auth-particle:nth-child(1){width:6px;height:6px;left:10%;animation-duration:12s;animation-delay:0s}
+        .auth-particle:nth-child(2){width:4px;height:4px;left:25%;animation-duration:16s;animation-delay:2s}
+        .auth-particle:nth-child(3){width:8px;height:8px;left:40%;animation-duration:14s;animation-delay:4s}
+        .auth-particle:nth-child(4){width:5px;height:5px;left:55%;animation-duration:18s;animation-delay:1s}
+        .auth-particle:nth-child(5){width:7px;height:7px;left:70%;animation-duration:13s;animation-delay:3s}
+        .auth-particle:nth-child(6){width:3px;height:3px;left:85%;animation-duration:20s;animation-delay:5s}
+        .auth-particle:nth-child(7){width:6px;height:6px;left:95%;animation-duration:15s;animation-delay:0.5s}
+        .auth-particle:nth-child(8){width:4px;height:4px;left:50%;animation-duration:17s;animation-delay:6s}
+    </style>
 </head>
 <body>
     <a href="#main" class="skip-link">Skip to content</a>
 
+    <!-- Floating particles -->
+    <div class="auth-particles">
+        <div class="auth-particle"></div><div class="auth-particle"></div>
+        <div class="auth-particle"></div><div class="auth-particle"></div>
+        <div class="auth-particle"></div><div class="auth-particle"></div>
+        <div class="auth-particle"></div><div class="auth-particle"></div>
+    </div>
+
     <main id="main" class="auth-wrapper">
         <div class="auth-container">
-            <a href="index.html" class="auth-logo">◆ JobSphere</a>
+            <a href="index.html" class="auth-logo">
+                <img src="images/logo.svg" alt="JobSphere" width="36" height="36">
+                JobSphere
+            </a>
 
             <div class="auth-card">
                 <h1 class="auth-title">Welcome Back</h1>
                 <p class="text-secondary text-center" style="margin-bottom:1.75rem">Sign in to continue your job search.</p>
 
-                <!-- Error display area -->
                 <div id="loginError" class="alert alert-error" style="display:none;margin-bottom:1rem" role="alert"></div>
 
                 <form id="loginForm" novalidate autocomplete="on">
@@ -31,22 +64,15 @@
                         <label for="email" class="form-label">Email Address</label>
                         <input type="email" id="email" class="form-control" placeholder="you@example.com" required autocomplete="email" autofocus>
                     </div>
-
                     <div class="form-group">
                         <label for="password" class="form-label">Password</label>
                         <input type="password" id="password" class="form-control" placeholder="Enter your password" required autocomplete="current-password">
                     </div>
-
-                    <button type="submit" class="btn btn-primary btn-block" id="loginBtn">
-                        Sign In
-                    </button>
+                    <button type="submit" class="btn btn-primary btn-block" id="loginBtn">Sign In</button>
                 </form>
             </div>
 
-            <p class="auth-footer">
-                Don't have an account?&nbsp; <a href="signup.html">Create one free</a>
-            </p>
-
+            <p class="auth-footer">Don't have an account?&nbsp; <a href="signup.html">Create one free</a></p>
             <div class="auth-perks">
                 <span>✓ 100% Free</span>
                 <span>✓ AI-Powered Tools</span>
@@ -57,22 +83,14 @@
 
     <script src="js/app.js"></script>
     <script>
-        // Redirect if already logged in
-        if (Auth.isAuthenticated()) {
-            window.location.href = 'dashboard.html';
-        }
+        if (Auth.isAuthenticated()) window.location.href = 'dashboard.html';
 
         const form = document.getElementById('loginForm');
         const btn = document.getElementById('loginBtn');
         const errorDiv = document.getElementById('loginError');
 
-        function showError(msg) {
-            errorDiv.textContent = msg;
-            errorDiv.style.display = 'block';
-        }
-        function hideError() {
-            errorDiv.style.display = 'none';
-        }
+        function showError(msg) { errorDiv.textContent = msg; errorDiv.style.display = 'block'; }
+        function hideError() { errorDiv.style.display = 'none'; }
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -81,15 +99,8 @@
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
 
-            // Validation
-            if (!email || !password) {
-                showError('Please fill in all fields.');
-                return;
-            }
-            if (!email.includes('@')) {
-                showError('Please enter a valid email address.');
-                return;
-            }
+            if (!email || !password) { showError('Please fill in all fields.'); return; }
+            if (!email.includes('@')) { showError('Please enter a valid email address.'); return; }
 
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner spinner-sm" style="width:18px;height:18px;border-width:2px;margin-right:8px"></span> Signing in…';
@@ -101,12 +112,8 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
                 });
-
                 const data = await res.json();
-
-                if (!res.ok) {
-                    throw new Error(data.detail || 'Invalid email or password.');
-                }
+                if (!res.ok) throw new Error(data.detail || 'Invalid email or password.');
 
                 Auth.setToken(data.access_token);
                 sessionStorage.setItem('userEmail', email);
@@ -114,7 +121,6 @@
 
                 Toast.show('Login successful! Redirecting...', 'success');
 
-                // Check admin status
                 try {
                     const me = await Auth.fetchWithAuth(`${API_BASE}/api/auth/me`);
                     const user = await me.json();
