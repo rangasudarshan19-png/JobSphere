@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - JobSphere</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚙️</text></svg>">
+    <script src="js/app.js"></script>
+    <script src="js/debouncer.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0f172a;
+            color: #f1f5f9;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+        }
+
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 260px;
+            background: #1e293b;
+            border-right: 1px solid #334155;
+            padding: 24px;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .content {
+            margin-left: 260px;
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            max-height: 100vh;
+        }
+
+        .logo {
+            font-size: 2rem;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .logo-text {
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 32px;
+            color: #f1f5f9;
+        }
+
+        .nav-group-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: #cbd5e1;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            margin: 20px 0 12px 0;
+        }
+
+        .nav-item {
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #cbd5e1;
+            border: 1px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+        }
+
+        .nav-item:hover {
+            background: rgba(99, 102, 241, 0.1);
+            color: #f1f5f9;
+        }
+
+        .nav-item.active {
+            background: #6366f1;
+            color: white;
+            border-color: #6366f1;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid #334155;
+        }
+
+        .title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #6366f1;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #cbd5e1;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-box {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #6366f1;
+            margin-bottom: 8px;
+        }
+
+        .stat-text {
+            color: #cbd5e1;
+            font-size: 0.9rem;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: #6366f1;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #4f46e5;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-success {
+            background: #22c55e;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #6366f1;
+            border: 1px solid #6366f1;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .btn-info {
+            background: #0ea5e9;
+            color: white;
+        }
+
+        .btn-info:hover {
+            background: #0284c7;
+            transform: translateY(-2px);
+        }
+
+        .btn-warning {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #d97706;
+            transform: translateY(-2px);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: #cbd5e1;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            background: #0f172a;
+            color: #f1f5f9;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+
+        .table thead {
+            background: #0f172a;
+            border-bottom: 2px solid #334155;
+        }
+
+        .table th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #cbd5e1;
+        }
+
+        .table td {
+            padding: 12px;
+            border-bottom: 1px solid #334155;
+        }
+
+        .table tbody tr:hover {
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.online {
+            background: #22c55e;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .alert {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .alert-success {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #22c55e;
+        }
+
+        .alert-info {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: #6366f1;
+        }
+
+        /* Confirm Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(2, 6, 23, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            width: 520px;
+            max-width: calc(100% - 32px);
+            box-shadow: 0 20px 40px rgba(2, 6, 23, 0.6);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 18px 20px;
+            border-bottom: 1px solid #334155;
+        }
+
+        .modal-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #f1f5f9;
+        }
+
+        .modal-body {
+            padding: 18px 20px;
+            color: #cbd5e1;
+        }
+
+        .modal-body .danger {
+            color: #ef4444;
+            font-weight: 600;
+        }
+
+        .modal-list {
+            margin-top: 10px;
+            margin-left: 16px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            padding: 18px 20px;
+            border-top: 1px solid #334155;
+        }
+
+        .logout-btn {
+            margin-top: 32px;
+            padding-top: 16px;
+            border-top: 1px solid #334155;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { width: 100%; position: static; height: auto; margin-bottom: 20px; }
+            .content { margin-left: 0; padding: 20px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">⚙️</div>
+            <div class="logo-text">Admin Panel</div>
+
+            <div>
+                <div class="nav-group-title">📊 Dashboard</div>
+                <div class="nav-item active" onclick="switchTab(event, 'overview')">📈 Overview</div>
+                <div class="nav-item" onclick="switchTab(event, 'api-status')">🔧 API Status</div>
+
+                <div class="nav-group-title">👥 Users</div>
+                <div class="nav-item" onclick="switchTab(event, 'users')">👤 All Users</div>
+                <div class="nav-item" onclick="switchTab(event, 'manage-users')">⚡ Manage Users</div>
+
+                <div class="nav-group-title">📋 Applications</div>
+                <div class="nav-item" onclick="switchTab(event, 'applications')">📄 Applications</div>
+
+                <div class="nav-group-title">📢 Communication</div>
+                <div class="nav-item" onclick="switchTab(event, 'announcements')">📣 Announcements</div>
+
+                <div class="nav-group-title">📝 Audit</div>
+                <div class="nav-item" onclick="switchTab(event, 'audit-logs')">📝 Audit Logs</div>
+
+                <div class="nav-group-title">🔗 Quick Links</div>
+                <div class="nav-item" onclick="goToSwagger()">📚 Swagger API Docs</div>
+
+                <div class="logout-btn">
+                    <button class="btn btn-danger" style="width: 100%;" onclick="logout()">🚪 Logout</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <div class="header">
+                <h1 class="title">JobSphere Admin Panel</h1>
+                <div class="user-info">
+                    <span id="adminName">Loading...</span>
+                    <span>•</span>
+                    <span id="adminEmail">admin@jobtracker.com</span>
+                </div>
+            </div>
+
+            <!-- Overview Tab -->
+            <div id="overview" class="tab-content active">
+                <div class="card">
+                    <div class="card-title">📊 System Overview</div>
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="stat-number" id="totalUsers">-</div>
+                            <div class="stat-text">Total Users</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-number" id="activeUsers">-</div>
+                            <div class="stat-text">Active Users</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-number" id="totalApps">-</div>
+                            <div class="stat-text">Job Applications</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-number" id="activeApps">-</div>
+                            <div class="stat-text">Active Applications</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">🔑 Swagger Authorization Token</div>
+                    <p style="color: #94a3b8; font-size: 13px; margin-bottom: 15px;">
+                        Copy this token to authorize API requests in Swagger UI
+                    </p>
+                    <div style="background: #1e293b; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                        <code id="swaggerToken" style="color: #22c55e; font-size: 12px; word-break: break-all; display: block; line-height: 1.6;">
+                            Loading token...
+                        </code>
+                    </div>
+                    <div class="button-group">
+                        <button class="btn btn-primary" onclick="copySwaggerToken()">📋 Copy Token</button>
+                        <button class="btn btn-secondary" onclick="goToSwagger()">📚 Open Swagger & Authorize</button>
+                    </div>
+                    <div id="tokenCopyMsg" style="margin-top: 10px; color: #22c55e; font-size: 13px; display: none;">
+                        ✅ Token copied to clipboard!
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">🎯 Quick Actions</div>
+                    <div class="button-group">
+                        <button class="btn btn-primary" onclick="switchTabDirect('announcements')">➕ Create Announcement</button>
+                        <button class="btn btn-secondary" onclick="switchTabDirect('users')">👥 View All Users</button>
+                        <button class="btn btn-secondary" onclick="switchTabDirect('audit-logs')">📝 View Audit Logs</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API Status Tab -->
+            <div id="api-status" class="tab-content">
+                <div class="card">
+                    <div class="card-title">🔧 API Status & Health Check</div>
+                    <div class="button-group">
+                        <button class="btn btn-primary" onclick="checkAllApis()">✓ Check All APIs</button>
+                        <button class="btn btn-secondary" onclick="goToSwagger()">📚 Open Swagger UI</button>
+                    </div>
+                    <div id="apiStatusContainer"></div>
+                </div>
+            </div>
+
+            <!-- Users Tab -->
+            <div id="users" class="tab-content">
+                <div class="card">
+                    <div class="card-title">👥 All Users</div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Email</th>
+                                <th>Status</th>
+                                <th>Admin</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <tr><td colspan="4">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Manage Users Tab -->
+            <div id="manage-users" class="tab-content">
+                <div class="card">
+                    <div class="card-title">⚡ User Management</div>
+                    <div class="form-group">
+                        <label>User Email</label>
+                        <input type="email" id="userEmail" placeholder="Enter user email">
+                    </div>
+                    <div class="button-group">
+                        <button id="suspendBtn" class="btn btn-primary" onclick="suspendUser()">🔒 Suspend User</button>
+                        <button id="activateBtn" class="btn btn-success" onclick="activateUser()">✅ Activate User</button>
+                        <button id="deleteBtn" class="btn btn-danger" onclick="deleteUser()">🗑️ Delete User</button>
+                    </div>
+                    <div class="button-group" style="margin-top: 15px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+                        <button id="grantAdminBtn" class="btn btn-info" onclick="grantAdminPower()">👑 Grant Admin Power</button>
+                        <button id="revokeAdminBtn" class="btn btn-warning" onclick="revokeAdminPower()">❌ Revoke Admin Power</button>
+                    </div>
+                    <div id="userManagementResult"></div>
+                </div>
+            </div>
+
+            <!-- Applications Tab -->
+            <div id="applications" class="tab-content">
+                <div class="card">
+                    <div class="card-title">📄 Job Applications</div>
+                    <div id="appsList">
+                        <p style="color: #cbd5e1;">Loading applications...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Announcements Tab -->
+            <div id="announcements" class="tab-content">
+                <div class="card">
+                    <div class="card-title">📣 Create Announcement</div>
+                    <div class="form-group">
+                        <label>Title</label>
+                        <input type="text" id="announcementTitle" placeholder="Announcement title">
+                    </div>
+                    <div class="form-group">
+                        <label>Content</label>
+                        <textarea id="announcementContent" placeholder="Announcement content..." rows="6"></textarea>
+                    </div>
+                    <button id="announceBtn" class="btn btn-primary" onclick="createAnnouncement()">📢 Publish Announcement</button>
+                    <div id="announcementResult" style="margin-top: 20px;"></div>
+                </div>
+            </div>
+
+            <!-- Audit Logs Tab -->
+            <div id="audit-logs" class="tab-content">
+                <div class="card">
+                    <div class="card-title">📝 Audit Logs</div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Admin</th>
+                                <th>Action</th>
+                                <th>Target</th>
+                            </tr>
+                        </thead>
+                        <tbody id="auditLogsBody">
+                            <tr><td colspan="4">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Modal -->
+    <div id="confirmOverlay" class="modal-overlay" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="modal" role="document">
+            <div class="modal-header">
+                <div style="background:#fee2e2;color:#b91c1c;border:1px solid #fecaca;border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;">⚠️</div>
+                <div class="modal-title" id="confirmTitle">Confirm Action</div>
+            </div>
+            <div class="modal-body">
+                <div id="confirmMessage">Are you sure you want to proceed?</div>
+                <ul class="modal-list" id="confirmList"></ul>
+                <div id="confirmNote" class="danger" style="margin-top:12px;">This action cannot be undone.</div>
+            </div>
+            <div class="modal-footer">
+                <button id="confirmCancel" class="btn btn-secondary">Cancel</button>
+                <button id="confirmOk" class="btn btn-danger">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:8000/api';
+        
+        // Enhanced authentication check with retry logic
+        function checkAuthAndInit() {
+            // Ensure Auth class is available
+            if (typeof Auth === 'undefined') {
+                console.log('Auth class not ready, retrying...');
+                setTimeout(checkAuthAndInit, 100);
+                return;
+            }
+            
+            // Check if authenticated
+            if (!Auth.isAuthenticated()) {
+                console.log('Not authenticated, redirecting to login');
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            console.log('Admin authenticated, initializing dashboard');
+            // Initialize dashboard once auth is confirmed
+            initDashboard();
+        }
+        
+        // Start auth check when DOM is ready
+        window.addEventListener('DOMContentLoaded', checkAuthAndInit);
+
+        function switchTab(event, tabName) {
+            event?.preventDefault?.();
+            
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            document.getElementById(tabName).classList.add('active');
+            event?.target?.classList.add('active');
+
+            if (tabName === 'users') loadAllUsers();
+            if (tabName === 'audit-logs') loadAuditLogs();
+            if (tabName === 'api-status') checkAllApis();
+            if (tabName === 'applications') loadApplicationsList();
+        }
+
+        function switchTabDirect(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            document.getElementById(tabName).classList.add('active');
+            
+            // Find and activate the corresponding nav item
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                if (item.textContent.includes(tabName === 'announcements' ? 'Announcements' : tabName === 'users' ? 'All Users' : 'Audit')) {
+                    item.classList.add('active');
+                }
+            });
+
+            if (tabName === 'users') loadAllUsers();
+            if (tabName === 'audit-logs') loadAuditLogs();
+            if (tabName === 'announcements') document.getElementById('announcementTitle').focus();
+        }
+
+        function goToSwagger() {
+            window.open('http://127.0.0.1:8000/docs', '_blank');
+        }
+
+        function copySwaggerToken() {
+            const token = Auth.getToken();
+            if (token) {
+                navigator.clipboard.writeText(token).then(() => {
+                    const msg = document.getElementById('tokenCopyMsg');
+                    msg.style.display = 'block';
+                    setTimeout(() => {
+                        msg.style.display = 'none';
+                    }, 3000);
+                }).catch(() => {
+                    alert('Failed to copy. Please copy the token manually.');
+                });
+            } else {
+                alert('No token found. Please login again.');
+            }
+        }
+
+        function updateSwaggerToken() {
+            const token = Auth.getToken();
+            const tokenElement = document.getElementById('swaggerToken');
+            if (token) {
+                tokenElement.textContent = token;
+            } else {
+                tokenElement.textContent = 'No token available. Please login again.';
+                tokenElement.style.color = '#ef4444';
+            }
+        }
+
+        async function initDashboard() {
+            try {
+                const authToken = Auth.getToken();
+                if (!authToken) {
+                    console.error('No token available');
+                    window.location.href = 'login.html';
+                    return;
+                }
+                
+                const response = await fetch(`${API_URL}/auth/me`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const data = await response.json();
+                document.getElementById('adminName').textContent = data.full_name || 'Admin';
+                document.getElementById('adminEmail').textContent = data.email;
+                
+                // Update swagger token display
+                updateSwaggerToken();
+                
+                await loadStats();
+            } catch (error) {
+                console.error('Error initializing dashboard:', error);
+            }
+        }
+
+        async function loadStats() {
+            try {
+                const authToken = Auth.getToken();
+                const response = await fetch(`${API_URL}/admin/dashboard`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const data = await response.json();
+                
+                document.getElementById('totalUsers').textContent = data.total_users || 0;
+                document.getElementById('activeUsers').textContent = data.active_users || 0;
+                document.getElementById('totalApps').textContent = data.total_applications || 0;
+                document.getElementById('activeApps').textContent = data.active_applications || 0;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        async function checkAllApis() {
+            const container = document.getElementById('apiStatusContainer');
+            container.innerHTML = '<p style="color: #cbd5e1;">Checking API status...</p>';
+
+            const endpoints = [
+                { name: 'Admin Dashboard', path: '/api/admin/dashboard' },
+                { name: 'Get Users', path: '/api/admin/users/search' },
+                { name: 'Get Audit Logs', path: '/api/admin/audit-logs' }
+            ];
+
+            let html = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 16px;">';
+            
+            for (const endpoint of endpoints) {
+                const status = await checkEndpoint(endpoint.path);
+                html += `
+                    <div style="background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 16px;">
+                        <div style="font-weight: 600; margin-bottom: 8px; color: #f1f5f9;">${endpoint.name}</div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span class="status-dot ${status ? 'online' : ''}"></span>
+                            <span style="color: ${status ? '#22c55e' : '#ef4444'};">${status ? '✅ Online' : '❌ Offline'}</span>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        async function checkEndpoint(path) {
+            try {
+                const authToken = Auth.getToken();
+                const response = await Promise.race([
+                    fetch(`http://127.0.0.1:8000${path}`, {
+                        headers: { 'Authorization': `Bearer ${authToken}` }
+                    }),
+                    new Promise((_, reject) => setTimeout(() => reject('timeout'), 5000))
+                ]);
+                return response.ok || response.status < 500;
+            } catch {
+                return false;
+            }
+        }
+
+        async function loadAllUsers() {
+            try {
+                const authToken = Auth.getToken();
+                const response = await fetch(`${API_URL}/admin/users/search`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const users = await response.json();
+                const tbody = document.getElementById('usersTableBody');
+                
+                if (!users || users.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4">No users found</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = users.map(user => `
+                    <tr>
+                        <td>${user.id}</td>
+                        <td>${user.email}</td>
+                        <td><span class="badge badge-${user.is_suspended ? 'danger' : 'success'}">${user.is_suspended ? 'Suspended' : 'Active'}</span></td>
+                        <td>${user.is_admin ? '✅ Yes' : '❌ No'}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading users:', error);
+                document.getElementById('usersTableBody').innerHTML = `<tr><td colspan="4" style="color: red;">Error: ${error.message}</td></tr>`;
+            }
+        }
+
+        async function loadApplicationsList() {
+            try {
+                const authToken = Auth.getToken();
+                const response = await fetch(`${API_URL}/applications`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const applications = await response.json();
+                const container = document.getElementById('appsList');
+
+                if (!applications || applications.length === 0) {
+                    container.innerHTML = '<p style="color: #cbd5e1; text-align: center; padding: 20px;">No job applications found</p>';
+                    return;
+                }
+
+                let html = '<div style="display: grid; gap: 16px;">';
+                
+                applications.forEach(app => {
+                    const appliedDate = new Date(app.applied_date).toLocaleDateString();
+                    const statusColor = {
+                        'applied': '#3b82f6',
+                        'interviewed': '#8b5cf6',
+                        'offer': '#10b981',
+                        'rejected': '#ef4444',
+                        'pending': '#f59e0b'
+                    }[app.status?.toLowerCase()] || '#64748b';
+
+                    html += `
+                        <div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 16px;">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                                <div>
+                                    <div style="font-weight: 600; color: #f1f5f9; font-size: 16px;">${app.job_title}</div>
+                                    <div style="color: #94a3b8; font-size: 14px; margin-top: 4px;">${app.company?.name || 'Unknown Company'}</div>
+                                </div>
+                                <span style="background: ${statusColor}; color: white; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 500;">
+                                    ${app.status || 'Unknown'}
+                                </span>
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 12px; font-size: 13px; color: #cbd5e1;">
+                                <div>📍 <strong>Location:</strong> ${app.location || 'Not specified'}</div>
+                                <div>💼 <strong>Type:</strong> ${app.job_type || 'Not specified'}</div>
+                                <div>📅 <strong>Applied:</strong> ${appliedDate}</div>
+                                ${app.salary_range ? `<div>💰 <strong>Salary:</strong> ${app.salary_range}</div>` : ''}
+                            </div>
+                            ${app.notes ? `<div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #334155; color: #94a3b8; font-size: 13px;"><strong>Notes:</strong> ${app.notes}</div>` : ''}
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading applications:', error);
+                document.getElementById('appsList').innerHTML = `<p style="color: #ef4444;">Error loading applications: ${error.message}</p>`;
+            }
+        }
+
+        async function loadAuditLogs() {
+            try {
+                const authToken = Auth.getToken();
+                const response = await fetch(`${API_URL}/admin/audit-logs?limit=50`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const data = await response.json();
+                const tbody = document.getElementById('auditLogsBody');
+
+                const logs = Array.isArray(data) ? data : (data?.logs || []);
+
+                if (!logs.length) {
+                    tbody.innerHTML = '<tr><td colspan="4">No audit logs found</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = logs.slice(0, 20).map(log => `
+                    <tr>
+                        <td>${new Date(log.timestamp).toLocaleString()}</td>
+                        <td>${log.admin_email || '-'}</td>
+                        <td>${log.action || '-'}</td>
+                        <td>${log.target_type || '-'}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading audit logs:', error);
+            }
+        }
+
+        async function createAnnouncement() {
+            const title = document.getElementById('announcementTitle').value;
+            const content = document.getElementById('announcementContent').value;
+
+            if (!title || !content) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            // Use debouncer to prevent multiple rapid clicks
+            await debouncer.executeWithButton('announceBtn', async () => {
+                const authToken = Auth.getToken();
+                const response = await fetch(`${API_URL}/admin/announcements`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ title, content, expires_in_hours: 24 })
+                });
+
+                if (response.ok) {
+                    document.getElementById('announcementResult').innerHTML = '<div class="alert alert-success">✅ Announcement published successfully!</div>';
+                    document.getElementById('announcementTitle').value = '';
+                    document.getElementById('announcementContent').value = '';
+                    Toast.show('Announcement published', 'success');
+                } else {
+                    throw new Error('Failed to create announcement');
+                }
+            }, 3000).catch(error => {
+                document.getElementById('announcementResult').innerHTML = '<div class="alert alert-danger">❌ Error: ' + error.message + '</div>';
+            });
+        }
+
+        async function suspendUser() {
+            const email = document.getElementById('userEmail').value;
+            if (!email) {
+                alert('Please enter email');
+                return;
+            }
+
+            // Use debouncer to prevent multiple rapid clicks
+            await debouncer.executeWithButton('suspendBtn', async () => {
+                const authToken = Auth.getToken();
+                
+                // First, search for the user by email
+                const searchResponse = await fetch(`${API_URL}/admin/users/search?email=${encodeURIComponent(email)}`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                if (!searchResponse.ok) {
+                    throw new Error('Failed to search users');
+                }
+                
+                const users = await searchResponse.json();
+                if (!users || users.length === 0) {
+                    throw new Error('User not found');
+                }
+                
+                const userId = users[0].id;
+                
+                // Now suspend the user
+                const suspendResponse = await fetch(`${API_URL}/admin/users/${userId}/suspend?action=suspend`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (suspendResponse.ok) {
+                    document.getElementById('userManagementResult').innerHTML = '<div class="alert alert-success">✅ User suspended successfully!</div>';
+                    document.getElementById('userEmail').value = '';
+                    Toast.show('User account suspended', 'success');
+                } else {
+                    throw new Error('Failed to suspend user');
+                }
+            }, 3000).catch(error => {
+                document.getElementById('userManagementResult').innerHTML = '<div class="alert alert-danger">❌ Error: ' + error.message + '</div>';
+            });
+        }
+
+        async function activateUser() {
+            const email = document.getElementById('userEmail').value;
+            if (!email) {
+                alert('Please enter email');
+                return;
+            }
+
+            // Use debouncer to prevent multiple rapid clicks
+            await debouncer.executeWithButton('activateBtn', async () => {
+                const authToken = Auth.getToken();
+                
+                // First, search for the user by email
+                const searchResponse = await fetch(`${API_URL}/admin/users/search?email=${encodeURIComponent(email)}`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                if (!searchResponse.ok) {
+                    throw new Error('Failed to search users');
+                }
+                
+                const users = await searchResponse.json();
+                if (!users || users.length === 0) {
+                    throw new Error('User not found');
+                }
+                
+                const userId = users[0].id;
+                
+                // Now activate the user
+                const activateResponse = await fetch(`${API_URL}/admin/users/${userId}/suspend?action=activate`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (activateResponse.ok) {
+                    document.getElementById('userManagementResult').innerHTML = '<div class="alert alert-success">✅ User activated successfully!</div>';
+                    document.getElementById('userEmail').value = '';
+                    Toast.show('User account activated', 'success');
+                } else {
+                    throw new Error('Failed to activate user');
+                }
+            }, 3000).catch(error => {
+                document.getElementById('userManagementResult').innerHTML = '<div class="alert alert-danger">❌ Error: ' + error.message + '</div>';
+            });
+        }
+
+        async function deleteUser() {
+            const email = document.getElementById('userEmail').value;
+            if (!email) {
+                alert('Please enter email');
+                return;
+            }
+
+            // Professional confirmation modal
+            const confirmed = await showConfirmDialog({
+                title: 'Delete User',
+                message: `Are you sure you want to delete user "${email}"?`,
+                list: [
+                    'User account',
+                    'All job applications',
+                    'All associated data'
+                ],
+                confirmText: 'Delete User',
+                cancelText: 'Cancel',
+                dangerNote: 'This action cannot be undone.'
+            });
+
+            if (!confirmed) {
+                return;
+            }
+
+            // Use debouncer to prevent multiple rapid clicks
+            await debouncer.executeWithButton('deleteBtn', async () => {
+                const authToken = Auth.getToken();
+                
+                // First, search for the user by email
+                const searchResponse = await fetch(`${API_URL}/admin/users/search?email=${encodeURIComponent(email)}`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                if (!searchResponse.ok) {
+                    throw new Error('Failed to search users');
+                }
+                
+                const users = await searchResponse.json();
+                if (!users || users.length === 0) {
+                    throw new Error('User not found');
+                }
+                
+                const userId = users[0].id;
+                const userName = users[0].full_name || users[0].email;
+                
+                // Now delete the user
+                const deleteResponse = await fetch(`${API_URL}/admin/users/${userId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (deleteResponse.ok) {
+                    const result = await deleteResponse.json();
+                    document.getElementById('userManagementResult').innerHTML = `<div class="alert alert-success">✅ User "${userName}" deleted successfully!</div>`;
+                    document.getElementById('userEmail').value = '';
+                    Toast.show('User deleted', 'success');
+                } else {
+                    const error = await deleteResponse.json();
+                    throw new Error(error.detail || 'Unknown error');
+                }
+            }, 3000).catch(error => {
+                document.getElementById('userManagementResult').innerHTML = '<div class="alert alert-danger">❌ Error: ' + error.message + '</div>';
+            });
+        }
+
+        async function grantAdminPower() {
+            const email = document.getElementById('userEmail').value;
+            if (!email) {
+                alert('Please enter email');
+                return;
+            }
+
+            // Use debouncer to prevent multiple rapid clicks
+            await debouncer.executeWithButton('grantAdminBtn', async () => {
+                const authToken = Auth.getToken();
+                
+                // First, search for the user by email
+                const searchResponse = await fetch(`${API_URL}/admin/users/search?email=${encodeURIComponent(email)}`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                if (!searchResponse.ok) {
+                    throw new Error('Failed to search users');
+                }
+                
+                const users = await searchResponse.json();
+                if (!users || users.length === 0) {
+                    throw new Error('User not found');
+                }
+                
+                const userId = users[0].id;
+                
+                // Grant admin power
+                const grantResponse = await fetch(`${API_URL}/admin/users/${userId}/make-admin`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (grantResponse.ok) {
+                    document.getElementById('userManagementResult').innerHTML = '<div class="alert alert-success">✅ Admin power granted successfully!</div>';
+                    document.getElementById('userEmail').value = '';
+                    Toast.show('Admin power granted', 'success');
+                } else {
+                    throw new Error('Failed to grant admin power');
+                }
+            }, 3000).catch(error => {
+                document.getElementById('userManagementResult').innerHTML = '<div class="alert alert-danger">❌ Error: ' + error.message + '</div>';
+            });
+        }
+
+        async function revokeAdminPower() {
+            const email = document.getElementById('userEmail').value;
+            if (!email) {
+                alert('Please enter email');
+                return;
+            }
+
+            // Use debouncer to prevent multiple rapid clicks
+            await debouncer.executeWithButton('revokeAdminBtn', async () => {
+                const authToken = Auth.getToken();
+                
+                // First, search for the user by email
+                const searchResponse = await fetch(`${API_URL}/admin/users/search?email=${encodeURIComponent(email)}`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                if (!searchResponse.ok) {
+                    throw new Error('Failed to search users');
+                }
+                
+                const users = await searchResponse.json();
+                if (!users || users.length === 0) {
+                    throw new Error('User not found');
+                }
+                
+                const userId = users[0].id;
+                
+                // Revoke admin power
+                const revokeResponse = await fetch(`${API_URL}/admin/users/${userId}/remove-admin`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (revokeResponse.ok) {
+                    document.getElementById('userManagementResult').innerHTML = '<div class="alert alert-success">✅ Admin power revoked successfully!</div>';
+                    document.getElementById('userEmail').value = '';
+                    Toast.show('Admin power revoked', 'success');
+                } else {
+                    throw new Error('Failed to revoke admin power');
+                }
+            }, 3000).catch(error => {
+                document.getElementById('userManagementResult').innerHTML = '<div class="alert alert-danger">❌ Error: ' + error.message + '</div>';
+            });
+        }
+
+        // Reusable confirmation modal
+        function showConfirmDialog({ title, message, list = [], confirmText = 'Confirm', cancelText = 'Cancel', dangerNote = '' }) {
+            return new Promise(resolve => {
+                const overlay = document.getElementById('confirmOverlay');
+                const titleEl = document.getElementById('confirmTitle');
+                const messageEl = document.getElementById('confirmMessage');
+                const listEl = document.getElementById('confirmList');
+                const noteEl = document.getElementById('confirmNote');
+                const okBtn = document.getElementById('confirmOk');
+                const cancelBtn = document.getElementById('confirmCancel');
+
+                titleEl.textContent = title || 'Confirm Action';
+                messageEl.textContent = message || 'Are you sure you want to proceed?';
+                listEl.innerHTML = list.map(item => `<li>${item}</li>`).join('');
+                noteEl.textContent = dangerNote || '';
+                okBtn.textContent = confirmText;
+                cancelBtn.textContent = cancelText;
+
+                const close = (result) => {
+                    overlay.style.display = 'none';
+                    overlay.setAttribute('aria-hidden', 'true');
+                    okBtn.removeEventListener('click', onOk);
+                    cancelBtn.removeEventListener('click', onCancel);
+                    document.removeEventListener('keydown', onKey);
+                    resolve(result);
+                };
+
+                const onOk = () => close(true);
+                const onCancel = () => close(false);
+                const onKey = (e) => {
+                    if (e.key === 'Escape') close(false);
+                };
+
+                okBtn.addEventListener('click', onOk);
+                cancelBtn.addEventListener('click', onCancel);
+                document.addEventListener('keydown', onKey);
+
+                overlay.style.display = 'flex';
+                overlay.setAttribute('aria-hidden', 'false');
+                okBtn.focus();
+            });
+        }
+
+        function logout() {
+            Auth.removeToken();
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>

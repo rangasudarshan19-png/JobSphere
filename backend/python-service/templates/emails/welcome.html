@@ -1,0 +1,122 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+<div style="padding: 30px 20px;">
+    <!-- Welcome Header -->
+    <div style="text-align: center; margin-bottom: 40px;">
+        <h1 style="color: #1a202c; font-size: 32px; margin: 0 0 15px 0;">
+            Welcome to JobSphere! 🎉
+        </h1>
+        <p style="color: #4a5568; font-size: 18px; margin: 0;">
+            Hi {{ user_name }}, we're excited to have you!
+        </p>
+    </div>
+
+    <!-- Welcome Message -->
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 12px; margin-bottom: 30px; text-align: center;">
+        <p style="font-size: 18px; margin: 0; line-height: 1.6;">
+            Your journey to landing your dream job starts here. We're here to help you track applications, prepare for interviews, and achieve your career goals! 🚀
+        </p>
+    </div>
+
+    <!-- Features Overview -->
+    <div style="margin-bottom: 30px;">
+        <h2 style="color: #2d3748; font-size: 22px; margin: 0 0 20px 0;">
+            What you can do with JobSphere:
+        </h2>
+        
+        <div style="display: grid; gap: 15px;">
+            <!-- Feature 1 -->
+            <div style="background-color: #f7fafc; border-left: 4px solid #48bb78; padding: 20px; border-radius: 8px;">
+                <h3 style="color: #2d3748; font-size: 18px; margin: 0 0 10px 0;">
+                    📊 Track All Your Applications
+                </h3>
+                <p style="color: #4a5568; margin: 0; line-height: 1.6;">
+                    Keep all your job applications organized in one place with our intuitive kanban board.
+                </p>
+            </div>
+
+            <!-- Feature 2 -->
+            <div style="background-color: #fff5f5; border-left: 4px solid #f56565; padding: 20px; border-radius: 8px;">
+                <h3 style="color: #2d3748; font-size: 18px; margin: 0 0 10px 0;">
+                    🤖 AI-Powered Interview Prep
+                </h3>
+                <p style="color: #4a5568; margin: 0; line-height: 1.6;">
+                    Generate personalized interview questions and get AI-powered preparation tips.
+                </p>
+            </div>
+
+            <!-- Feature 3 -->
+            <div style="background-color: #fffaf0; border-left: 4px solid #ed8936; padding: 20px; border-radius: 8px;">
+                <h3 style="color: #2d3748; font-size: 18px; margin: 0 0 10px 0;">
+                    📧 Smart Email Notifications
+                </h3>
+                <p style="color: #4a5568; margin: 0; line-height: 1.6;">
+                    Get timely reminders for interviews, follow-ups, and status updates.
+                </p>
+            </div>
+
+            <!-- Feature 4 -->
+            <div style="background-color: #f0fff4; border-left: 4px solid #38b2ac; padding: 20px; border-radius: 8px;">
+                <h3 style="color: #2d3748; font-size: 18px; margin: 0 0 10px 0;">
+                    📈 Detailed Analytics
+                </h3>
+                <p style="color: #4a5568; margin: 0; line-height: 1.6;">
+                    Track your progress with insights on response rates, success metrics, and more.
+                </p>
+            </div>
+
+            <!-- Feature 5 -->
+            <div style="background-color: #faf5ff; border-left: 4px solid #9f7aea; padding: 20px; border-radius: 8px;">
+                <h3 style="color: #2d3748; font-size: 18px; margin: 0 0 10px 0;">
+                    📝 Resume & Cover Letter Builder
+                </h3>
+                <p style="color: #4a5568; margin: 0; line-height: 1.6;">
+                    Create professional resumes and cover letters with AI assistance.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Getting Started -->
+    <div style="background-color: #edf2f7; padding: 25px; border-radius: 12px; margin-bottom: 30px;">
+        <h2 style="color: #2d3748; font-size: 20px; margin: 0 0 15px 0;">
+            🚀 Quick Start Guide:
+        </h2>
+        <ol style="color: #4a5568; line-height: 2; padding-left: 20px; margin: 0;">
+            <li><strong>Add your first application</strong> - Click "+ Add Application" on your dashboard</li>
+            <li><strong>Organize by status</strong> - Drag and drop applications between columns</li>
+            <li><strong>Set up notifications</strong> - Configure email reminders in settings</li>
+            <li><strong>Prepare for interviews</strong> - Use our AI-powered interview prep tool</li>
+            <li><strong>Track your progress</strong> - Check analytics to optimize your job search</li>
+        </ol>
+    </div>
+
+    <!-- Action Button -->
+    <div style="text-align: center; margin: 35px 0;">
+        <a href="{{ dashboard_link }}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; padding: 18px 50px; border-radius: 10px; font-weight: bold; font-size: 18px; box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);">
+            🎯 Go to Your Dashboard
+        </a>
+    </div>
+
+    <!-- Tips Box -->
+    <div style="background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%); padding: 25px; border-radius: 12px; text-align: center; margin-top: 30px;">
+        <p style="font-size: 16px; color: #2d3748; margin: 0 0 10px 0; font-weight: 600;">
+            💡 Pro Tip
+        </p>
+        <p style="font-size: 15px; color: #2d3748; margin: 0; line-height: 1.6;">
+            Add applications regularly and update their status as you progress. This helps you stay organized and track your success rate!
+        </p>
+    </div>
+
+    <!-- Support Section -->
+    <div style="margin-top: 40px; padding-top: 30px; border-top: 2px solid #e2e8f0; text-align: center;">
+        <p style="color: #718096; font-size: 15px; margin: 0 0 10px 0;">
+            Need help getting started?
+        </p>
+        <p style="color: #4a5568; font-size: 14px; margin: 0;">
+            We're here to help! Check out our documentation or contact support.
+        </p>
+    </div>
+</div>
+{% endblock %}

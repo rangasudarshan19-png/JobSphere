@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - JobSphere</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
+</head>
+<body>
+    <div class="container" style="max-width: 500px; padding-top: 80px; padding-bottom: 80px;">
+        <!-- Logo -->
+        <div class="text-center mb-2xl">
+            <a href="index.html" style="text-decoration: none;">
+                <h1 style="font-size: 2.5rem; margin-bottom: 10px;">
+                    <span>🎯</span>
+                    <span style="background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">JobSphere</span>
+                </h1>
+            </a>
+            <p class="text-secondary">Create your free account and start your job search</p>
+        </div>
+
+        <!-- Signup Card -->
+        <div class="card" style="padding: 40px;">
+            <!-- Step 1: Email Verification -->
+            <div id="step1" style="display: block;">
+                <h3 class="mb-md">Step 1: Verify Your Email</h3>
+                <form id="emailForm" onsubmit="handleEmailSubmit(event)">
+                    <div class="form-group">
+                        <label class="form-label">Full Name</label>
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            id="fullName" 
+                            placeholder="John Doe"
+                            required
+                            autocomplete="name">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Email Address</label>
+                        <input 
+                            type="email" 
+                            class="form-control" 
+                            id="email" 
+                            placeholder="you@example.com"
+                            required
+                            autocomplete="email">
+                        <small class="text-muted" style="display: block; margin-top: 5px;">
+                            We'll send you a verification code to confirm your email
+                        </small>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-bottom: 20px;">
+                        📧 Send Verification Code
+                    </button>
+                </form>
+            </div>
+
+            <!-- Step 2: Verify Code & Create Password -->
+            <div id="step2" style="display: none;">
+                <h3 class="mb-md">Step 2: Verify & Create Password</h3>
+                <form id="signupForm" onsubmit="handleSignup(event)">
+                    <div class="form-group">
+                        <label class="form-label">Verification Code</label>
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            id="verificationCode" 
+                            placeholder="Enter 6-digit code"
+                            required
+                            maxlength="6"
+                            pattern="[0-9]{6}">
+                        <small class="text-muted" style="display: block; margin-top: 5px;">
+                            Check your email for the verification code. 
+                            <a href="#" onclick="resendCode(event)" style="color: var(--primary-light);">Resend code</a>
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input 
+                            type="password" 
+                            class="form-control" 
+                            id="password" 
+                            placeholder="Create a strong password"
+                            required
+                            autocomplete="new-password"
+                            minlength="8">
+                        <small class="text-muted" style="display: block; margin-top: 5px;">
+                            At least 8 characters with uppercase, lowercase, and number
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Confirm Password</label>
+                        <input 
+                            type="password" 
+                            class="form-control" 
+                            id="confirmPassword" 
+                            placeholder="Confirm your password"
+                            required
+                            autocomplete="new-password">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-bottom: 20px;">
+                        🚀 Create Account
+                    </button>
+
+                    <button type="button" class="btn btn-secondary" style="width: 100%;" onclick="goBackToStep1()">
+                        ← Back to Email
+                    </button>
+                </form>
+            </div>
+
+                <div class="text-center">
+                    <p class="text-secondary">
+                        Already have an account? 
+                        <a href="login.html" style="color: var(--primary-light); font-weight: 600;">Login here</a>
+                    </p>
+                </div>
+            </form>
+        </div>
+
+        <!-- Benefits -->
+        <div class="mt-xl">
+            <p class="text-center text-muted mb-md" style="font-size: 0.9rem;">What you get for free:</p>
+            <div class="grid grid-2" style="gap: 15px;">
+                <div class="flex gap-sm">
+                    <span>✓</span>
+                    <span class="text-secondary">Unlimited job applications</span>
+                </div>
+                <div class="flex gap-sm">
+                    <span>✓</span>
+                    <span class="text-secondary">AI resume builder</span>
+                </div>
+                <div class="flex gap-sm">
+                    <span>✓</span>
+                    <span class="text-secondary">Interview preparation</span>
+                </div>
+                <div class="flex gap-sm">
+                    <span>✓</span>
+                    <span class="text-secondary">Analytics dashboard</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        let userEmail = '';
+        let userFullName = '';
+
+        async function handleEmailSubmit(event) {
+            event.preventDefault();
+            
+            userFullName = document.getElementById('fullName').value;
+            userEmail = document.getElementById('email').value;
+
+            Loading.show('Sending verification code...');
+
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/send-verification`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: userEmail,
+                        full_name: userFullName
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    Toast.show('Verification code sent! Check your email.', 'success');
+                    // Move to step 2
+                    document.getElementById('step1').style.display = 'none';
+                    document.getElementById('step2').style.display = 'block';
+                } else {
+                    Toast.show(data.detail || 'Failed to send verification code', 'error');
+                }
+            } catch (error) {
+                console.error('Email verification error:', error);
+                Toast.show('Connection error. Please try again.', 'error');
+            } finally {
+                Loading.hide();
+            }
+        }
+
+        async function handleSignup(event) {
+            event.preventDefault();
+            
+            const verificationCode = document.getElementById('verificationCode').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            // Validate password match
+            if (password !== confirmPassword) {
+                Toast.show('Passwords do not match', 'error');
+                return;
+            }
+
+            // Validate password strength
+            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+            if (!passwordRegex.test(password)) {
+                Toast.show('Password must contain uppercase, lowercase, and number', 'error');
+                return;
+            }
+
+            Loading.show('Creating your account...');
+
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: userEmail,
+                        password: password,
+                        full_name: userFullName,
+                        verification_code: verificationCode
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    Toast.show('Account created successfully! Please login.', 'success');
+                    
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 1500);
+                } else {
+                    Toast.show(data.detail || 'Signup failed. Please try again.', 'error');
+                }
+            } catch (error) {
+                console.error('Signup error:', error);
+                Toast.show('Connection error. Please try again.', 'error');
+            } finally {
+                Loading.hide();
+            }
+        }
+
+        function goBackToStep1() {
+            document.getElementById('step2').style.display = 'none';
+            document.getElementById('step1').style.display = 'block';
+        }
+
+        async function resendCode(event) {
+            event.preventDefault();
+            
+            if (!userEmail) {
+                Toast.show('Please enter your email first', 'error');
+                return;
+            }
+
+            Loading.show('Resending verification code...');
+
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/send-verification`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: userEmail,
+                        full_name: userFullName
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    Toast.show('New verification code sent!', 'success');
+                } else {
+                    Toast.show(data.detail || 'Failed to resend code', 'error');
+                }
+            } catch (error) {
+                console.error('Resend error:', error);
+                Toast.show('Connection error. Please try again.', 'error');
+            } finally {
+                Loading.hide();
+            }
+        }
+
+        // Check if already logged in
+        if (Auth.isAuthenticated()) {
+            window.location.href = 'dashboard.html';
+        }
+    </script>
+</body>
+</html>

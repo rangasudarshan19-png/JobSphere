@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Interview Prep - JobSphere</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
+    <style>
+        .hero-banner {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 30px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+        .hero-banner img {
+            width: 100%;
+            max-width: 500px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        .practice-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 30px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+        .practice-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(99, 102, 241, 0.3);
+        }
+        .question-card {
+            background: var(--bg-darker);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--primary);
+        }
+        .question-text {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+        }
+        .answer-input {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            color: var(--text-primary);
+            width: 100%;
+            min-height: 150px;
+            font-family: inherit;
+            font-size: 1rem;
+            resize: vertical;
+        }
+        .feedback-card {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(16, 185, 129, 0.1));
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            margin-top: 20px;
+        }
+        .score-display {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--gradient-primary);
+            color: white;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-right: 20px;
+        }
+        .category-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .category-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-4px);
+        }
+        .category-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="dashboard.html" class="navbar-brand">
+                ◆ JobSphere
+            </a>
+            
+            <div class="navbar-menu" id="navbarMenu">
+            </div>
+
+            <div class="navbar-end">
+                <a href="dashboard.html" class="btn btn-secondary btn-sm">Dashboard</a>
+                <button class="btn btn-primary btn-sm" onclick="handleLogout()">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container" style="margin-top: 80px; padding-bottom: 60px;">
+        <!-- Hero Banner -->
+        <div class="hero-banner">
+            <h1>🎤 AI Interview Preparation</h1>
+            <p class="text-secondary" style="max-width: 600px; margin: 0 auto;">
+                Practice with AI-powered interview questions tailored to your target job, get instant feedback, and ace your next interview with confidence
+            </p>
+        </div>
+
+        <!-- Job Context Form -->
+        <div class="card" style="margin-bottom: 30px;">
+            <h3 style="margin-bottom: 20px;">🎯 Target Job Details (Optional)</h3>
+            <p class="text-muted" style="margin-bottom: 20px;">Provide job details to get personalized interview questions</p>
+            <div class="grid grid-3" style="gap: 20px;">
+                <div class="form-group">
+                    <label class="form-label">Job Title</label>
+                    <input type="text" class="form-control" id="targetJobTitle" placeholder="e.g., Software Engineer">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Company</label>
+                    <input type="text" class="form-control" id="targetCompany" placeholder="e.g., Google">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Industry</label>
+                    <input type="text" class="form-control" id="targetIndustry" placeholder="e.g., Tech">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Job Description (Optional)</label>
+                <textarea class="form-control" id="targetJobDesc" rows="3" 
+                    placeholder="Paste the job description to get highly relevant questions..."></textarea>
+            </div>
+        </div>
+
+        <!-- Categories -->
+        <div class="mb-2xl">
+            <h2 style="margin-bottom: 25px;">Choose Your Focus Area</h2>
+            <div class="grid grid-3" style="gap: 20px;">
+                <div class="category-card" onclick="startPractice('behavioral')">
+                    <div class="category-icon">💬</div>
+                    <h3 style="margin-bottom: 10px;">Behavioral</h3>
+                    <p class="text-secondary">STAR method questions about your experience</p>
+                </div>
+                <div class="category-card" onclick="startPractice('technical')">
+                    <div class="category-icon">💻</div>
+                    <h3 style="margin-bottom: 10px;">Technical</h3>
+                    <p class="text-secondary">Role-specific technical questions</p>
+                </div>
+                <div class="category-card" onclick="startPractice('situational')">
+                    <div class="category-icon">🎯</div>
+                    <h3 style="margin-bottom: 10px;">Situational</h3>
+                    <p class="text-secondary">Problem-solving scenarios</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Questions Display -->
+        <div id="questionsSection" style="display: none;">
+            <div class="practice-card">
+                <div class="flex-between mb-lg">
+                    <h2>📋 <span id="categoryName">Interview</span> Questions</h2>
+                    <button class="btn btn-secondary" onclick="backToCategories()">← Back</button>
+                </div>
+
+                <p class="text-secondary mb-lg">
+                    Here are AI-generated interview questions tailored to your target role. 
+                    Click "Show Answer" to see a sample answer for each question.
+                </p>
+
+                <!-- Questions List -->
+                <div id="questionsList">
+                    <!-- Questions will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Tips Section -->
+        <div class="card" style="margin-top: 40px; background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));">
+            <h3 style="margin-bottom: 20px;">💡 Interview Tips</h3>
+            <div class="grid grid-2" style="gap: 20px;">
+                <div>
+                    <h4 style="margin-bottom: 10px;">📝 STAR Method</h4>
+                    <p class="text-secondary">Structure your answers: Situation, Task, Action, Result</p>
+                </div>
+                <div>
+                    <h4 style="margin-bottom: 10px;">⏱️ Time Management</h4>
+                    <p class="text-secondary">Keep answers concise: 1-2 minutes per response</p>
+                </div>
+                <div>
+                    <h4 style="margin-bottom: 10px;">🎯 Be Specific</h4>
+                    <p class="text-secondary">Use concrete examples and quantify results when possible</p>
+                </div>
+                <div>
+                    <h4 style="margin-bottom: 10px;">💪 Show Growth</h4>
+                    <p class="text-secondary">Highlight what you learned from challenges</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        Auth.requireAuth();
+
+        // Navbar burger removed - using clean navbar without hamburger menu
+
+        function handleLogout() {
+            Auth.removeToken();
+            localStorage.clear();
+            Toast.show('Logged out successfully', 'success');
+            setTimeout(() => window.location.href = 'login.html', 1000);
+        }
+
+        let currentQuestions = [];
+        let currentCategory = '';
+
+        // Removed hardcoded defaultQuestions to force real AI usage.
+        // If AI fails or backend unreachable we will show an instructional message instead.
+
+        async function startPractice(category) {
+            currentCategory = category;
+            const jobTitle = document.getElementById('targetJobTitle').value.trim();
+            const company = document.getElementById('targetCompany').value.trim();
+            const jobDesc = document.getElementById('targetJobDesc').value.trim();
+
+            // Validation
+            if (!jobTitle && !jobDesc) {
+                Toast.show('⚠️ Please enter at least a Job Title or Job Description', 'warning');
+                return;
+            }
+
+            Loading.show('🤖 Generating AI-powered interview questions...');
+
+            try {
+                // Build detailed request with actual job information
+                const requestBody = {
+                    job_title: jobTitle || `${category.charAt(0).toUpperCase() + category.slice(1)} Position`,
+                    job_description: jobDesc || '',
+                    company_name: company || ''
+                };
+
+                console.log('📤 Sending request to AI with job description:', {
+                    title: requestBody.job_title,
+                    descriptionLength: requestBody.job_description.length,
+                    company: requestBody.company_name,
+                    category: category
+                });
+
+                // Call backend API for real AI generation
+                const response = await Auth.fetchWithAuth(`${API_BASE}/api/ai/interview-questions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('📥 Received AI response:', data);
+                    
+                    // Map API response to question categories
+                    if (category === 'behavioral') {
+                        currentQuestions = data.questions.behavioral || data.questions.behavioural || [];
+                    } else if (category === 'technical') {
+                        currentQuestions = data.questions.technical || [];
+                    } else {
+                        currentQuestions = data.questions.general || data.questions.company || data.questions.situational || [];
+                    }
+
+                    // If no questions in the specific category, try to get from all questions
+                    if (!currentQuestions || currentQuestions.length === 0) {
+                        console.warn(`⚠️ No questions returned for category: ${category}`);
+                        const allQuestions = Object.values(data.questions || {}).flat();
+                        currentQuestions = allQuestions.length > 0 ? allQuestions : [];
+                    }
+
+                    Loading.hide();
+                    console.log(`✅ Loaded ${currentQuestions.length} questions for ${category}`);
+                    Toast.show(`✨ Generated ${currentQuestions.length} AI questions!`, 'success');
+                } else {
+                    const errorText = await response.text();
+                    console.error('❌ API Error Response:', errorText);
+                    throw new Error(`API request failed: ${response.status}`);
+                }
+            } catch (error) {
+                console.error('❌ Failed to generate AI questions:', error);
+                Loading.hide();
+                Toast.show('AI unavailable. Please start backend & set GEMINI_API_KEY.', 'warning');
+                currentQuestions = [];
+            }
+
+            // Display questions
+            displayQuestions();
+        }
+
+        function displayQuestions() {
+            document.getElementById('questionsSection').style.display = 'block';
+            document.getElementById('categoryName').textContent = 
+                currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1);
+            
+            const questionsList = document.getElementById('questionsList');
+            if (!currentQuestions || currentQuestions.length === 0) {
+                questionsList.innerHTML = `
+                <div class="card" style="background: var(--bg-darker); padding: 30px; text-align: center;">
+                    <h3 style="margin-bottom:15px;">⚠️ No Questions Generated</h3>
+                    <p class="text-secondary" style="margin-bottom:20px;">AI did not return questions. Ensure:</p>
+                    <ul class="text-secondary" style="text-align:left; max-width:600px; margin:0 auto 20px; line-height:1.6;">
+                        <li>Backend server is running on http://localhost:8001</li>
+                        <li>Environment variable <code>GEMINI_API_KEY</code> is set in the shell before starting</li>
+                        <li>Your network allows outbound requests to Gemini API</li>
+                        <li>You entered a relevant Job Title and/or Job Description</li>
+                    </ul>
+                    <button class="btn btn-primary" onclick="backToCategories()">← Try Again</button>
+                </div>`;
+                document.getElementById('questionsSection').scrollIntoView({ behavior: 'smooth' });
+                return;
+            }
+
+            questionsList.innerHTML = currentQuestions.map((question, index) => `
+                <div class="question-card" id="question-${index}">
+                    <div class="flex-between" style="margin-bottom: 15px;">
+                        <span class="text-muted">Question ${index + 1} of ${currentQuestions.length}</span>
+                    </div>
+                    <div class="question-text" style="margin-bottom: 20px;">
+                        ${question}
+                    </div>
+                    
+                    <!-- Answer Section (Hidden initially) -->
+                    <div id="answer-${index}" style="display: none; margin-top: 20px; padding: 20px; background: var(--bg-darker); border-radius: 8px; border-left: 4px solid var(--success);">
+                        <h4 style="color: var(--success); margin-bottom: 15px;">💡 Sample Answer:</h4>
+                        <div id="answer-content-${index}" class="text-secondary" style="line-height: 1.8;">
+                            <div class="text-center" style="padding: 20px;">
+                                <div class="spinner" style="margin: 0 auto;"></div>
+                                <p>Generating AI answer...</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-sm" style="margin-top: 15px;">
+                        <button class="btn btn-primary btn-sm" onclick="toggleAnswer(${index})" id="btn-${index}">
+                            👁️ Show Answer
+                        </button>
+                        <button class="btn btn-secondary btn-sm" onclick="copyQuestion(${index})">
+                            📋 Copy Question
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('questionsSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        async function toggleAnswer(index) {
+            const answerDiv = document.getElementById(`answer-${index}`);
+            const btn = document.getElementById(`btn-${index}`);
+            const answerContent = document.getElementById(`answer-content-${index}`);
+            
+            if (answerDiv.style.display === 'none') {
+                // Show and generate answer
+                answerDiv.style.display = 'block';
+                btn.textContent = '🔼 Hide Answer';
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-secondary');
+                
+                // Check if answer already generated
+                if (!answerContent.dataset.generated) {
+                    try {
+                        const question = currentQuestions[index];
+                        
+                        // Call backend to generate answer
+                        const response = await Auth.fetchWithAuth(`${API_BASE}/api/ai/answer-question`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                question: question
+                            })
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            answerContent.innerHTML = formatAnswer(data.answer);
+                            answerContent.dataset.generated = 'true';
+                        } else {
+                            throw new Error('Failed to generate answer');
+                        }
+                    } catch (error) {
+                        console.error('Error generating answer:', error);
+                        answerContent.innerHTML = `
+                            <p style="color: var(--warning);">⚠️ Could not generate AI answer. Please try again.</p>
+                            <p class="text-muted" style="margin-top: 10px;">
+                                <strong>Tip:</strong> Use the STAR method (Situation, Task, Action, Result) to structure your answer.
+                                Provide specific examples with measurable outcomes.
+                            </p>
+                        `;
+                    }
+                }
+                
+                answerDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } else {
+                // Hide answer
+                answerDiv.style.display = 'none';
+                btn.textContent = '👁️ Show Answer';
+                btn.classList.remove('btn-secondary');
+                btn.classList.add('btn-primary');
+            }
+        }
+
+        function formatAnswer(answer) {
+            // Format the answer with proper HTML
+            return answer
+                .split('\n')
+                .map(line => line.trim())
+                .filter(line => line.length > 0)
+                .map(line => {
+                    if (line.startsWith('**') && line.endsWith('**')) {
+                        return `<h4 style="color: var(--primary); margin-top: 15px; margin-bottom: 10px;">${line.replace(/\*\*/g, '')}</h4>`;
+                    } else if (line.startsWith('- ') || line.startsWith('• ')) {
+                        return `<li style="margin-left: 20px; margin-bottom: 5px;">${line.substring(2)}</li>`;
+                    } else {
+                        return `<p style="margin-bottom: 10px;">${line}</p>`;
+                    }
+                })
+                .join('');
+        }
+
+        function copyQuestion(index) {
+            const question = currentQuestions[index];
+            Utils.copyToClipboard(question);
+        }
+
+        function backToCategories() {
+            document.getElementById('questionsSection').style.display = 'none';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function reviewSession(id) {
+            Toast.show('Loading session review...', 'info');
+        }
+
+        function continueSession(id) {
+            startPractice('technical');
+        }
+    </script>
+</body>
+</html>
+

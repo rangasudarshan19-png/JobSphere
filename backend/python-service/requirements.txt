@@ -1,0 +1,59 @@
+# FastAPI Backend Dependencies
+fastapi==0.104.1
+uvicorn==0.24.0
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# Security
+bleach==6.1.0
+
+# Database
+sqlalchemy==2.0.23
+# psycopg2-binary temporarily disabled on Windows (pg_config missing). Uncomment if using PostgreSQL.
+# psycopg2-binary==2.9.9
+alembic==1.12.1
+
+# AI/ML
+openai==1.3.5
+google-generativeai==0.3.1
+langchain==0.0.335
+sentence-transformers==2.2.2
+groq==0.4.1
+cohere==4.37
+
+# Web Scraping
+beautifulsoup4==4.12.2
+selenium==4.15.2
+requests==2.31.0
+lxml==4.9.3
+
+# Resume Parsing
+PyPDF2==3.0.1
+python-docx==1.1.0
+spacy==3.7.2
+reportlab==4.0.7
+
+# Utilities
+python-dotenv==1.0.0
+python-multipart==0.0.6
+email-validator==2.1.0
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+celery==5.3.4
+redis==5.0.1
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+pytest-env==1.1.3
+httpx==0.25.2
+
+# Performance & Caching
+redis==5.0.1
+slowapi==0.1.9
+
+# Code Quality
+black==23.12.1
+flake8==7.0.0
+isort==5.13.2

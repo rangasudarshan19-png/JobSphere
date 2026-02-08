@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Cover Letter Generator - JobSphere</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
+    <style>
+        .hero-banner {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 30px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+        .hero-banner img {
+            width: 100%;
+            max-width: 500px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        .generator-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
+        .input-panel {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 30px;
+            border: 1px solid var(--border-color);
+        }
+        .output-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            border: 1px solid var(--border-color);
+            color: #1f2937;
+            max-height: 800px;
+            overflow-y: auto;
+        }
+        .cover-letter-text {
+            color: #1f2937;
+            line-height: 1.8;
+            font-size: 1rem;
+        }
+        .cover-letter-text p {
+            margin-bottom: 20px;
+        }
+        .saved-letter-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 15px;
+            transition: all 0.2s;
+        }
+        .saved-letter-card:hover {
+            border-color: var(--primary);
+            transform: translateX(5px);
+        }
+        @media (max-width: 768px) {
+            .generator-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="dashboard.html" class="navbar-brand">
+                ◆ JobSphere
+            </a>
+            
+            <div class="navbar-menu" id="navbarMenu">
+            </div>
+
+            <div class="navbar-end">
+                <a href="dashboard.html" class="btn btn-secondary btn-sm">Dashboard</a>
+                <button class="btn btn-primary btn-sm" onclick="handleLogout()">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container" style="margin-top: 80px; padding-bottom: 60px;">
+        <!-- Hero Banner -->
+        <div class="hero-banner">
+            <img src="https://images.unsplash.com/photo-1455390582262-044cdead277a?w=800&auto=format&fit=crop" alt="Cover Letter">
+            <h1>✉️ AI Cover Letter Generator</h1>
+            <p class="text-secondary" style="max-width: 600px; margin: 0 auto;">
+                Create personalized, compelling cover letters in seconds with our AI-powered generator
+            </p>
+        </div>
+
+        <!-- Generator -->
+        <div class="generator-container">
+            <!-- Input Panel -->
+            <div class="input-panel">
+                <h3 style="margin-bottom: 25px;">📝 Job Details</h3>
+
+                <div class="form-group">
+                    <label class="form-label">Company Name</label>
+                    <input type="text" class="form-control" id="companyName" placeholder="e.g., Google">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Position Title</label>
+                    <input type="text" class="form-control" id="positionTitle" placeholder="e.g., Senior Software Engineer">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Job Description</label>
+                    <textarea class="form-control" id="jobDescription" rows="6" 
+                        placeholder="Paste the job description here..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Your Key Skills</label>
+                    <textarea class="form-control" id="keySkills" rows="3" 
+                        placeholder="e.g., JavaScript, React, Node.js, Team Leadership"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Tone</label>
+                    <select class="form-control" id="tone">
+                        <option value="professional">Professional</option>
+                        <option value="enthusiastic">Enthusiastic</option>
+                        <option value="formal">Formal</option>
+                        <option value="creative">Creative</option>
+                    </select>
+                </div>
+
+                <button class="btn btn-primary" style="width: 100%;" onclick="generateCoverLetter()">
+                    ✨ Generate Cover Letter
+                </button>
+            </div>
+
+            <!-- Output Panel -->
+            <div>
+                <div class="flex-between" style="margin-bottom: 15px;">
+                    <h3>📄 Generated Cover Letter</h3>
+                    <div class="flex gap-sm">
+                        <button class="btn btn-secondary btn-sm" onclick="copyCoverLetter()" id="copyBtn" style="display: none;">
+                            📋 Copy
+                        </button>
+                        <button class="btn btn-primary btn-sm" onclick="saveCoverLetter()" id="saveBtn" style="display: none;">
+                            💾 Save
+                        </button>
+                    </div>
+                </div>
+                <div class="output-panel" id="coverLetterOutput">
+                    <div class="text-center" style="padding: 100px 20px; color: #9ca3af;">
+                        <div style="font-size: 3rem; margin-bottom: 20px;">📝</div>
+                        <p>Fill in the job details and click "Generate Cover Letter" to create your personalized letter.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tips -->
+        <div class="card" style="margin-top: 40px; background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));">
+            <h3 style="margin-bottom: 20px;">💡 Cover Letter Best Practices</h3>
+            <div class="grid grid-2" style="gap: 20px;">
+                <div>
+                    <h4 style="margin-bottom: 10px;">✅ Do</h4>
+                    <ul style="margin-left: 20px; color: var(--text-secondary);">
+                        <li>Address the hiring manager by name if possible</li>
+                        <li>Highlight specific achievements and metrics</li>
+                        <li>Show enthusiasm for the company and role</li>
+                        <li>Keep it concise (3-4 paragraphs)</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 style="margin-bottom: 10px;">❌ Don't</h4>
+                    <ul style="margin-left: 20px; color: var(--text-secondary);">
+                        <li>Use generic templates without customization</li>
+                        <li>Repeat your entire resume</li>
+                        <li>Include salary expectations</li>
+                        <li>Make it longer than one page</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        Auth.requireAuth();
+
+        function handleLogout() {
+            Auth.removeToken();
+            localStorage.clear();
+            Toast.show('Logged out successfully', 'success');
+            setTimeout(() => window.location.href = 'login.html', 1000);
+        }
+
+        async function generateCoverLetter() {
+            // Get form values
+            const companyName = document.getElementById('companyName').value.trim();
+            const jobTitle = document.getElementById('positionTitle').value.trim();
+            const jobDescription = document.getElementById('jobDescription').value.trim();
+            const userExperience = document.getElementById('keySkills').value.trim();
+            const tone = document.getElementById('tone').value;
+
+            // Validate inputs
+            if (!companyName || !jobTitle) {
+                Toast.show('Please fill in Company Name and Position Title', 'error');
+                return;
+            }
+
+            Loading.show('Generating your personalized cover letter...');
+
+            try {
+                const response = await Auth.fetchWithAuth('http://127.0.0.1:8000/api/ai/generate-cover-letter', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        company_name: companyName,
+                        job_title: jobTitle,
+                        job_description: jobDescription,
+                        user_experience: userExperience,
+                        tone: tone
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Failed to generate cover letter');
+                }
+
+                const data = await response.json();
+                
+                // Display cover letter
+                const container = document.getElementById('coverLetterOutput');
+                container.innerHTML = `
+                    <div class="cover-letter-text">
+                        ${data.cover_letter.replace(/\n/g, '<br>')}
+                    </div>
+                `;
+
+                // Show action buttons
+                document.getElementById('copyBtn').style.display = 'inline-flex';
+                document.getElementById('saveBtn').style.display = 'inline-flex';
+
+                Loading.hide();
+                Toast.show('Cover letter generated successfully!', 'success');
+            } catch (error) {
+                console.error('Error:', error);
+                Loading.hide();
+                Toast.show(error.message || 'Failed to generate cover letter', 'error');
+            }
+        }
+        
+
+        function copyCoverLetter() {
+            const text = document.getElementById('coverLetterOutput').innerText;
+            Utils.copyToClipboard(text);
+        }
+
+        function saveCoverLetter() {
+            Loading.show('Saving cover letter...');
+            setTimeout(() => {
+                Loading.hide();
+                Toast.show('Cover letter saved successfully!', 'success');
+            }, 1000);
+        }
+
+        function viewLetter(id) {
+            Toast.show('Loading cover letter...', 'info');
+        }
+
+        function editLetter(id) {
+            Toast.show('Loading editor...', 'info');
+        }
+    </script>
+</body>
+</html>
+

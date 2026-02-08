@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Tracker - JobSphere</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/dark-theme.css">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --bg: #0f172a;
+            --panel: #1e293b;
+            --card: #111827;
+            --border: #374151;
+            --text: #e5e7eb;
+            --muted: #9ca3af;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+        * { box-sizing: border-box; }
+        body { margin:0; font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); }
+        .container { max-width:1200px; margin:0 auto; padding:20px; }
+        .navbar { background:var(--panel); border-bottom:1px solid var(--border); padding:16px 0; position:sticky; top:0; z-index:10; }
+        .nav-row { display:flex; justify-content:space-between; align-items:center; }
+        .brand { font-weight:800; color:var(--text); text-decoration:none; font-size:1.2rem; }
+        .btn { border:none; border-radius:10px; padding:10px 16px; font-weight:700; cursor:pointer; transition:all .2s ease; }
+        .btn-primary { background:linear-gradient(135deg,#6366f1,#8b5cf6); color:white; }
+        .btn-secondary { background:var(--card); color:var(--text); border:1px solid var(--border); }
+        .btn-ghost { background:transparent; color:var(--muted); border:1px solid var(--border); }
+        .btn:hover { transform:translateY(-1px); }
+        .hero { background:linear-gradient(135deg,rgba(99,102,241,.1),rgba(139,92,246,.1)); border:1px solid var(--border); border-radius:16px; padding:32px; margin:24px 0; }
+        .hero h1 { margin:0 0 12px; }
+        .filters { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+        .filter { padding:10px 14px; border-radius:20px; border:1px solid var(--border); background:var(--card); color:var(--muted); cursor:pointer; }
+        .filter.active { background:var(--primary); color:white; border-color:var(--primary); }
+        .board { display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:16px; }
+        .card { background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:20px; display:flex; flex-direction:column; gap:12px; }
+        .title { font-size:1.05rem; font-weight:700; margin:0; color:#fff; }
+        .meta { color:var(--muted); font-size:0.9rem; display:flex; gap:10px; flex-wrap:wrap; }
+        .chips { display:flex; gap:8px; flex-wrap:wrap; }
+        .chip { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:4px 10px; font-size:0.8rem; color:var(--muted); }
+        .status-row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+        .pill { padding:6px 10px; border-radius:12px; font-weight:700; font-size:0.85rem; display:inline-flex; align-items:center; gap:6px; }
+        .pill.saved { background:rgba(99,102,241,.1); color:#c7d2fe; border:1px solid rgba(99,102,241,.3); }
+        .pill.applied { background:rgba(16,185,129,.1); color:#a7f3d0; border:1px solid rgba(16,185,129,.3); }
+        .actions { display:flex; gap:10px; flex-wrap:wrap; }
+        .textarea { width:100%; min-height:70px; background:var(--card); border:1px solid var(--border); color:var(--text); border-radius:10px; padding:10px; resize:vertical; }
+        .badge { font-size:0.75rem; color:var(--muted); }
+        .empty { text-align:center; padding:40px; color:var(--muted); border:1px dashed var(--border); border-radius:12px; }
+        .toast { position:fixed; bottom:20px; right:20px; background:var(--panel); border:1px solid var(--border); color:var(--text); padding:12px 16px; border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,.3); z-index:50; }
+        @media (max-width:640px){ .board{grid-template-columns:1fr;} .nav-row{flex-direction:column; align-items:flex-start; gap:10px;} }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-row">
+                <a class="brand" href="dashboard.html">📌 Job Tracker</a>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <button class="btn btn-secondary" onclick="window.location.href='job-search.html'">Search Jobs</button>
+                    <button class="btn btn-secondary" onclick="window.location.href='ai-resume-builder.html'">Resume Builder</button>
+                    <button class="btn btn-primary" onclick="handleLogout()">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="hero">
+            <h1>Job Tracking Board</h1>
+            <p style="color:var(--muted); max-width:720px;">
+                Manage your saved and applied jobs in one place. Toggle statuses, add quick notes, and jump back to the apply link.
+            </p>
+        </div>
+
+        <div class="filters">
+            <div class="filter active" data-filter="all" onclick="setFilter('all', this)">All</div>
+            <div class="filter" data-filter="saved" onclick="setFilter('saved', this)">Saved</div>
+            <div class="filter" data-filter="applied" onclick="setFilter('applied', this)">Applied</div>
+        </div>
+
+        <div id="board" class="board"></div>
+        <div id="emptyState" class="empty" style="display:none;">
+            No jobs tracked yet. Save or apply to jobs from search results to see them here.
+        </div>
+    </div>
+
+    <div id="toast" class="toast" style="display:none;"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:8001';
+        let jobs = [];
+        let currentFilter = 'all';
+
+        window.addEventListener('load', () => {
+            if (!localStorage.getItem('auth_token')) {
+                window.location.href = 'login.html';
+                return;
+            }
+            loadBoard();
+        });
+
+        async function loadBoard() {
+            try {
+                const res = await fetch(`${API_BASE}/api/job-matching/tracking-board`, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+                });
+                if (!res.ok) throw new Error('Failed to load board');
+                const data = await res.json();
+                jobs = data.jobs || [];
+                render();
+            } catch (err) {
+                showToast(err.message, true);
+            }
+        }
+
+        function render() {
+            const board = document.getElementById('board');
+            const empty = document.getElementById('emptyState');
+            const filtered = jobs.filter(job => {
+                if (currentFilter === 'saved') return job.is_saved;
+                if (currentFilter === 'applied') return job.is_applied;
+                return true;
+            });
+
+            if (!filtered.length) {
+                board.innerHTML = '';
+                empty.style.display = 'block';
+                return;
+            }
+            empty.style.display = 'none';
+
+            board.innerHTML = filtered.map(job => jobCard(job)).join('');
+        }
+
+        function jobCard(job) {
+            const appliedDate = job.applied_date ? new Date(job.applied_date).toLocaleDateString() : null;
+            return `
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; gap:8px;">
+                        <div>
+                            <div class="title">${job.title}</div>
+                            <div class="meta">${job.company || 'Unknown'} · ${job.location || 'Remote'} · ${job.job_type || ''}</div>
+                        </div>
+                        <div class="badge">${job.source || ''}</div>
+                    </div>
+
+                    <div class="chips">
+                        ${job.match_score ? `<span class="chip">Match ${job.match_score}%</span>` : ''}
+                        ${job.salary ? `<span class="chip">${job.salary}</span>` : ''}
+                    </div>
+
+                    <div class="status-row">
+                        <span class="pill ${job.is_saved ? 'saved' : 'ghost'}">${job.is_saved ? 'Saved' : 'Not saved'}</span>
+                        <span class="pill ${job.is_applied ? 'applied' : 'ghost'}">${job.is_applied ? 'Applied' : 'Not applied'}</span>
+                        ${appliedDate ? `<span class="chip">Applied: ${appliedDate}</span>` : ''}
+                    </div>
+
+                    <textarea class="textarea" id="note-${job.id}" placeholder="Notes (interviewer, follow-up, reminders)">${job.notes || ''}</textarea>
+
+                    <div class="actions">
+                        <button class="btn btn-secondary" onclick="openJob('${job.external_url}')">Open Job</button>
+                        <button class="btn btn-ghost" onclick="toggleSaved(${job.id}, ${job.is_saved ? 'false' : 'true'})">${job.is_saved ? 'Unsave' : 'Save'}</button>
+                        <button class="btn btn-primary" onclick="toggleApplied(${job.id}, ${job.is_applied ? 'false' : 'true'})">${job.is_applied ? 'Mark Unapplied' : 'Mark Applied'}</button>
+                        <button class="btn btn-secondary" onclick="saveNotes(${job.id})">Save Notes</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function toggleSaved(id, state) {
+            await updateJob(id, { is_saved: state });
+        }
+
+        async function toggleApplied(id, state) {
+            await updateJob(id, { is_applied: state });
+        }
+
+        async function saveNotes(id) {
+            const notes = document.getElementById(`note-${id}`).value;
+            await updateJob(id, { notes });
+        }
+
+        async function updateJob(id, payload) {
+            try {
+                const res = await fetch(`${API_BASE}/api/job-matching/update-job-status`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                    },
+                    body: JSON.stringify({ job_id: id, ...payload })
+                });
+                if (!res.ok) throw new Error('Failed to update job');
+                const data = await res.json();
+                // Update local state
+                jobs = jobs.map(job => job.id === id ? { ...job, ...payload, is_saved: payload.is_saved ?? job.is_saved, is_applied: payload.is_applied ?? job.is_applied, notes: payload.notes ?? job.notes, applied_date: payload.is_applied ? new Date().toISOString() : job.applied_date } : job);
+                render();
+                showToast('Updated');
+            } catch (err) {
+                showToast(err.message, true);
+            }
+        }
+
+        function openJob(url) {
+            if (!url || url === '#') {
+                showToast('No apply link available', true);
+                return;
+            }
+            window.open(url, '_blank');
+        }
+
+        function setFilter(filter, el) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter').forEach(f => f.classList.remove('active'));
+            el.classList.add('active');
+            render();
+        }
+
+        function handleLogout() {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+
+        function showToast(msg, isError=false) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.style.display = 'block';
+            toast.style.borderColor = isError ? 'var(--danger)' : 'var(--border)';
+            setTimeout(() => { toast.style.display = 'none'; }, 2500);
+        }
+    </script>
+</body>
+</html>

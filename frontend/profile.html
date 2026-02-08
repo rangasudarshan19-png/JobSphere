@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - JobSphere</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
+    <style>
+        .profile-header {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 30px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+        .avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: var(--gradient-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            margin: 0 auto 20px;
+            border: 4px solid var(--bg-primary);
+        }
+        .profile-section {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 30px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 25px;
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+        }
+        .skill-tag {
+            display: inline-block;
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            padding: 8px 16px;
+            border-radius: 20px;
+            margin: 5px;
+            font-size: 0.9rem;
+        }
+        .experience-item {
+            padding: 20px;
+            background: var(--bg-darker);
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="dashboard.html" class="navbar-brand">
+                ◆ JobSphere
+            </a>
+            
+            <div class="navbar-menu" id="navbarMenu">
+            </div>
+
+            <div class="navbar-end">
+                <a href="dashboard.html" class="btn btn-secondary btn-sm">Dashboard</a>
+                <button class="btn btn-primary btn-sm" onclick="handleLogout()">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container" style="margin-top: 80px; padding-bottom: 60px;">
+        <!-- Profile Header -->
+        <div class="profile-header">
+            <div class="avatar">👤</div>
+            <h1 style="margin-bottom: 5px;" id="profileName">Loading...</h1>
+            <p class="text-secondary" id="profileEmail">Loading...</p>
+        </div>
+
+        <div class="grid grid-2" style="gap: 30px;">
+            <!-- Left Column -->
+            <div>
+                <!-- Personal Information -->
+                <div class="profile-section">
+                    <div class="section-header">
+                        <h3>👤 Personal Information</h3>
+                        <button class="btn btn-secondary btn-sm" onclick="editPersonalInfo()">Edit</button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" class="form-control" id="fullName" readonly>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" readonly>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Phone</label>
+                        <input type="tel" class="form-control" id="phone" readonly>
+                    </div>
+                </div>
+
+                <!-- Account Settings -->
+                <div class="profile-section">
+                    <div class="section-header">
+                        <h3>🔒 Account Settings</h3>
+                    </div>
+                    
+                    <div class="form-group">
+                        <h4 style="margin-bottom: 5px;">Change Password</h4>
+                        <p class="text-secondary" style="margin-bottom: 15px;">Update your password to keep your account secure</p>
+                        <button class="btn btn-primary" onclick="changePassword()">Change Password</button>
+                    </div>
+                    
+                    <div class="form-group" style="margin-top: 30px;">
+                        <h4 style="margin-bottom: 5px;">Email Notifications</h4>
+                        <p class="text-secondary" style="margin-bottom: 15px;">Manage your email preferences</p>
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" id="emailNotifications" checked onchange="toggleEmailNotifications()">
+                            <span>Enabled</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div>
+                <!-- Resume Data -->
+                <div class="profile-section">
+                    <div class="section-header">
+                        <h3>📄 Resume</h3>
+                        <button class="btn btn-secondary btn-sm" onclick="window.location.href='ai-resume-builder.html'">Upload Resume</button>
+                    </div>
+                    
+                    <div id="resumeSection">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📄</div>
+                            <p>No resume uploaded yet</p>
+                            <p class="text-secondary" style="font-size: 0.9rem;">Upload your resume to automatically fill your profile</p>
+                            <button class="btn btn-primary" style="margin-top: 15px;" onclick="window.location.href='ai-resume-builder.html'">Upload Resume</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="profile-section">
+                    <div class="section-header">
+                        <h3>⚡ Quick Actions</h3>
+                    </div>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <button class="btn btn-secondary" onclick="window.location.href='ai-resume-builder.html'" style="justify-content: flex-start;">
+                            📄 Build Resume
+                        </button>
+                        <button class="btn btn-secondary" onclick="window.location.href='job-matching.html'" style="justify-content: flex-start;">
+                            🎯 Find Matching Jobs
+                        </button>
+                        <button class="btn btn-secondary" onclick="window.location.href='dashboard.html'" style="justify-content: flex-start;">
+                            📊 View Applications
+                        </button>
+                        <button class="btn btn-secondary" onclick="window.location.href='analytics.html'" style="justify-content: flex-start;">
+                            📈 View Analytics
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/app.js"></script>
+    <script>
+        let currentUser = null;
+
+        async function loadProfile() {
+            try {
+                Loading.show('Loading profile...');
+                
+                // Check if user is authenticated
+                const token = Auth.getToken();
+                if (!token) {
+                    Loading.hide();
+                    window.location.href = 'login.html';
+                    return;
+                }
+                
+                // Add required headers
+                const headers = {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                };
+                
+                const apiResponse = await fetch(`${API_BASE}/api/auth/me`, {
+                    method: 'GET',
+                    headers: headers
+                });
+                
+                if (apiResponse.status === 401) {
+                    // Token is invalid, redirect to login
+                    Loading.hide();
+                    Auth.removeToken();
+                    sessionStorage.clear();
+                    window.location.href = 'login.html';
+                    return;
+                }
+                
+                if (!apiResponse.ok) {
+                    throw new Error(`Failed to load profile: ${apiResponse.status} ${apiResponse.statusText}`);
+                }
+                
+                const response = await apiResponse.json();
+                currentUser = response;
+                
+                // Display basic info
+                document.getElementById('profileName').textContent = response.full_name || 'User';
+                document.getElementById('profileEmail').textContent = response.email;
+                document.getElementById('fullName').value = response.full_name || '';
+                document.getElementById('email').value = response.email || '';
+                document.getElementById('phone').value = response.phone || '';
+                
+                // Parse resume data if available
+                if (response.resume_data) {
+                    try {
+                        const resumeData = JSON.parse(response.resume_data);
+                        displayResumeData(resumeData);
+                    } catch (e) {
+                        console.error('Failed to parse resume data:', e);
+                    }
+                } else {
+                    // Fallback: fetch resume from dedicated endpoint
+                    try {
+                        const resumeResponse = await fetch(`${API_BASE}/api/resume/get`, {
+                            method: 'GET',
+                            headers: headers
+                        });
+                        if (resumeResponse.ok) {
+                            const resumeData = await resumeResponse.json();
+                            displayResumeData(resumeData);
+                        }
+                    } catch (e) {
+                        console.error('Failed to fetch resume data:', e);
+                    }
+                }
+                
+                Loading.hide();
+            } catch (error) {
+                Loading.hide();
+                console.error('Failed to load profile:', error);
+                Toast.show('Failed to load profile', 'error');
+            }
+        }
+
+        function displayResumeData(resumeData) {
+            const resumeSection = document.getElementById('resumeSection');
+            
+            if (!resumeData || Object.keys(resumeData).length === 0) {
+                return;
+            }
+            
+            const normalized = normalizeResumeForProfile(resumeData);
+            
+            let html = '<div>';
+            
+            if (normalized.contact) {
+                html += '<h4 style="margin-bottom: 15px;">Personal Information</h4>';
+                html += '<div style="padding: 15px; background: var(--bg-darker); border-radius: 8px; margin-bottom: 20px;">';
+                if (normalized.contact.full_name) html += `<p><strong>Name:</strong> ${normalized.contact.full_name}</p>`;
+                if (normalized.contact.email) html += `<p><strong>Email:</strong> ${normalized.contact.email}</p>`;
+                if (normalized.contact.phone) html += `<p><strong>Phone:</strong> ${normalized.contact.phone}</p>`;
+                if (normalized.contact.location) html += `<p><strong>Location:</strong> ${normalized.contact.location}</p>`;
+                if (normalized.contact.linkedin) html += `<p><strong>LinkedIn:</strong> ${normalized.contact.linkedin}</p>`;
+                html += '</div>';
+            }
+            
+            if (normalized.summary) {
+                html += '<h4 style="margin-bottom: 15px;">Professional Summary</h4>';
+                html += `<p class="text-secondary" style="margin-bottom: 20px;">${normalized.summary}</p>`;
+            }
+            
+            if (normalized.skills && normalized.skills.length > 0) {
+                html += '<h4 style="margin-bottom: 15px;">Skills</h4>';
+                html += '<div style="margin-bottom: 20px;">';
+                normalized.skills.forEach(skill => {
+                    html += `<span class="skill-tag">${skill}</span>`;
+                });
+                html += '</div>';
+            }
+            
+            if (normalized.experience && normalized.experience.length > 0) {
+                html += '<h4 style="margin-bottom: 15px;">Experience</h4>';
+                normalized.experience.forEach(exp => {
+                    html += '<div class="experience-item">';
+                    html += `<h5>${exp.title || exp.position || 'Position'}</h5>`;
+                    const company = exp.company || exp.organization || 'Company';
+                    const duration = exp.duration || exp.period || `${exp.start_date || ''} ${exp.end_date ? ' - ' + exp.end_date : ''}`.trim();
+                    html += `<p class="text-secondary">${company}${duration ? ' • ' + duration : ''}</p>`;
+                    if (exp.description) html += `<p class="text-muted">${Array.isArray(exp.description) ? exp.description.join(' ') : exp.description}</p>`;
+                    if (exp.achievements && Array.isArray(exp.achievements)) {
+                        html += `<p class="text-muted">${exp.achievements.join(' ')}</p>`;
+                    }
+                    html += '</div>';
+                });
+            }
+            
+            if (normalized.education && normalized.education.length > 0) {
+                html += '<h4 style="margin-bottom: 15px;">Education</h4>';
+                normalized.education.forEach(edu => {
+                    html += '<div class="experience-item">';
+                    html += `<h5>${edu.degree || 'Degree'}</h5>`;
+                    const inst = edu.institution || edu.school || 'Institution';
+                    const year = edu.graduation_date || edu.year || '';
+                    html += `<p class="text-secondary">${inst}${year ? ' • ' + year : ''}</p>`;
+                    html += '</div>';
+                });
+            }
+            
+            html += '</div>';
+            resumeSection.innerHTML = html;
+        }
+
+        function normalizeResumeForProfile(resumeData) {
+            const normalized = {
+                contact: null,
+                summary: '',
+                skills: [],
+                experience: [],
+                education: []
+            };
+
+            if (resumeData.contact) {
+                normalized.contact = resumeData.contact;
+            } else {
+                normalized.contact = {
+                    full_name: resumeData.full_name || resumeData.name || '',
+                    email: resumeData.email || '',
+                    phone: resumeData.phone || '',
+                    location: resumeData.location || '',
+                    linkedin: resumeData.linkedin || ''
+                };
+            }
+
+            normalized.summary = resumeData.professional_summary || resumeData.summary || '';
+
+            // Skills can be list, JSON string, comma string, or dict
+            let skills = resumeData.skills || [];
+            if (typeof skills === 'string') {
+                try {
+                    skills = JSON.parse(skills);
+                } catch {
+                    skills = skills.split(',').map(s => s.trim()).filter(Boolean);
+                }
+            }
+            if (skills && typeof skills === 'object' && !Array.isArray(skills)) {
+                const merged = [];
+                Object.values(skills).forEach(group => {
+                    if (Array.isArray(group)) merged.push(...group);
+                });
+                skills = merged;
+            }
+            normalized.skills = Array.isArray(skills) ? skills : [];
+
+            // Experience
+            let exp = resumeData.experience || [];
+            if (typeof exp === 'string') {
+                try {
+                    exp = JSON.parse(exp);
+                } catch {
+                    exp = [];
+                }
+            }
+            normalized.experience = Array.isArray(exp) ? exp : [];
+
+            // Education
+            let edu = resumeData.education || [];
+            if (typeof edu === 'string') {
+                try {
+                    edu = JSON.parse(edu);
+                } catch {
+                    edu = [];
+                }
+            }
+            normalized.education = Array.isArray(edu) ? edu : [];
+
+            return normalized;
+        }
+
+        function editPersonalInfo() {
+            Modal.show(
+                'Edit Personal Information',
+                `
+                    <div class="form-group">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" class="form-control" id="editFullName" value="${currentUser?.full_name || ''}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Phone</label>
+                        <input type="tel" class="form-control" id="editPhone" value="${currentUser?.phone || ''}">
+                    </div>
+                `,
+                [
+                    { text: 'Cancel', class: 'btn-secondary', onclick: 'Modal.hide()' },
+                    { text: 'Save', class: 'btn-primary', onclick: 'savePersonalInfo()' }
+                ]
+            );
+        }
+
+        async function savePersonalInfo() {
+            const fullName = document.getElementById('editFullName').value;
+            const phone = document.getElementById('editPhone').value;
+            
+            try {
+                Loading.show('Saving...');
+                Modal.hide();
+                
+                const token = Auth.getToken();
+                const apiResponse = await fetch(`${API_BASE}/api/auth/update-profile`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        full_name: fullName,
+                        phone: phone
+                    })
+                });
+                
+                if (!apiResponse.ok) {
+                    const errorData = await apiResponse.json().catch(() => ({ detail: 'Failed to update profile' }));
+                    throw new Error(errorData.detail || 'Failed to update profile');
+                }
+                
+                const updatedUser = await apiResponse.json();
+                
+                // Update the UI directly instead of reloading
+                document.getElementById('profileName').textContent = updatedUser.full_name || 'User';
+                document.getElementById('fullName').value = updatedUser.full_name || '';
+                document.getElementById('phone').value = updatedUser.phone || '';
+                currentUser = updatedUser;
+                
+                Loading.hide();
+                Toast.show('Profile updated successfully!', 'success');
+            } catch (error) {
+                Loading.hide();
+                console.error('Failed to update profile:', error);
+                Toast.show(error.message || 'Failed to update profile', 'error');
+            }
+        }
+
+        function changePassword() {
+            Modal.show(
+                'Change Password',
+                `
+                    <div class="form-group">
+                        <label class="form-label">Current Password</label>
+                        <input type="password" class="form-control" id="currentPassword">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">New Password</label>
+                        <input type="password" class="form-control" id="newPassword">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Confirm New Password</label>
+                        <input type="password" class="form-control" id="confirmPassword">
+                    </div>
+                `,
+                [
+                    { text: 'Cancel', class: 'btn-secondary', onclick: 'Modal.hide()' },
+                    { text: 'Update Password', class: 'btn-primary', onclick: 'updatePassword()' }
+                ]
+            );
+        }
+
+        async function updatePassword() {
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                Toast.show('All fields are required', 'error');
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                Toast.show('New passwords do not match', 'error');
+                return;
+            }
+            
+            if (newPassword.length < 8) {
+                Toast.show('Password must be at least 8 characters', 'error');
+                return;
+            }
+            
+            try {
+                Loading.show('Updating password...');
+                Modal.hide();
+                
+                const token = Auth.getToken();
+                const apiResponse = await fetch(`${API_BASE}/api/auth/change-password`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        current_password: currentPassword,
+                        new_password: newPassword
+                    })
+                });
+                
+                if (!apiResponse.ok) {
+                    const error = await apiResponse.json();
+                    throw new Error(error.detail || 'Failed to change password');
+                }
+                
+                Loading.hide();
+                Toast.show('Password changed successfully!', 'success');
+                document.getElementById('currentPassword').value = '';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
+                
+                Loading.hide();
+                Toast.show('Password updated successfully!', 'success');
+            } catch (error) {
+                Loading.hide();
+                console.error('Failed to update password:', error);
+                Toast.show(error.message || 'Failed to update password', 'error');
+            }
+        }
+
+        function toggleEmailNotifications() {
+            const enabled = document.getElementById('emailNotifications').checked;
+            Toast.show(enabled ? 'Email notifications enabled' : 'Email notifications disabled', 'success');
+        }
+
+        function handleLogout() {
+            Auth.logout();
+            window.location.href = 'login.html';
+        }
+
+        // Load profile on page load
+        document.addEventListener('DOMContentLoaded', loadProfile);
+    </script>
+</body>
+</html>

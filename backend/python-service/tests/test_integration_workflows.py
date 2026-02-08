@@ -1,0 +1,329 @@
+"""
+Comprehensive integration tests for authentication workflows
+"""
+import pytest
+from fastapi.testclient import TestClient
+from fastapi import status
+from app.utils.database import get_db
+from app.models.user import User
+from sqlalchemy.orm import Session
+
+
+@pytest.mark.integration
+@pytest.mark.auth
+class TestAuthenticationFlow:
+    """Integration tests for complete authentication workflows."""
+    
+    def test_user_registration_and_login_flow(self, client: TestClient, db: Session):
+        """
+        Test complete user registration and login flow.
+        
+        Steps:
+        1. Register new user
+        2. Verify user is created in database
+        3. Login with new credentials
+        4. Verify JWT token is returned
+        5. Use token to access protected endpoint
+        """
+        # Step 1: Register new user
+        registration_data = {
+            "email": "integration.test@example.com",
+            "password": "SecurePassword123!",
+            "full_name": "Integration Test User",
+            "phone": "+1-555-0123"
+        }
+        
+        register_response = client.post(
+            "/api/auth/register",
+            json=registration_data
+        )
+        
+        assert register_response.status_code == status.HTTP_201_CREATED
+        register_json = register_response.json()
+        assert "id" in register_json
+        assert register_json["email"] == registration_data["email"].lower()
+        user_id = register_json["id"]
+        
+        # Step 2: Verify user in database
+        user = db.query(User).filter(User.id == user_id).first()
+        assert user is not None
+        assert user.email == registration_data["email"].lower()
+        assert user.full_name == registration_data["full_name"]
+        assert user.is_admin == 0
+        assert user.is_suspended == 0
+        
+        # Step 3: Login with credentials
+        login_data = {
+            "email": registration_data["email"],
+            "password": registration_data["password"]
+        }
+        
+        login_response = client.post(
+            "/api/auth/login",
+            json=login_data
+        )
+        
+        assert login_response.status_code == status.HTTP_200_OK
+        login_json = login_response.json()
+        assert "access_token" in login_json
+        assert login_json["token_type"] == "bearer"
+        access_token = login_json["access_token"]
+        
+        # Step 4: Access protected endpoint with token
+        headers = {"Authorization": f"Bearer {access_token}"}
+        me_response = client.get(
+            "/api/auth/me",
+            headers=headers
+        )
+        
+        assert me_response.status_code == status.HTTP_200_OK
+        me_json = me_response.json()
+        assert me_json["email"] == registration_data["email"].lower()
+        assert me_json["full_name"] == registration_data["full_name"]
+    
+    def test_duplicate_registration_prevented(self, client: TestClient):
+        """Test that duplicate email registration is prevented."""
+        # Arrange
+        user_data = {
+            "email": "duplicate.test@example.com",
+            "password": "Password123!",
+            "full_name": "Duplicate Test"
+        }
+        
+        # Act - Register first time
+        first_response = client.post(
+            "/api/auth/register",
+            json=user_data
+        )
+        assert first_response.status_code == status.HTTP_201_CREATED
+        
+        # Act - Try to register again
+        second_response = client.post(
+            "/api/auth/register",
+            json=user_data
+        )
+        
+        # Assert
+        assert second_response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "already registered" in second_response.json()["detail"].lower()
+    
+    def test_case_insensitive_email_login(self, client: TestClient):
+        """Test that login works with different email casing."""
+        # Arrange - Register with lowercase
+        user_data = {
+            "email": "casetest@example.com",
+            "password": "Password123!",
+            "full_name": "Case Test User"
+        }
+        
+        register_response = client.post(
+            "/api/auth/register",
+            json=user_data
+        )
+        assert register_response.status_code == status.HTTP_201_CREATED
+        
+        # Act - Login with uppercase
+        login_data = {
+            "email": "CASETEST@EXAMPLE.COM",
+            "password": "Password123!"
+        }
+        
+        login_response = client.post(
+            "/api/auth/login",
+            json=login_data
+        )
+        
+        # Assert
+        assert login_response.status_code == status.HTTP_200_OK
+        assert "access_token" in login_response.json()
+    
+    def test_invalid_credentials_rejected(self, client: TestClient):
+        """Test that invalid login credentials are rejected."""
+        # Arrange
+        user_data = {
+            "email": "valid@example.com",
+            "password": "CorrectPassword123!",
+            "full_name": "Valid User"
+        }
+        
+        client.post("/api/auth/register", json=user_data)
+        
+        # Act - Try login with wrong password
+        login_data = {
+            "email": "valid@example.com",
+            "password": "WrongPassword123!"
+        }
+        
+        login_response = client.post(
+            "/api/auth/login",
+            json=login_data
+        )
+        
+        # Assert
+        assert login_response.status_code == status.HTTP_401_UNAUTHORIZED
+    
+    def test_suspended_user_cannot_login(self, client: TestClient, db: Session):
+        """Test that suspended users cannot login."""
+        # Arrange - Create and suspend user
+        user_data = {
+            "email": "suspended@example.com",
+            "password": "Password123!",
+            "full_name": "Suspended User"
+        }
+        
+        register_response = client.post(
+            "/api/auth/register",
+            json=user_data
+        )
+        user_id = register_response.json()["id"]
+        
+        # Suspend the user
+        user = db.query(User).filter(User.id == user_id).first()
+        user.is_suspended = 1
+        db.commit()
+        
+        # Act - Try to login
+        login_response = client.post(
+            "/api/auth/login",
+            json={"email": user_data["email"], "password": user_data["password"]}
+        )
+        
+        # Assert
+        assert login_response.status_code == status.HTTP_403_FORBIDDEN
+        assert "suspended" in login_response.json()["detail"].lower()
+    
+    def test_token_required_for_protected_endpoints(self, client: TestClient):
+        """Test that protected endpoints require authentication token."""
+        # Act - Try to access protected endpoint without token
+        response = client.get("/api/auth/me")
+        
+        # Assert
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+    
+    def test_invalid_token_rejected(self, client: TestClient):
+        """Test that invalid tokens are rejected."""
+        # Arrange
+        invalid_token = "invalid.jwt.token"
+        headers = {"Authorization": f"Bearer {invalid_token}"}
+        
+        # Act
+        response = client.get("/api/auth/me", headers=headers)
+        
+        # Assert
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+@pytest.mark.integration
+class TestApplicationWorkflow:
+    """Integration tests for job application workflows."""
+    
+    def test_create_and_retrieve_application(self, authenticated_client: TestClient):
+        """Test creating and retrieving a job application."""
+        # Arrange
+        application_data = {
+            "job_title": "Senior Software Engineer",
+            "company_name": "Tech Corp",
+            "job_url": "https://example.com/jobs/123",
+            "status": "applied",
+            "applied_date": "2026-01-23",
+            "notes": "Exciting opportunity"
+        }
+        
+        # Act - Create application
+        create_response = authenticated_client.post(
+            "/api/applications/",
+            json=application_data
+        )
+        
+        # Assert creation
+        assert create_response.status_code == status.HTTP_201_CREATED
+        created = create_response.json()
+        assert created["job_title"] == application_data["job_title"]
+        app_id = created["id"]
+        
+        # Act - Retrieve application
+        get_response = authenticated_client.get(f"/api/applications/{app_id}")
+        
+        # Assert retrieval
+        assert get_response.status_code == status.HTTP_200_OK
+        retrieved = get_response.json()
+        assert retrieved["id"] == app_id
+        assert retrieved["job_title"] == application_data["job_title"]
+    
+    def test_update_application_status(self, authenticated_client: TestClient):
+        """Test updating application status."""
+        # Arrange - Create application
+        application_data = {
+            "job_title": "Backend Developer",
+            "company_name": "StartupXYZ",
+            "status": "applied"
+        }
+        
+        create_response = authenticated_client.post(
+            "/api/applications/",
+            json=application_data
+        )
+        app_id = create_response.json()["id"]
+        
+        # Act - Update status
+        update_data = {"status": "interview"}
+        update_response = authenticated_client.patch(
+            f"/api/applications/{app_id}",
+            json=update_data
+        )
+        
+        # Assert
+        assert update_response.status_code == status.HTTP_200_OK
+        updated = update_response.json()
+        assert updated["status"] == "interview"
+    
+    def test_delete_application(self, authenticated_client: TestClient):
+        """Test deleting an application."""
+        # Arrange - Create application
+        application_data = {
+            "job_title": "Test Position",
+            "company_name": "Test Company",
+            "status": "applied"
+        }
+        
+        create_response = authenticated_client.post(
+            "/api/applications/",
+            json=application_data
+        )
+        app_id = create_response.json()["id"]
+        
+        # Act - Delete application
+        delete_response = authenticated_client.delete(
+            f"/api/applications/{app_id}"
+        )
+        
+        # Assert deletion
+        assert delete_response.status_code == status.HTTP_204_NO_CONTENT
+        
+        # Verify it's gone
+        get_response = authenticated_client.get(f"/api/applications/{app_id}")
+        assert get_response.status_code == status.HTTP_404_NOT_FOUND
+    
+    def test_list_user_applications(self, authenticated_client: TestClient):
+        """Test listing all applications for a user."""
+        # Arrange - Create multiple applications
+        apps = [
+            {"job_title": f"Position {i}", "company_name": f"Company {i}", "status": "applied"}
+            for i in range(3)
+        ]
+        
+        for app_data in apps:
+            authenticated_client.post("/api/applications/", json=app_data)
+        
+        # Act - List applications
+        list_response = authenticated_client.get("/api/applications/")
+        
+        # Assert
+        assert list_response.status_code == status.HTTP_200_OK
+        applications = list_response.json()
+        assert len(applications) >= 3
+        
+        # Verify our applications are in the list
+        titles = [app["job_title"] for app in applications]
+        for i in range(3):
+            assert f"Position {i}" in titles

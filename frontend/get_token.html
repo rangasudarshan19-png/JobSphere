@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get Admin Token</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 90%;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .token-section {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        #token {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            display: block;
+            word-break: break-all;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #333;
+            max-height: 150px;
+            overflow-y: auto;
+            line-height: 1.4;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-copy {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-copy:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-clear {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-clear:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+        }
+
+        .info {
+            background: #e8f4f8;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #0c5460;
+            margin-bottom: 20px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 4px solid #155724;
+            margin-top: 15px;
+            display: none;
+            text-align: center;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 4px solid #721c24;
+            margin-top: 15px;
+            display: none;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🔐 Admin Token for Swagger</h2>
+        
+        <div class="info">
+            <strong>ℹ️ Instructions:</strong><br>
+            1. This page shows your admin authentication token<br>
+            2. Click "Copy Token" to copy it to your clipboard<br>
+            3. Go to http://127.0.0.1:8000/docs (Swagger)<br>
+            4. Click "Authorize" button → paste token → click "Authorize"
+        </div>
+
+        <div class="token-section">
+            <div class="label">Your Token:</div>
+            <code id="token">Loading token...</code>
+        </div>
+
+        <div class="button-group">
+            <button class="btn-copy" onclick="copyToClipboard()">📋 Copy Token</button>
+            <button class="btn-clear" onclick="clearToken()">🗑️ Clear Storage</button>
+        </div>
+
+        <div class="success" id="successMsg">✅ Token copied to clipboard!</div>
+        <div class="error" id="errorMsg">❌ No token found. Please login first.</div>
+    </div>
+
+    <script>
+        function loadToken() {
+            const token = localStorage.getItem('access_token');
+            const tokenElement = document.getElementById('token');
+            const successMsg = document.getElementById('successMsg');
+            const errorMsg = document.getElementById('errorMsg');
+
+            if (token) {
+                tokenElement.textContent = token;
+                successMsg.style.display = 'none';
+                errorMsg.style.display = 'none';
+            } else {
+                tokenElement.textContent = 'No token found. Please login first at http://127.0.0.1:8000/frontend/login.html';
+                errorMsg.style.display = 'block';
+            }
+        }
+
+        function copyToClipboard() {
+            const token = localStorage.getItem('access_token');
+            const successMsg = document.getElementById('successMsg');
+            const errorMsg = document.getElementById('errorMsg');
+
+            if (token) {
+                navigator.clipboard.writeText(token).then(() => {
+                    successMsg.style.display = 'block';
+                    errorMsg.style.display = 'none';
+                    setTimeout(() => {
+                        successMsg.style.display = 'none';
+                    }, 3000);
+                }).catch(() => {
+                    alert('Failed to copy. Try selecting the token manually and using Ctrl+C');
+                });
+            } else {
+                errorMsg.style.display = 'block';
+                successMsg.style.display = 'none';
+            }
+        }
+
+        function clearToken() {
+            if (confirm('Are you sure you want to clear the token? You will need to login again.')) {
+                localStorage.removeItem('access_token');
+                loadToken();
+            }
+        }
+
+        // Load token on page load
+        window.addEventListener('load', loadToken);
+        
+        // Refresh token every 5 seconds in case it was updated
+        setInterval(loadToken, 5000);
+    </script>
+</body>
+</html>

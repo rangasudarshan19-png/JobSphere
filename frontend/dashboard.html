@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - JobSphere</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>◆</text></svg>">
+    <style>
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.2);
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        .quick-actions-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            max-width: 900px;
+            margin: 0 auto;
+            position: relative;
+            animation: fadeInContainer 0.8s ease-out;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(14, 165, 233, 0.08));
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            height: 370px;
+            overflow-y: scroll;
+            scroll-behavior: smooth;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        .quick-actions-grid::-webkit-scrollbar {
+            width: 6px;
+        }
+        .quick-actions-grid::-webkit-scrollbar-track {
+            background: rgba(99, 102, 241, 0.05);
+            border-radius: 3px;
+        }
+        .quick-actions-grid::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, var(--primary), rgba(99, 102, 241, 0.6));
+            border-radius: 3px;
+        }
+        .quick-actions-grid::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, var(--primary), var(--primary));
+        }
+        @keyframes fadeInContainer {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+        .quick-action {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 24px 26px;
+            border: 1px solid var(--border-color);
+            text-decoration: none;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 20px;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            opacity: 0;
+            transform: translateX(-20px) scale(0.95);
+            animation: quickActionIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            will-change: transform, opacity, box-shadow;
+            position: relative;
+            overflow: hidden;
+            min-height: 95px;
+        }
+        .quick-action::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(14, 165, 233, 0.1));
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        .quick-action:hover {
+            border-color: var(--primary);
+            transform: translateY(-4px) scale(1.03);
+            box-shadow: 0 12px 40px rgba(99, 102, 241, 0.3), 0 0 0 1px rgba(99, 102, 241, 0.1);
+            z-index: 10;
+        }
+        .quick-action:hover::before {
+            opacity: 1;
+        }
+        .quick-actions-grid:has(.quick-action:hover) .quick-action:not(:hover) {
+            opacity: 0.6;
+            transform: scale(0.98);
+        }
+        @keyframes quickActionIn {
+            0% { 
+                opacity: 0; 
+                transform: translateX(-20px) scale(0.95);
+            }
+            60% { 
+                opacity: 1; 
+                transform: translateX(4px) scale(1.01);
+            }
+            100% { 
+                opacity: 1; 
+                transform: translateX(0) scale(1);
+            }
+        }
+        .quick-action:nth-child(1) { animation-delay: 0ms; }
+        .quick-action:nth-child(2) { animation-delay: 80ms; }
+        .quick-action:nth-child(3) { animation-delay: 160ms; }
+        .quick-action:nth-child(4) { animation-delay: 240ms; }
+        .quick-action:nth-child(5) { animation-delay: 320ms; }
+        .quick-action:nth-child(6) { animation-delay: 400ms; }
+        .quick-action-icon {
+            font-size: 2.6rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .quick-action-content {
+            flex: 1;
+        }
+        .quick-action-title {
+            color: var(--text-primary);
+            font-weight: 700;
+            margin-bottom: 6px;
+            font-size: 1.12rem;
+        }
+        .quick-action-desc {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        .app-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 15px;
+            transition: all 0.2s;
+        }
+        .app-card:hover {
+            border-color: var(--primary);
+            transform: translateX(5px);
+        }
+        .animated-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .animated-item {
+            opacity: 0;
+            transform: translateY(10px);
+            animation: listIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            will-change: transform, opacity;
+        }
+        @keyframes listIn {
+            0% { opacity: 0; transform: translateY(14px) scale(0.98); }
+            60% { opacity: 1; transform: translateY(-2px) scale(1.01); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+        .app-main {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+        }
+        .app-icon-box {
+            width: 58px;
+            height: 58px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, rgba(99,102,241,0.16), rgba(14,165,233,0.18));
+            border: 1px solid var(--border-color);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.12);
+        }
+        .app-meta {
+            flex: 1;
+        }
+        .app-company {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+        }
+        .app-position {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+        .app-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .status-applied { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+        .status-interview { background: rgba(168, 85, 247, 0.2); color: #c084fc; }
+        .status-offer { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+        .status-rejected { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+        .app-date {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+        
+        /* Flowing Menu Styles */
+        .flowing-menu-container {
+            width: 100%;
+            margin: 0 auto;
+            overflow: visible;
+            display: block;
+        }
+        
+        .flowing-menu {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            width: 100%;
+            overflow: visible;
+            auto-rows: max-content;
+        }
+        
+        .flowing-menu-item {
+            position: relative;
+            overflow: visible;
+            text-decoration: none;
+            color: var(--text-primary);
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 1;
+        }
+        
+        .flowing-menu-item:hover {
+            border-color: var(--primary);
+            box-shadow: 0 12px 40px rgba(99, 102, 241, 0.3);
+            z-index: 10;
+        }
+        
+        .flowing-menu-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            opacity: 1;
+            transform: scale(1);
+            color: var(--text-primary);
+        }
+        
+        .flowing-menu-item:hover .flowing-menu-name {
+            opacity: 0;
+            transform: scale(0.8);
+            pointer-events: none;
+        }
+        
+        .flowing-menu-hover {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 24px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(14, 165, 233, 0.1));
+            opacity: 0;
+            transform: scale(0.8);
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            pointer-events: none;
+            box-sizing: border-box;
+        }
+        
+        .flowing-menu-item:hover .flowing-menu-hover {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
+        }
+        
+        .flowing-menu-icon {
+            font-size: 2.6rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .flowing-menu-content {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .flowing-menu-title {
+            color: var(--text-primary);
+            font-weight: 700;
+            margin-bottom: 6px;
+            font-size: 1rem;
+        }
+        
+        .flowing-menu-desc {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+        
+        @media (max-width: 1024px) {
+            .flowing-menu {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .flowing-menu {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Ensure Quick Actions section doesn't clip content */
+        .mb-2xl:has(.flowing-menu-container) {
+            overflow: visible;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="dashboard.html" class="navbar-brand">
+                ◆ JobSphere
+            </a>
+            
+            <div class="navbar-menu" id="navbarMenu">
+            </div>
+
+            <div class="navbar-end">
+                <a href="profile.html" class="btn btn-secondary btn-sm" style="margin-right: 10px;">Profile</a>
+                <span id="adminButton"></span>
+                <span class="navbar-item" id="userGreeting">Welcome!</span>
+                <button class="btn btn-secondary btn-sm" onclick="handleLogout()">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container" style="margin-top: 120px; padding-bottom: 60px;">
+        <!-- Welcome Header -->
+        <div class="mb-2xl">
+            <h1 id="welcomeHeading" style="margin-bottom: 10px;">Welcome, <span id="userName">User</span>! 👋</h1>
+            <p class="text-secondary">Here's your job search overview</p>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="grid grid-4 mb-2xl" style="gap: 20px;">
+            <div class="stat-card">
+                <div class="stat-value" id="totalApps">0</div>
+                <div class="stat-label">Total Applications</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="activeApps">0</div>
+                <div class="stat-label">Active Applications</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="interviews">0</div>
+                <div class="stat-label">Interviews Scheduled</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="offers">0</div>
+                <div class="stat-label">Offers Received</div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="mb-2xl">
+            <h2 style="margin-bottom: 20px;">Quick Actions</h2>
+            <div class="flowing-menu-container">
+                <div class="flowing-menu" id="flowingMenu">
+                    <a href="job-matching.html" class="flowing-menu-item" data-title="Find Matching Jobs" data-desc="AI-powered job recommendations">
+                        <span class="flowing-menu-name">Find Matching Jobs</span>
+                        <div class="flowing-menu-hover">
+                            <div class="flowing-menu-content">
+                                <div class="flowing-menu-title">Find Matching Jobs</div>
+                                <div class="flowing-menu-desc">AI-powered job recommendations</div>
+                            </div>
+                        </div>
+                    </a>
+                    <a href="ai-resume-builder.html" class="flowing-menu-item" data-title="AI Resume Builder" data-desc="Company-optimized resumes">
+                        <span class="flowing-menu-name">AI Resume Builder</span>
+                        <div class="flowing-menu-hover">
+                            <div class="flowing-menu-content">
+                                <div class="flowing-menu-title">AI Resume Builder</div>
+                                <div class="flowing-menu-desc">Company-optimized resumes</div>
+                            </div>
+                        </div>
+                    </a>
+                    <a href="kanban-tracker.html" class="flowing-menu-item" data-title="Application Tracker" data-desc="Kanban board for tracking">
+                        <span class="flowing-menu-name">Application Tracker</span>
+                        <div class="flowing-menu-hover">
+                            <div class="flowing-menu-content">
+                                <div class="flowing-menu-title">Application Tracker</div>
+                                <div class="flowing-menu-desc">Kanban board for tracking</div>
+                            </div>
+                        </div>
+                    </a>
+                    <a href="interview-prep.html" class="flowing-menu-item" data-title="Practice Interview" data-desc="AI interview preparation">
+                        <span class="flowing-menu-name">Practice Interview</span>
+                        <div class="flowing-menu-hover">
+                            <div class="flowing-menu-content">
+                                <div class="flowing-menu-title">Practice Interview</div>
+                                <div class="flowing-menu-desc">AI interview preparation</div>
+                            </div>
+                        </div>
+                    </a>
+                    <a href="cover-letter.html" class="flowing-menu-item" data-title="Generate Cover Letter" data-desc="AI-powered cover letters">
+                        <span class="flowing-menu-name">Generate Cover Letter</span>
+                        <div class="flowing-menu-hover">
+                            <div class="flowing-menu-content">
+                                <div class="flowing-menu-title">Generate Cover Letter</div>
+                                <div class="flowing-menu-desc">AI-powered cover letters</div>
+                            </div>
+                        </div>
+                    </a>
+                    <a href="analytics.html" class="flowing-menu-item" data-title="View Analytics" data-desc="Track your job search progress">
+                        <span class="flowing-menu-name">View Analytics</span>
+                        <div class="flowing-menu-hover">
+                            <div class="flowing-menu-content">
+                                <div class="flowing-menu-title">View Analytics</div>
+                                <div class="flowing-menu-desc">Track your job search progress</div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script>
+        // Flowing Menu Animation
+        function initFlowingMenu() {
+            const menuItems = document.querySelectorAll('.flowing-menu-item');
+            
+            // Ensure all items are visible first
+            menuItems.forEach((item) => {
+                item.style.opacity = '1';
+                item.style.transform = 'translateY(0)';
+            });
+            
+            menuItems.forEach((item, index) => {
+                // Stagger entrance animation with fromTo to ensure proper starting state
+                gsap.fromTo(item, 
+                    { opacity: 0, y: 20 },
+                    {
+                        opacity: 1,
+                        y: 0,
+                        duration: 0.6,
+                        delay: index * 0.08,
+                        ease: 'back.out'
+                    }
+                );
+            });
+        }
+        
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initFlowingMenu);
+        } else {
+            initFlowingMenu();
+        }
+        
+        // Require authentication
+        Auth.requireAuth();
+
+        // Navbar burger removed - using clean navbar without hamburger menu
+
+        // Set user name - extract first name from full name for greeting
+        const fullName = sessionStorage.getItem('userName') || 'User';
+        const firstName = fullName.split(' ')[0]; // Get first name (first word before space)
+        document.getElementById('userName').textContent = firstName;
+        document.getElementById('userGreeting').textContent = `Hi, ${firstName}`;
+
+        // Fetch fresh user data from API to update name and check first login
+        async function updateUserName() {
+            try {
+                const response = await Auth.fetchWithAuth(`${API_BASE}/api/auth/me`);
+                if (response.ok) {
+                    const userData = await response.json();
+                    if (userData.full_name) {
+                        // Update sessionStorage with fresh data
+                        sessionStorage.setItem('userName', userData.full_name);
+                        // Update display
+                        const firstName = userData.full_name.split(' ')[0];
+                        document.getElementById('userName').textContent = firstName;
+                        
+                        // Check if first login
+                        if (userData.first_login) {
+                            document.getElementById('welcomeHeading').innerHTML = `Welcome, <span id="userName">${firstName}</span>! 👋`;
+                        } else {
+                            document.getElementById('welcomeHeading').innerHTML = `Welcome back, <span id="userName">${firstName}</span>! 👋`;
+                        }
+                    }
+                }
+            } catch (error) {
+                console.log('Could not fetch user data:', error);
+            }
+        }
+        
+        // Update user name from API
+        updateUserName();
+
+        // Logout function
+        function handleLogout() {
+            Auth.removeToken();
+            localStorage.clear();
+            Toast.show('Logged out successfully', 'success');
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 1000);
+        }
+
+        // Admin users should not see admin button on user dashboard - they login directly to admin panel
+
+        // Load dashboard data
+        async function loadDashboardData() {
+            try {
+                const response = await Auth.fetchWithAuth(`${API_BASE}/api/applications`);
+                
+                if (response.ok) {
+                    const applications = await response.json();
+                    
+                    // Update stats
+                    document.getElementById('totalApps').textContent = applications.length;
+                    document.getElementById('activeApps').textContent = 
+                        applications.filter(app => ['applied', 'screening', 'interview'].includes(app.status)).length;
+                    document.getElementById('interviews').textContent = 
+                        applications.filter(app => app.status === 'interview').length;
+                    document.getElementById('offers').textContent = 
+                        applications.filter(app => app.status === 'offer').length;
+                }
+            } catch (error) {
+                console.error('Failed to load dashboard data:', error);
+            }
+        }
+
+        // Load data on page load
+        loadDashboardData();
+    </script>
+</body>
+</html>

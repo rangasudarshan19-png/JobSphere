@@ -1,0 +1,60 @@
+{% extends "base_email.html" %}
+
+{% block title %}Email Verification - JobSphere{% endblock %}
+
+{% block header_icon %}🔐{% endblock %}
+{% block header_title %}Verify Your Email{% endblock %}
+
+{% block content %}
+<div style="padding: 40px 30px;">
+    <div style="text-align: center; margin-bottom: 40px;">
+        <h1 style="color: #1a202c; font-size: 28px; margin: 0 0 15px 0;">
+            Email Verification
+        </h1>
+        <p style="color: #4a5568; font-size: 16px; margin: 0;">
+            Welcome to JobSphere! 🎉
+        </p>
+    </div>
+
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px; border-radius: 12px; margin-bottom: 30px; text-align: center;">
+        <p style="font-size: 16px; margin: 0 0 20px 0; opacity: 0.9;">
+            Your verification code is:
+        </p>
+        <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 10px; margin: 0 auto; display: inline-block;">
+            <div style="font-size: 48px; font-weight: bold; letter-spacing: 12px; font-family: 'Courier New', monospace;">
+                {{ otp }}
+            </div>
+        </div>
+        <p style="font-size: 14px; margin: 20px 0 0 0; opacity: 0.9;">
+            ⏱️ Valid for {{ validity_minutes }} minutes
+        </p>
+    </div>
+
+    <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+        <p style="color: #856404; margin: 0 0 10px 0; font-weight: 600;">
+            ⚠️ Security Notice
+        </p>
+        <ul style="color: #856404; margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.6;">
+            <li>Never share this code with anyone</li>
+            <li>We will never ask for your OTP via phone or email</li>
+            <li>This code expires in {{ validity_minutes }} minutes</li>
+            <li>You have {{ max_attempts }} attempts to enter the correct code</li>
+        </ul>
+    </div>
+
+    <div style="text-align: center; margin: 30px 0;">
+        <p style="color: #4a5568; font-size: 15px; margin: 0 0 20px 0;">
+            Enter this code on the registration page to complete your account setup.
+        </p>
+    </div>
+
+    <div style="background-color: #f7fafc; padding: 25px; border-radius: 12px; text-align: center;">
+        <p style="color: #4a5568; font-size: 14px; margin: 0 0 10px 0;">
+            Didn't request this code?
+        </p>
+        <p style="color: #718096; font-size: 13px; margin: 0;">
+            If you didn't try to register for Job Tracker, you can safely ignore this email.
+        </p>
+    </div>
+</div>
+{% endblock %}

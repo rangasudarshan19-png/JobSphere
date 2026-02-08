@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Resume Builder - JobSphere</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
+    <style>
+        .wizard-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            position: relative;
+        }
+        .step-indicator::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--border-color);
+            z-index: 0;
+        }
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+        .step-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            margin-bottom: 8px;
+            transition: all 0.3s;
+        }
+        .step.active .step-number {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .step.completed .step-number {
+            background: #10b981;
+            color: white;
+            border-color: #10b981;
+        }
+        .step-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+        .step.active .step-label {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        .wizard-content {
+            display: none;
+        }
+        .wizard-content.active {
+            display: block;
+        }
+        .company-research-result {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(139, 92, 246, 0.05));
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+        .keyword-tag {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.85rem;
+            margin: 4px;
+        }
+        .tip-item {
+            display: flex;
+            align-items: start;
+            margin: 12px 0;
+            padding: 12px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+        }
+        .tip-item::before {
+            content: '✓';
+            color: #10b981;
+            font-weight: 700;
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+        .experience-entry, .education-entry, .project-entry {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        .remove-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .remove-btn:hover {
+            background: #dc2626;
+        }
+        .resume-preview {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            color: #1f2937;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        .preview-name {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 5px;
+        }
+        .preview-contact {
+            color: #6b7280;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+        .preview-section {
+            margin-bottom: 25px;
+        }
+        .preview-section-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #4f46e5;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="dashboard.html" class="navbar-brand">
+                � JobSphere
+            </a>
+            
+            <div class="navbar-menu" id="navbarMenu">
+            </div>
+
+            <div class="navbar-end">
+                <a href="dashboard.html" class="btn btn-secondary btn-sm">Dashboard</a>
+                <button class="btn btn-primary btn-sm" onclick="handleLogout()">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container" style="margin-top: 120px; padding-bottom: 60px;">
+        <div class="wizard-container">
+            <!-- Header -->
+            <div class="text-center" style="margin-bottom: 50px;">
+                <h1 style="font-size: 2.5rem; margin-bottom: 15px;">🤖 AI Resume Builder</h1>
+                <p class="text-secondary" style="font-size: 1.1rem;">
+                    Generate company-optimized resumes with AI in 3 easy steps
+                </p>
+            </div>
+
+            <!-- Step Indicator -->
+            <div class="step-indicator">
+                <div class="step active" data-step="1">
+                    <div class="step-number">1</div>
+                    <div class="step-label">Company<br>Research</div>
+                </div>
+                <div class="step" data-step="2">
+                    <div class="step-number">2</div>
+                    <div class="step-label">Your<br>Details</div>
+                </div>
+                <div class="step" data-step="3">
+                    <div class="step-number">3</div>
+                    <div class="step-label">Generate<br>Resume</div>
+                </div>
+            </div>
+
+            <!-- Step 1: Company Research -->
+            <div class="wizard-content active" id="step1">
+                <div class="card">
+                    <h2 style="margin-bottom: 10px;">🔍 Research Target Company</h2>
+                    <p class="text-secondary" style="margin-bottom: 30px;">
+                        Enter the company name to get AI-powered insights and resume optimization tips
+                    </p>
+
+                    <div class="form-group">
+                        <label class="form-label">Company Name *</label>
+                        <input type="text" class="form-control" id="companyName" 
+                               placeholder="e.g., Google, Microsoft, Amazon" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Target Job Title (Optional)</label>
+                        <input type="text" class="form-control" id="jobTitle" 
+                               placeholder="e.g., Software Engineer, Product Manager">
+                    </div>
+
+                    <button class="btn btn-primary btn-lg" onclick="researchCompany()" style="width: 100%;">
+                        🚀 Research Company
+                    </button>
+
+                    <!-- Research Results -->
+                    <div id="researchResults" style="display: none;">
+                        <div class="company-research-result">
+                            <h3 style="margin-bottom: 20px;">📊 Company Analysis</h3>
+                            
+                            <div style="margin-bottom: 20px;">
+                                <strong>Company Type:</strong> <span id="companyType"></span>
+                            </div>
+
+                            <div style="margin-bottom: 20px;">
+                                <strong>Recommended Template:</strong> <span id="recommendedTemplate"></span>
+                            </div>
+
+                            <div style="margin-bottom: 20px;">
+                                <strong>Tone:</strong> <span id="tone"></span>
+                            </div>
+
+                            <div style="margin-bottom: 20px;">
+                                <strong>Culture Keywords:</strong>
+                                <div id="cultureKeywords"></div>
+                            </div>
+
+                            <div style="margin-bottom: 20px;">
+                                <strong>Key Skills to Highlight:</strong>
+                                <div id="keySkills"></div>
+                            </div>
+
+                            <div>
+                                <strong>Resume Optimization Tips:</strong>
+                                <div id="resumeTips"></div>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary btn-lg" onclick="nextStep()" style="width: 100%;">
+                            Next: Enter Your Details →
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: User Details -->
+            <div class="wizard-content" id="step2">
+                <div class="card">
+                    <h2 style="margin-bottom: 10px;">👤 Your Information</h2>
+                    <p class="text-secondary" style="margin-bottom: 30px;">
+                        Provide your details - AI will optimize them for the target company
+                    </p>
+
+                    <!-- Profile Picture -->
+                    <h3 style="margin: 30px 0 15px 0;">Profile Picture (Optional)</h3>
+                    <div class="form-group">
+                        <label class="form-label">Upload Your Photo</label>
+                        <input type="file" class="form-control" id="profilePicture" accept="image/*" onchange="handleProfilePicture(event)">
+                        <img id="profilePreview" style="display:none; max-width: 150px; margin-top: 10px; border-radius: 8px;">
+                    </div>
+
+                    <!-- Personal Info -->
+                    <h3 style="margin: 30px 0 15px 0;">Contact Information</h3>
+                    <div class="form-group">
+                        <label class="form-label">Full Name *</label>
+                        <input type="text" class="form-control" id="fullName" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email *</label>
+                        <input type="email" class="form-control" id="email" required oninput="checkEmailMatch()">
+                        <div id="emailWarning" style="display: none; margin-top: 8px; padding: 12px; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 8px; color: #f59e0b;">
+                            <div style="display: flex; align-items: start; gap: 8px;">
+                                <span style="font-size: 1.2rem;">⚠️</span>
+                                <div>
+                                    <strong>Different from your verified account email</strong>
+                                    <div style="font-size: 0.9rem; margin-top: 4px;">
+                                        Your account email: <strong id="verifiedEmailDisplay"></strong><br>
+                                        <span style="color: #92400e;">Companies will contact you at the email you enter in your resume. Make sure it's correct!</span>
+                                    </div>
+                                    <button type="button" class="btn btn-sm" style="margin-top: 8px; background: rgba(251, 191, 36, 0.2); border: 1px solid rgba(251, 191, 36, 0.4);" onclick="useVerifiedEmail()">
+                                        Use Verified Email Instead
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Country</label>
+                        <select class="form-control" id="country" onchange="updateCountryCode()">
+                            <option value="">Select Country</option>
+                            <option value="US">United States (+1)</option>
+                            <option value="IN">India (+91)</option>
+                            <option value="CA">Canada (+1)</option>
+                            <option value="GB">United Kingdom (+44)</option>
+                            <option value="AU">Australia (+61)</option>
+                            <option value="AE">United Arab Emirates (+971)</option>
+                            <option value="SG">Singapore (+65)</option>
+                            <option value="DE">Germany (+49)</option>
+                            <option value="FR">France (+33)</option>
+                            <option value="JP">Japan (+81)</option>
+                            <option value="CN">China (+86)</option>
+                            <option value="BR">Brazil (+55)</option>
+                            <option value="MX">Mexico (+52)</option>
+                            <option value="ZA">South Africa (+27)</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Phone</label>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" class="form-control" id="countryCode" placeholder="+1" readonly style="max-width: 80px;">
+                            <input type="tel" class="form-control" id="phone" placeholder="Enter phone number" style="flex: 1;">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Location</label>
+                        <input type="text" class="form-control" id="location" placeholder="City, State">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">LinkedIn Profile</label>
+                        <input type="url" class="form-control" id="linkedin" placeholder="https://linkedin.com/in/yourprofile">
+                    </div>
+
+                    <!-- Experience -->
+                    <h3 style="margin: 40px 0 15px 0;">Work Experience</h3>
+                    <div id="experienceContainer"></div>
+                    <button class="btn btn-secondary" onclick="addExperience()">+ Add Experience</button>
+
+                    <!-- Education -->
+                    <h3 style="margin: 40px 0 15px 0;">Education</h3>
+                    <div id="educationContainer"></div>
+                    <button class="btn btn-secondary" onclick="addEducation()">+ Add Education</button>
+
+                    <!-- Skills -->
+                    <h3 style="margin: 40px 0 15px 0;">Skills</h3>
+                    <div class="form-group">
+                        <label class="form-label">Technical Skills (comma-separated)</label>
+                        <textarea class="form-control" id="skills" rows="3" 
+                                  placeholder="e.g., JavaScript, React, Python, SQL, AWS"></textarea>
+                    </div>
+
+                    <!-- Projects (Optional) -->
+                    <h3 style="margin: 40px 0 15px 0;">Projects (Optional)</h3>
+                    <div id="projectsContainer"></div>
+                    <button class="btn btn-secondary" onclick="addProject()">+ Add Project</button>
+
+                    <!-- Certifications (Optional) -->
+                    <h3 style="margin: 40px 0 15px 0;">Certifications (Optional)</h3>
+                    <div class="form-group">
+                        <textarea class="form-control" id="certifications" rows="2" 
+                                  placeholder="e.g., AWS Certified Developer, PMP"></textarea>
+                    </div>
+
+                    <!-- Additional Info (NEW) -->
+                    <h3 style="margin: 40px 0 15px 0;">Additional Context (Optional)</h3>
+                    <div class="form-group">
+                        <label class="form-label">Extra Information</label>
+                        <textarea class="form-control" id="additionalInfo" rows="3" 
+                                  placeholder="Provide any additional context to help AI generate better resume... E.g., career transition details, specific achievements, gaps in employment"></textarea>
+                    </div>
+
+                    <!-- AI Suggestions (NEW) -->
+                    <h3 style="margin: 40px 0 15px 0;">AI Suggestions (Optional)</h3>
+                    <div class="form-group">
+                        <label class="form-label">Instructions for AI</label>
+                        <textarea class="form-control" id="aiSuggestions" rows="2" 
+                                  placeholder="e.g., Emphasize leadership, Focus on technical skills, Use conversational tone"></textarea>
+                        <small class="text-secondary">Tell AI how to tailor your resume (emphasis areas, tone, focus)</small>
+                    </div>
+
+                    <!-- Template Preference (NEW) -->
+                    <h3 style="margin: 40px 0 15px 0;">Resume Template</h3>
+                    <div class="form-group">
+                        <label class="form-label">Choose Template</label>
+                        <select class="form-control" id="templatePreference" onchange="updateTemplateRecommendation()">
+                            <option value="">Use AI Recommendation</option>
+                            <option value="Professional">Professional (Classic, Corporate)</option>
+                            <option value="Modern">Modern (Clean, Contemporary)</option>
+                            <option value="Creative">Creative (Eye-catching, Colorful)</option>
+                            <option value="ATS-Optimized">ATS-Optimized (Maximum Compatibility)</option>
+                            <option value="Executive">Executive (Senior-level, Sophisticated)</option>
+                        </select>
+                        <small id="templateRecommendation" class="text-secondary" style="display: none;"></small>
+                    </div>
+
+                    <div style="display: flex; gap: 15px; margin-top: 30px;">
+                        <button class="btn btn-secondary" onclick="prevStep()" style="flex: 1;">
+                            ← Back
+                        </button>
+                        <button class="btn btn-primary" onclick="nextStep()" style="flex: 2;">
+                            Next: Generate Resume →
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Generate & Preview -->
+            <div class="wizard-content" id="step3">
+                <div class="card">
+                    <h2 style="margin-bottom: 10px;">✨ Generate Your Resume</h2>
+                    <p class="text-secondary" style="margin-bottom: 30px;">
+                        AI will create an ATS-optimized resume tailored to <strong id="targetCompany"></strong>
+                    </p>
+
+                    <button class="btn btn-primary btn-lg" onclick="generateResume()" style="width: 100%; margin-bottom: 20px;">
+                        🤖 Generate AI Resume
+                    </button>
+
+                    <div id="resumeResult" style="display: none;">
+                        <div class="resume-preview" id="resumePreview">
+                            <!-- AI-generated resume will appear here -->
+                        </div>
+
+                        <!-- Download Options (NEW) -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 30px;">
+                            <button class="btn btn-primary" onclick="downloadResume('pdf')">
+                                📥 Download PDF
+                            </button>
+                            <button class="btn btn-primary" onclick="downloadResume('docx')">
+                                📥 Download DOCX
+                            </button>
+                        </div>
+
+                        <!-- Save Resume -->
+                        <button class="btn btn-success" onclick="saveResume()" style="width: 100%; margin-top: 15px; margin-bottom: 20px;">
+                            💾 Save Resume
+                        </button>
+
+                        <!-- Post-Resume Actions (NEW) -->
+                        <div id="postResumeActions" style="display:none; margin-top: 30px; padding: 20px; background: #f3f4f6; border-radius: 12px;">
+                            <h3 style="margin-bottom: 20px;">📋 What would you like to do next?</h3>
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                                <button class="btn btn-outline" onclick="goToCoverLetter()" style="padding: 15px;">
+                                    📝 Generate Cover Letter
+                                </button>
+                                <button class="btn btn-outline" onclick="goToInterviewPrep()" style="padding: 15px;">
+                                    💼 Interview Prep
+                                </button>
+                                <button class="btn btn-outline" onclick="goToJobSearch()" style="padding: 15px;">
+                                    🔍 Find Jobs
+                                </button>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 15px; margin-top: 30px;">
+                            <button class="btn btn-secondary" onclick="prevStep()" style="flex: 1;">
+                                ← Edit Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        // API_BASE is already defined in app.js
+        let currentStep = 1;
+        let companyResearchData = null;
+        let generatedResume = null;
+        let profilePictureData = null;
+        let currentResumeId = null;
+        let verifiedAccountEmail = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Add initial experience and education
+            addExperience();
+            addEducation();
+            // Load saved resumes if any
+            loadSavedResumes();
+            // Get verified account email
+            getVerifiedEmail();
+        });
+
+        // Get user's verified email
+        async function getVerifiedEmail() {
+            try {
+                if (!Auth.isAuthenticated()) return;
+                
+                const token = Auth.getToken();
+                const response = await fetch(`${API_BASE}/api/auth/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const userData = await response.json();
+                    verifiedAccountEmail = userData.email;
+                    document.getElementById('verifiedEmailDisplay').textContent = verifiedAccountEmail;
+                    
+                    // Pre-fill email with verified email
+                    const emailInput = document.getElementById('email');
+                    if (!emailInput.value) {
+                        emailInput.value = verifiedAccountEmail;
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to get verified email:', error);
+            }
+        }
+
+        // Check if entered email matches verified email
+        function checkEmailMatch() {
+            if (!verifiedAccountEmail) return;
+            
+            const enteredEmail = document.getElementById('email').value.trim().toLowerCase();
+            const warning = document.getElementById('emailWarning');
+            
+            if (enteredEmail && enteredEmail !== verifiedAccountEmail.toLowerCase()) {
+                warning.style.display = 'block';
+            } else {
+                warning.style.display = 'none';
+            }
+        }
+
+        // Use verified email
+        function useVerifiedEmail() {
+            if (verifiedAccountEmail) {
+                document.getElementById('email').value = verifiedAccountEmail;
+                document.getElementById('emailWarning').style.display = 'none';
+                showToast('Using your verified email', 'success');
+            }
+        }
+
+        // ============ NEW: Profile Picture Handling ============
+        function handleProfilePicture(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    profilePictureData = e.target.result; // Base64 string
+                    document.getElementById('profilePreview').src = e.target.result;
+                    document.getElementById('profilePreview').style.display = 'block';
+                    showToast('Profile picture added!', 'success');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // ============ NEW: Template Recommendation ============
+        function updateTemplateRecommendation() {
+            const selected = document.getElementById('templatePreference').value;
+            const recommendation = document.getElementById('templateRecommendation');
+            
+            if (!selected && companyResearchData) {
+                recommendation.textContent = `AI recommends: ${companyResearchData.recommended_template}`;
+                recommendation.style.display = 'block';
+            } else if (selected) {
+                recommendation.style.display = 'none';
+            }
+        }
+
+        // ============ NEW: Load Saved Resumes ============
+        async function loadSavedResumes() {
+            try {
+                if (!Auth.isAuthenticated()) return;
+                
+                const response = await fetch(`${API_BASE}/api/resume/list`, {
+                    headers: {
+                        'Authorization': `Bearer ${Auth.getToken()}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.count > 0) {
+                        console.log(`Found ${data.count} saved resume(s)`);
+                    }
+                }
+            } catch (error) {
+                console.log('No saved resumes found');
+            }
+        }
+
+        function handleLogout() {
+            localStorage.clear();
+            showToast('Logged out successfully', 'success');
+            setTimeout(() => window.location.href = 'login.html', 1000);
+        }
+
+        // Step Navigation
+        function nextStep() {
+            if (currentStep === 1 && !companyResearchData) {
+                showToast('Please research a company first', 'error');
+                return;
+            }
+
+            if (currentStep === 2 && !validateStep2()) {
+                return;
+            }
+
+            document.querySelector(`#step${currentStep}`).classList.remove('active');
+            document.querySelector(`.step[data-step="${currentStep}"]`).classList.add('completed');
+            
+            currentStep++;
+            
+            document.querySelector(`#step${currentStep}`).classList.add('active');
+            document.querySelector(`.step[data-step="${currentStep}"]`).classList.add('active');
+
+            if (currentStep === 3) {
+                document.getElementById('targetCompany').textContent = document.getElementById('companyName').value;
+                updateTemplateRecommendation();
+            }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function prevStep() {
+            document.querySelector(`#step${currentStep}`).classList.remove('active');
+            document.querySelector(`.step[data-step="${currentStep}"]`).classList.remove('active');
+            
+            currentStep--;
+            
+            document.querySelector(`#step${currentStep}`).classList.add('active');
+            document.querySelector(`.step[data-step="${currentStep + 1}"]`).classList.remove('completed');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function validateStep2() {
+            const fullName = document.getElementById('fullName').value.trim();
+            const email = document.getElementById('email').value.trim();
+
+            if (!fullName || !email) {
+                showToast('Please fill in required fields (Name and Email)', 'error');
+                return false;
+            }
+
+            return true;
+        }
+
+        // Company Research
+        async function researchCompany() {
+            const companyName = document.getElementById('companyName').value.trim();
+            
+            if (!companyName) {
+                showToast('Please enter a company name', 'error');
+                return;
+            }
+
+            showLoading('Researching company with AI...');
+
+            try {
+                // Add 12 second timeout
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+                const response = await fetch(`${API_BASE}/api/resume/research-company`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ company_name: companyName }),
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+
+                if (!response.ok) throw new Error('Research failed');
+
+                companyResearchData = await response.json();
+                displayResearchResults(companyResearchData);
+                showToast('Company research complete!', 'success');
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    console.log('Request timeout - using defaults');
+                    showToast('Request took too long. Using default settings.', 'warning');
+                } else {
+                    console.error('Research error:', error);
+                    showToast('Failed to research company. Please try again.', 'error');
+                }
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function displayResearchResults(data) {
+            document.getElementById('companyType').textContent = data.company_type || 'N/A';
+            document.getElementById('recommendedTemplate').textContent = data.recommended_template || 'Professional';
+            document.getElementById('tone').textContent = data.tone || 'Professional';
+
+            // Keywords
+            const keywordsHTML = (data.culture_keywords || [])
+                .map(kw => `<span class="keyword-tag">${kw}</span>`)
+                .join('');
+            document.getElementById('cultureKeywords').innerHTML = keywordsHTML;
+
+            // Skills
+            const skillsHTML = (data.key_skills_to_highlight || [])
+                .map(skill => `<span class="keyword-tag">${skill}</span>`)
+                .join('');
+            document.getElementById('keySkills').innerHTML = skillsHTML;
+
+            // Tips
+            const tipsHTML = (data.resume_format_tips || [])
+                .map(tip => `<div class="tip-item">${tip}</div>`)
+                .join('');
+            document.getElementById('resumeTips').innerHTML = tipsHTML;
+
+            document.getElementById('researchResults').style.display = 'block';
+        }
+
+        // Dynamic Form Management
+        function addExperience() {
+            const container = document.getElementById('experienceContainer');
+            const index = container.children.length;
+            const html = `
+                <div class="experience-entry" data-index="${index}">
+                    <div class="form-group">
+                        <label class="form-label">Job Title</label>
+                        <input type="text" class="form-control exp-title" placeholder="e.g., Software Engineer">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Company</label>
+                        <input type="text" class="form-control exp-company" placeholder="e.g., Tech Corp">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Duration</label>
+                        <input type="text" class="form-control exp-duration" placeholder="e.g., Jan 2020 - Present">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Responsibilities & Achievements</label>
+                        <textarea class="form-control exp-description" rows="3" 
+                                  placeholder="• Led team of 5 engineers\n• Increased performance by 40%\n• Implemented new features"></textarea>
+                    </div>
+                    ${index > 0 ? '<button class="remove-btn" onclick="removeElement(this)">Remove</button>' : ''}
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+        }
+
+        function addEducation() {
+            const container = document.getElementById('educationContainer');
+            const index = container.children.length;
+            const html = `
+                <div class="education-entry" data-index="${index}">
+                    <div class="form-group">
+                        <label class="form-label">Degree</label>
+                        <input type="text" class="form-control edu-degree" placeholder="e.g., B.S. Computer Science">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Institution</label>
+                        <input type="text" class="form-control edu-institution" placeholder="e.g., MIT">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Graduation Year</label>
+                        <input type="text" class="form-control edu-year" placeholder="e.g., 2020">
+                    </div>
+                    ${index > 0 ? '<button class="remove-btn" onclick="removeElement(this)">Remove</button>' : ''}
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+        }
+
+        function addProject() {
+            const container = document.getElementById('projectsContainer');
+            const index = container.children.length;
+            const html = `
+                <div class="project-entry" data-index="${index}">
+                    <div class="form-group">
+                        <label class="form-label">Project Name</label>
+                        <input type="text" class="form-control proj-name" placeholder="e.g., E-commerce Platform">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control proj-description" rows="2" 
+                                  placeholder="Brief description of the project and your role"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Technologies</label>
+                        <input type="text" class="form-control proj-technologies" placeholder="e.g., React, Node.js, MongoDB">
+                    </div>
+                    <button class="remove-btn" onclick="removeElement(this)">Remove</button>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+        }
+
+        function removeElement(button) {
+            button.parentElement.remove();
+        }
+
+        // Collect User Data (UPDATED with new fields)
+        function collectUserData() {
+            // Experience
+            const experience = Array.from(document.querySelectorAll('.experience-entry')).map(entry => ({
+                title: entry.querySelector('.exp-title').value,
+                company: entry.querySelector('.exp-company').value,
+                duration: entry.querySelector('.exp-duration').value,
+                description: entry.querySelector('.exp-description').value
+            })).filter(exp => exp.title || exp.company);
+
+            // Education
+            const education = Array.from(document.querySelectorAll('.education-entry')).map(entry => ({
+                degree: entry.querySelector('.edu-degree').value,
+                institution: entry.querySelector('.edu-institution').value,
+                year: entry.querySelector('.edu-year').value
+            })).filter(edu => edu.degree || edu.institution);
+
+            // Projects
+            const projects = Array.from(document.querySelectorAll('.project-entry')).map(entry => ({
+                name: entry.querySelector('.proj-name').value,
+                description: entry.querySelector('.proj-description').value,
+                technologies: entry.querySelector('.proj-technologies').value
+            })).filter(proj => proj.name);
+
+            // Skills
+            const skills = document.getElementById('skills').value
+                .split(',')
+                .map(s => s.trim())
+                .filter(s => s);
+
+            // Certifications
+            const certifications = document.getElementById('certifications').value
+                .split(',')
+                .map(c => c.trim())
+                .filter(c => c);
+
+            return {
+                company_name: document.getElementById('companyName').value,
+                job_title: document.getElementById('jobTitle').value || null,
+                full_name: document.getElementById('fullName').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value || null,
+                location: document.getElementById('location').value || null,
+                linkedin: document.getElementById('linkedin').value || null,
+                profile_picture: profilePictureData || null,  // NEW
+                experience: JSON.stringify(experience),
+                education: JSON.stringify(education),
+                skills: JSON.stringify(skills),
+                projects: projects.length > 0 ? JSON.stringify(projects) : null,
+                certifications: certifications.length > 0 ? JSON.stringify(certifications) : null,
+                additional_info: document.getElementById('additionalInfo').value || null,  // NEW
+                ai_suggestions: document.getElementById('aiSuggestions').value || null,  // NEW
+                template_preference: document.getElementById('templatePreference').value || 'Professional'  // NEW
+            };
+        }
+
+        // Generate Resume
+        async function generateResume() {
+            showLoading('Generating AI-optimized resume...');
+
+            try {
+                const userData = collectUserData();
+                
+                // Add 30-second timeout
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 30000);
+                
+                const response = await fetch(`${API_BASE}/api/resume/generate-ai-resume`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userData),
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.detail || 'Generation failed');
+                }
+
+                generatedResume = await response.json();
+                
+                // Show email warning if present
+                if (generatedResume.warning) {
+                    showToast(generatedResume.warning.message, 'warning', 5000);
+                }
+                
+                displayResume(generatedResume);
+                showToast('Resume generated successfully!', 'success');
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    console.log('Request timeout');
+                    showToast('Generation took too long. Please try again.', 'warning');
+                } else {
+                    console.error('Generation error:', error);
+                    showToast('Failed to generate resume: ' + error.message, 'error');
+                }
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function displayResume(data) {
+            const resume = data.resume;
+            const contact = resume.contact;
+
+            let html = `
+                <div style="display: flex; gap: 20px; margin-bottom: 20px;">
+                    <div style="flex-grow: 1;">
+                        <div class="preview-name">${contact.full_name}</div>
+                        <div class="preview-contact">
+                            ${contact.email}${contact.phone ? ' | ' + contact.phone : ''}${contact.location ? ' | ' + contact.location : ''}
+                            ${contact.linkedin ? '<br>' + contact.linkedin : ''}
+                        </div>
+                    </div>
+                    ${contact.profile_picture ? `<div style="text-align: center;">
+                        <img src="${contact.profile_picture}" style="width: 120px; height: 120px; border-radius: 8px; object-fit: cover; border: 2px solid #3f51b5;">
+                        <div style="font-size: 0.8rem; color: #999; margin-top: 8px;">(Preview only<br>not in ATS export)</div>
+                    </div>` : ''}
+                </div>
+            `;
+
+            // Professional Summary
+            if (resume.professional_summary) {
+                const summary = resume.professional_summary;
+                html += `
+                    <div class="preview-section">
+                        <div class="preview-section-title">Professional Summary</div>
+                        <p style="color: #4b5563; line-height: 1.6;">${typeof summary === 'string' ? summary : JSON.stringify(summary)}</p>
+                    </div>
+                `;
+            }
+
+            // Experience
+            if (resume.experience && resume.experience.length > 0) {
+                html += `<div class="preview-section"><div class="preview-section-title">Experience</div>`;
+                resume.experience.forEach(exp => {
+                    const achievements = exp.achievements || exp.description || [];
+                    const achievementsList = Array.isArray(achievements) ? achievements : [achievements];
+                    
+                    html += `
+                        <div style="margin-bottom: 20px;">
+                            <div style="font-weight: 700; font-size: 1.1rem; color: #1f2937;">${exp.title || 'Position'}</div>
+                            <div style="color: #6b7280; margin-bottom: 8px;">${exp.company || ''} | ${exp.duration || ''}</div>
+                            ${achievementsList.length > 0 ? `
+                                <ul style="color: #4b5563; line-height: 1.6; margin: 0; padding-left: 20px;">
+                                    ${achievementsList.map(ach => `<li>${ach}</li>`).join('')}
+                                </ul>
+                            ` : ''}
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+            }
+
+            // Skills
+            if (resume.skills) {
+                let skillsHtml = '';
+                
+                if (Array.isArray(resume.skills)) {
+                    // If skills is an array, display as simple list
+                    skillsHtml = resume.skills.join(', ');
+                } else if (typeof resume.skills === 'object') {
+                    // If skills is an object with technical/soft
+                    const technical = resume.skills.technical || [];
+                    const soft = resume.skills.soft || [];
+                    
+                    if (technical.length > 0) {
+                        skillsHtml += `<div style="margin-bottom: 10px;"><strong>Technical:</strong> ${Array.isArray(technical) ? technical.join(', ') : technical}</div>`;
+                    }
+                    if (soft.length > 0) {
+                        skillsHtml += `<div><strong>Soft Skills:</strong> ${Array.isArray(soft) ? soft.join(', ') : soft}</div>`;
+                    }
+                }
+                
+                if (skillsHtml) {
+                    html += `
+                        <div class="preview-section">
+                            <div class="preview-section-title">Skills</div>
+                            ${skillsHtml}
+                        </div>
+                    `;
+                }
+            }
+
+            // Education
+            if (resume.education && resume.education.length > 0) {
+                html += `<div class="preview-section"><div class="preview-section-title">Education</div>`;
+                resume.education.forEach(edu => {
+                    const courses = edu.relevant_courses || [];
+                    const coursesList = Array.isArray(courses) ? courses : [];
+                    
+                    html += `
+                        <div style="margin-bottom: 15px;">
+                            <div style="font-weight: 700; font-size: 1.1rem; color: #1f2937;">${edu.degree || 'Degree'}</div>
+                            <div style="color: #6b7280;">${edu.institution || ''} | ${edu.year || ''}</div>
+                            ${coursesList.length > 0 ? 
+                                `<div style="color: #6b7280; font-size: 0.9rem;">Relevant Courses: ${coursesList.join(', ')}</div>` 
+                                : ''}
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+            }
+
+            // Projects
+            if (resume.projects && resume.projects.length > 0) {
+                html += `<div class="preview-section"><div class="preview-section-title">Projects</div>`;
+                resume.projects.forEach(proj => {
+                    const techs = proj.technologies || [];
+                    const techList = Array.isArray(techs) ? techs : (typeof techs === 'string' ? techs.split(',') : []);
+                    
+                    html += `
+                        <div style="margin-bottom: 15px;">
+                            <div style="font-weight: 700; color: #1f2937;">${proj.name || 'Project'}</div>
+                            <div style="color: #4b5563; line-height: 1.6;">${proj.description || ''}</div>
+                            ${techList.length > 0 ? `<div style="color: #6b7280; font-size: 0.9rem;">Technologies: ${techList.join(', ')}</div>` : ''}
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+            }
+
+            // Certifications
+            if (resume.certifications && resume.certifications.length > 0) {
+                html += `
+                    <div class="preview-section">
+                        <div class="preview-section-title">Certifications</div>
+                        <ul style="color: #4b5563; line-height: 1.6; margin: 0; padding-left: 20px;">
+                            ${resume.certifications.map(cert => `<li>${cert}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            document.getElementById('resumePreview').innerHTML = html;
+            document.getElementById('resumeResult').style.display = 'block';
+        }
+
+        // ============ NEW: Download Resume in Multiple Formats ============
+        async function downloadResume(format = 'pdf') {
+            try {
+                if (!generatedResume) {
+                    showToast('Please generate a resume first', 'error');
+                    return;
+                }
+
+                showLoading(`Generating ${format.toUpperCase()}...`);
+                
+                const response = await fetch(`${API_BASE}/api/resume/download`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${Auth.getToken()}`
+                    },
+                    body: JSON.stringify({
+                        resume_data: generatedResume.resume,
+                        format: format,
+                        template_style: document.getElementById('templatePreference').value || 'Professional'
+                    })
+                });
+                
+                if (!response.ok) throw new Error('Download failed');
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                const fullName = generatedResume.resume.contact.full_name.replace(/\s+/g, '_');
+                a.download = `resume_${fullName}.${format}`;
+                a.click();
+                window.URL.revokeObjectURL(url);
+                
+                hideLoading();
+                showToast(`Resume downloaded as ${format.toUpperCase()}!`, 'success');
+            } catch (error) {
+                hideLoading();
+                console.error('Download error:', error);
+                showToast('Download failed: ' + error.message, 'error');
+            }
+        }
+
+        // ============ NEW: Save Resume ============
+        async function saveResume() {
+            try {
+                if (!generatedResume) {
+                    showToast('Please generate a resume first', 'error');
+                    return;
+                }
+
+                if (!Auth.isAuthenticated()) {
+                    showToast('Please login to save resume', 'error');
+                    return;
+                }
+
+                showLoading('Saving resume...');
+                
+                const resumeData = {
+                    full_name: generatedResume.resume.contact.full_name,
+                    email: generatedResume.resume.contact.email,
+                    phone: generatedResume.resume.contact.phone,
+                    location: generatedResume.resume.contact.location,
+                    linkedin: generatedResume.resume.contact.linkedin,
+                    profile_picture: profilePictureData,
+                    summary: generatedResume.resume.professional_summary,
+                    experience: JSON.stringify(generatedResume.resume.experience || []),
+                    education: JSON.stringify(generatedResume.resume.education || []),
+                    skills: JSON.stringify(generatedResume.resume.skills),
+                    projects: JSON.stringify(generatedResume.resume.projects || []),
+                    certifications: JSON.stringify(generatedResume.resume.certifications || []),
+                    additional_info: document.getElementById('additionalInfo').value,
+                    template_style: document.getElementById('templatePreference').value || 'Professional'
+                };
+
+                const response = await fetch(`${API_BASE}/api/resume/save`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${Auth.getToken()}`
+                    },
+                    body: JSON.stringify(resumeData)
+                });
+
+                if (!response.ok) throw new Error('Save failed');
+
+                const result = await response.json();
+                currentResumeId = result.resume_id;
+                
+                hideLoading();
+                
+                // Show email warning if present
+                if (result.warning) {
+                    showToast(`⚠️ ${result.warning.message}`, 'warning', 7000);
+                    // Show additional details
+                    setTimeout(() => {
+                        showToast(result.warning.suggestion, 'info', 5000);
+                    }, 1000);
+                } else {
+                    showToast('Resume saved successfully!', 'success');
+                }
+                
+                // Show post-resume actions
+                document.getElementById('postResumeActions').style.display = 'block';
+            } catch (error) {
+                hideLoading();
+                console.error('Save error:', error);
+                showToast('Failed to save resume: ' + error.message, 'error');
+            }
+        }
+
+        // ============ NEW: Post-Resume Actions ============
+        async function goToCoverLetter() {
+            try {
+                    if (!generatedResume) {
+                        showToast('Please generate resume first', 'error');
+                        return;
+                    }
+
+                    showLoading('Loading cover letter generator...');
+                
+                    // Store resume context for cover letter page
+                    const resumeContext = {
+                        full_name: generatedResume.resume.contact.full_name,
+                        email: generatedResume.resume.contact.email,
+                        phone: generatedResume.resume.contact.phone,
+                        skills: generatedResume.resume.skills,
+                        experience: generatedResume.resume.experience,
+                        resume_summary: generatedResume.resume.professional_summary
+                    };
+                
+                    sessionStorage.setItem('resumeContext', JSON.stringify(resumeContext));
+                hideLoading();
+                    window.location.href = 'cover-letter.html';
+            } catch (error) {
+                hideLoading();
+                showToast('Error: ' + error.message, 'error');
+            }
+        }
+
+        async function goToInterviewPrep() {
+            try {
+                    if (!generatedResume) {
+                        showToast('Please generate resume first', 'error');
+                        return;
+                    }
+
+                    showLoading('Loading interview prep...');
+                
+                    // Store resume context for interview prep page
+                    const resumeContext = {
+                        skills: generatedResume.resume.skills,
+                        experience: generatedResume.resume.experience,
+                        education: generatedResume.resume.education,
+                        projects: generatedResume.resume.projects,
+                        role: generatedResume.resume.contact.full_name
+                    };
+                
+                    sessionStorage.setItem('resumeContext', JSON.stringify(resumeContext));
+                hideLoading();
+                    window.location.href = 'interview-prep.html';
+            } catch (error) {
+                hideLoading();
+                showToast('Error: ' + error.message, 'error');
+            }
+        }
+
+        async function goToJobSearch() {
+            try {
+                if (!generatedResume) {
+                    showToast('Please generate resume first', 'error');
+                    return;
+                }
+
+                showLoading('Preparing job search...');
+                
+                // Collect resume data for job search context
+                const resumeContext = {
+                    job_title: document.getElementById('jobTitle')?.value || generatedResume.resume.experience?.[0]?.title || 'Software Tester',
+                    skills: document.getElementById('skills')?.value?.split(',').map(s => s.trim()) || [],
+                        location: generatedResume.resume.contact.location || 'Remote',
+                    experience: collectExperience(),
+                    education: collectEducation()
+                };
+                
+                // Store context in sessionStorage for job search page
+                sessionStorage.setItem('resumeContext', JSON.stringify(resumeContext));
+                
+                hideLoading();
+                // Redirect to dedicated job search page
+                window.location.href = 'job-search.html';
+            } catch (error) {
+                hideLoading();
+                showToast('Error: ' + error.message, 'error');
+            }
+        }
+        
+        // Helper functions for resume context
+        function collectExperience() {
+            const items = [];
+            document.querySelectorAll('.experience-entry').forEach(entry => {
+                items.push({
+                    title: entry.querySelector('.exp-title')?.value || '',
+                    company: entry.querySelector('.exp-company')?.value || '',
+                    duration: entry.querySelector('.exp-duration')?.value || ''
+                });
+            });
+            return items;
+        }
+        
+        function collectEducation() {
+            const items = [];
+            document.querySelectorAll('.education-entry').forEach(entry => {
+                items.push({
+                    degree: entry.querySelector('.edu-degree')?.value || '',
+                    institution: entry.querySelector('.edu-institution')?.value || '',
+                    year: entry.querySelector('.edu-year')?.value || ''
+                });
+            });
+            return items;
+        }
+
+        // Toast & Loading helpers
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.textContent = message;
+            toast.style.cssText = 'position: fixed; top: 20px; right: 20px; padding: 15px 20px; border-radius: 8px; color: white; z-index: 10000; animation: slideIn 0.3s;';
+            
+            if (type === 'success') toast.style.background = '#10b981';
+            else if (type === 'error') toast.style.background = '#ef4444';
+            else toast.style.background = '#6366f1';
+            
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function showLoading(message) {
+            const loading = document.createElement('div');
+            loading.id = 'loadingOverlay';
+            loading.innerHTML = `
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 9999;">
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 50px; border-radius: 20px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3); transform: scale(1); animation: popIn 0.3s ease-out;">
+                        <div style="margin-bottom: 20px;">
+                            <div class="spinner" style="width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid white; border-radius: 50%; margin: 0 auto; animation: spin 0.8s linear infinite;"></div>
+                        </div>
+                        <div style="color: white; font-weight: 600; font-size: 1.1rem; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">${message}</div>
+                        <div style="color: rgba(255,255,255,0.8); font-size: 0.85rem; margin-top: 8px;">Please wait...</div>
+                    </div>
+                </div>
+                <style>
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                    @keyframes popIn {
+                        0% { transform: scale(0.8); opacity: 0; }
+                        100% { transform: scale(1); opacity: 1; }
+                    }
+                </style>
+            `;
+            document.body.appendChild(loading);
+        }
+
+        function hideLoading() {
+            const loading = document.getElementById('loadingOverlay');
+            if (loading) loading.remove();
+        }
+
+        // Country code mapping
+        const countryCodes = {
+            'US': '+1',
+            'CA': '+1',
+            'IN': '+91',
+            'GB': '+44',
+            'AU': '+61',
+            'AE': '+971',
+            'SG': '+65',
+            'DE': '+49',
+            'FR': '+33',
+            'JP': '+81',
+            'CN': '+86',
+            'BR': '+55',
+            'MX': '+52',
+            'ZA': '+27'
+        };
+
+        function updateCountryCode() {
+            const countrySelect = document.getElementById('country');
+            const countryCodeInput = document.getElementById('countryCode');
+            const selectedCountry = countrySelect.value;
+            
+            if (selectedCountry && countryCodes[selectedCountry]) {
+                countryCodeInput.value = countryCodes[selectedCountry];
+            } else {
+                countryCodeInput.value = '';
+            }
+        }
+    </script>
+</body>
+</html>
