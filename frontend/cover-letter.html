@@ -76,17 +76,14 @@
 <body>
     <!-- Navigation -->
     <nav class="navbar">
-        <div class="container">
+        <div class="navbar-container">
             <a href="dashboard.html" class="navbar-brand">
                 ◆ JobSphere
             </a>
             
-            <div class="navbar-menu" id="navbarMenu">
-            </div>
-
             <div class="navbar-end">
                 <a href="dashboard.html" class="btn btn-secondary btn-sm">Dashboard</a>
-                <button class="btn btn-primary btn-sm" onclick="handleLogout()">Logout</button>
+                <button class="btn btn-primary btn-sm" onclick="Auth.logout()">Logout</button>
             </div>
         </div>
     </nav>
@@ -197,13 +194,6 @@
     <script>
         Auth.requireAuth();
 
-        function handleLogout() {
-            Auth.removeToken();
-            localStorage.clear();
-            Toast.show('Logged out successfully', 'success');
-            setTimeout(() => window.location.href = 'login.html', 1000);
-        }
-
         async function generateCoverLetter() {
             // Get form values
             const companyName = document.getElementById('companyName').value.trim();
@@ -221,7 +211,7 @@
             Loading.show('Generating your personalized cover letter...');
 
             try {
-                const response = await Auth.fetchWithAuth('http://127.0.0.1:8000/api/ai/generate-cover-letter', {
+                const response = await Auth.fetchWithAuth(`${API_BASE}/api/ai/generate-cover-letter`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

@@ -17,38 +17,24 @@
 
     <main id="main" class="auth-wrapper">
         <div class="auth-container">
-            <!-- Branding -->
             <a href="index.html" class="auth-logo">◆ JobSphere</a>
 
-            <!-- Login Card -->
             <div class="auth-card">
                 <h1 class="auth-title">Welcome Back</h1>
                 <p class="text-secondary text-center" style="margin-bottom:1.75rem">Sign in to continue your job search.</p>
 
+                <!-- Error display area -->
+                <div id="loginError" class="alert alert-error" style="display:none;margin-bottom:1rem" role="alert"></div>
+
                 <form id="loginForm" novalidate autocomplete="on">
                     <div class="form-group">
                         <label for="email" class="form-label">Email Address</label>
-                        <input
-                            type="email"
-                            id="email"
-                            class="form-input"
-                            placeholder="you@example.com"
-                            required
-                            autocomplete="email"
-                            autofocus
-                        >
+                        <input type="email" id="email" class="form-control" placeholder="you@example.com" required autocomplete="email" autofocus>
                     </div>
 
                     <div class="form-group">
                         <label for="password" class="form-label">Password</label>
-                        <input
-                            type="password"
-                            id="password"
-                            class="form-input"
-                            placeholder="Enter your password"
-                            required
-                            autocomplete="current-password"
-                        >
+                        <input type="password" id="password" class="form-control" placeholder="Enter your password" required autocomplete="current-password">
                     </div>
 
                     <button type="submit" class="btn btn-primary btn-block" id="loginBtn">
@@ -57,7 +43,6 @@
                 </form>
             </div>
 
-            <!-- Footer -->
             <p class="auth-footer">
                 Don't have an account?&nbsp; <a href="signup.html">Create one free</a>
             </p>
@@ -79,21 +64,36 @@
 
         const form = document.getElementById('loginForm');
         const btn = document.getElementById('loginBtn');
+        const errorDiv = document.getElementById('loginError');
+
+        function showError(msg) {
+            errorDiv.textContent = msg;
+            errorDiv.style.display = 'block';
+        }
+        function hideError() {
+            errorDiv.style.display = 'none';
+        }
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
+            hideError();
 
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
 
+            // Validation
             if (!email || !password) {
-                Toast.show('Please fill in all fields.', 'warning');
+                showError('Please fill in all fields.');
+                return;
+            }
+            if (!email.includes('@')) {
+                showError('Please enter a valid email address.');
                 return;
             }
 
             btn.disabled = true;
-            btn.textContent = 'Signing in…';
-            Loading.show();
+            btn.innerHTML = '<span class="spinner spinner-sm" style="width:18px;height:18px;border-width:2px;margin-right:8px"></span> Signing in…';
+            Loading.show('Signing you in...');
 
             try {
                 const res = await fetch(`${API_BASE}/api/auth/login`, {
@@ -112,9 +112,9 @@
                 sessionStorage.setItem('userEmail', email);
                 if (data.user_name) sessionStorage.setItem('userName', data.user_name);
 
-                Toast.show('Login successful!', 'success');
+                Toast.show('Login successful! Redirecting...', 'success');
 
-                // Check admin status and redirect
+                // Check admin status
                 try {
                     const me = await Auth.fetchWithAuth(`${API_BASE}/api/auth/me`);
                     const user = await me.json();
@@ -128,7 +128,13 @@
                     setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
                 }
             } catch (err) {
-                Toast.show(err.message, 'error');
+                if (err.message.includes('fetch') || err.message.includes('network')) {
+                    showError('Cannot connect to server. Please make sure the backend is running.');
+                    Toast.show('Server connection failed', 'error');
+                } else {
+                    showError(err.message);
+                    Toast.show(err.message, 'error');
+                }
             } finally {
                 btn.disabled = false;
                 btn.textContent = 'Sign In';

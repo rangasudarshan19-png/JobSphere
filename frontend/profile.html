@@ -75,17 +75,11 @@
 <body>
     <!-- Navigation -->
     <nav class="navbar">
-        <div class="container">
-            <a href="dashboard.html" class="navbar-brand">
-                ◆ JobSphere
-            </a>
-            
-            <div class="navbar-menu" id="navbarMenu">
-            </div>
-
+        <div class="navbar-container">
+            <a href="dashboard.html" class="navbar-brand">◆ JobSphere</a>
             <div class="navbar-end">
-                <a href="dashboard.html" class="btn btn-secondary btn-sm">Dashboard</a>
-                <button class="btn btn-primary btn-sm" onclick="handleLogout()">Logout</button>
+                <a href="dashboard.html" class="btn btn-ghost btn-sm">← Dashboard</a>
+                <button class="btn btn-ghost btn-sm" onclick="Auth.logout()">Logout</button>
             </div>
         </div>
     </nav>

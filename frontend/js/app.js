@@ -1,13 +1,17 @@
 /**
  * JobSphere — Core JavaScript
- * Auth, Toast, Loading, Modal, Utils, Session
+ * Auth, Toast, Loading, Modal, Utils, SessionTimeout
  */
 
-const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://127.0.0.1:8000'
-    : window.location.origin;
+const API_BASE = (() => {
+    const h = window.location.hostname;
+    if (h === 'localhost' || h === '127.0.0.1') return 'http://127.0.0.1:8000';
+    return window.location.origin;
+})();
 
-/* ── Auth ── */
+/* ═══════════════════════════════════
+   AUTH
+   ═══════════════════════════════════ */
 class Auth {
     static getToken() {
         return sessionStorage.getItem('access_token') || sessionStorage.getItem('token');
@@ -20,9 +24,14 @@ class Auth {
         sessionStorage.removeItem('token');
         sessionStorage.removeItem('userEmail');
         sessionStorage.removeItem('userName');
+        sessionStorage.removeItem('isAdmin');
     }
     static isAuthenticated() {
         return !!this.getToken();
+    }
+    static logout() {
+        this.removeToken();
+        window.location.href = 'login.html';
     }
     static async requireAuth() {
         if (!this.isAuthenticated()) {
@@ -36,14 +45,23 @@ class Auth {
         const token = this.getToken();
         const headers = { 'Content-Type': 'application/json', ...options.headers };
         if (token) headers['Authorization'] = `Bearer ${token}`;
-        const response = await fetch(url, { ...options, headers });
-        if (response.status === 401) {
-            this.removeToken();
-            Toast.show('Session expired. Please login again.', 'error');
-            setTimeout(() => { window.location.href = 'login.html'; }, 1200);
-            throw new Error('Unauthorized');
+
+        try {
+            const response = await fetch(url, { ...options, headers });
+            if (response.status === 401) {
+                this.removeToken();
+                Toast.show('Session expired. Please login again.', 'error');
+                setTimeout(() => { window.location.href = 'login.html'; }, 1500);
+                throw new Error('Unauthorized');
+            }
+            return response;
+        } catch (err) {
+            if (err.message === 'Unauthorized') throw err;
+            if (err.name === 'TypeError' && err.message.includes('fetch')) {
+                Toast.show('Cannot reach the server. Is the backend running?', 'error');
+            }
+            throw err;
         }
-        return response;
     }
     static getUserInfo() {
         return {
@@ -51,38 +69,61 @@ class Auth {
             name: sessionStorage.getItem('userName') || 'User'
         };
     }
+    static getInitials() {
+        const name = this.getUserInfo().name;
+        return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'U';
+    }
 }
 
-/* ── Toast ── */
+/* ═══════════════════════════════════
+   TOAST
+   ═══════════════════════════════════ */
 class Toast {
-    static show(message, type = 'info', duration = 3500) {
+    static ICONS = { info: 'ℹ️', success: '✅', warning: '⚠️', error: '❌' };
+
+    static show(message, type = 'info', duration = 4000) {
         const el = document.createElement('div');
         el.className = `toast toast-${type}`;
         el.setAttribute('role', 'alert');
+        el.setAttribute('aria-live', 'assertive');
         el.innerHTML = `
-            <span class="toast-message">${this.escapeHtml(message)}</span>
+            <span class="toast-icon"></span>
+            <span class="toast-message">${this.escape(message)}</span>
             <button class="toast-close" aria-label="Dismiss">&times;</button>`;
-        el.querySelector('.toast-close').addEventListener('click', () => el.remove());
-        this.getContainer().appendChild(el);
+        el.querySelector('.toast-close').addEventListener('click', () => this._dismiss(el));
+        this._container().appendChild(el);
         requestAnimationFrame(() => el.classList.add('show'));
-        setTimeout(() => {
-            el.classList.remove('show');
-            setTimeout(() => el.remove(), 350);
-        }, duration);
+        el._timer = setTimeout(() => this._dismiss(el), duration);
     }
-    static getContainer() {
+
+    static _dismiss(el) {
+        clearTimeout(el._timer);
+        el.classList.remove('show');
+        setTimeout(() => el.remove(), 400);
+    }
+
+    static _container() {
         let c = document.getElementById('toast-container');
-        if (!c) { c = document.createElement('div'); c.id = 'toast-container'; document.body.appendChild(c); }
+        if (!c) {
+            c = document.createElement('div');
+            c.id = 'toast-container';
+            document.body.appendChild(c);
+        }
         return c;
     }
-    static escapeHtml(str) {
+
+    static escape(str) {
         const d = document.createElement('div');
         d.textContent = str;
         return d.innerHTML;
     }
+    // Alias for backward compat
+    static escapeHtml(str) { return this.escape(str); }
 }
 
-/* ── Loading ── */
+/* ═══════════════════════════════════
+   LOADING
+   ═══════════════════════════════════ */
 class Loading {
     static show(message = 'Loading...') {
         if (document.getElementById('loading-overlay')) return;
@@ -93,36 +134,42 @@ class Loading {
         el.innerHTML = `
             <div class="loading-card">
                 <div class="loading-spinner"></div>
-                <div class="loading-content"><p>${this.escapeHtml(message)}</p></div>
+                <div class="loading-content"><p>${Toast.escape(message)}</p></div>
             </div>`;
         document.body.appendChild(el);
         requestAnimationFrame(() => el.classList.add('show'));
     }
     static hide() {
         const el = document.getElementById('loading-overlay');
-        if (el) { el.classList.remove('show'); setTimeout(() => el.remove(), 250); }
+        if (el) { el.classList.remove('show'); setTimeout(() => el.remove(), 300); }
     }
-    static escapeHtml(str) {
-        const d = document.createElement('div'); d.textContent = str; return d.innerHTML;
+    static async wrap(asyncFn, message = 'Loading...') {
+        this.show(message);
+        try { return await asyncFn(); }
+        finally { this.hide(); }
     }
 }
 
-/* ── Modal ── */
+/* ═══════════════════════════════════
+   MODAL
+   ═══════════════════════════════════ */
 class Modal {
     static show(title, content, buttons = []) {
+        this.hide(); // Remove any existing modal
+
         const overlay = document.createElement('div');
         overlay.className = 'modal-overlay';
         overlay.setAttribute('role', 'dialog');
         overlay.setAttribute('aria-modal', 'true');
 
-        const btnsHtml = buttons.map(btn =>
-            `<button class="btn ${btn.class || 'btn-primary'}" data-action="${btn.action || ''}">${Toast.escapeHtml(btn.text)}</button>`
+        const btnsHtml = buttons.map((btn, i) =>
+            `<button class="btn ${btn.class || 'btn-primary'}" data-modal-btn="${i}">${Toast.escape(btn.text || btn.label || 'OK')}</button>`
         ).join('');
 
         overlay.innerHTML = `
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3>${Toast.escapeHtml(title)}</h3>
+                    <h3>${Toast.escape(title)}</h3>
                     <button class="modal-close" aria-label="Close">&times;</button>
                 </div>
                 <div class="modal-body">${content}</div>
@@ -131,43 +178,79 @@ class Modal {
 
         overlay.querySelector('.modal-close').addEventListener('click', () => Modal.hide());
         overlay.addEventListener('click', e => { if (e.target === overlay) Modal.hide(); });
+        document.addEventListener('keydown', Modal._escHandler);
+
         buttons.forEach((btn, i) => {
-            if (btn.handler) {
-                overlay.querySelectorAll('.modal-footer .btn')[i]?.addEventListener('click', btn.handler);
-            }
+            const el = overlay.querySelector(`[data-modal-btn="${i}"]`);
+            if (el && btn.handler) el.addEventListener('click', btn.handler);
         });
 
         document.body.appendChild(overlay);
         requestAnimationFrame(() => overlay.classList.add('show'));
     }
+
     static hide() {
+        document.removeEventListener('keydown', Modal._escHandler);
         const m = document.querySelector('.modal-overlay');
         if (m) { m.classList.remove('show'); setTimeout(() => m.remove(), 250); }
     }
+
+    static confirm(title, message) {
+        return new Promise(resolve => {
+            Modal.show(title, `<p>${Toast.escape(message)}</p>`, [
+                { text: 'Cancel', class: 'btn-ghost', handler: () => { Modal.hide(); resolve(false); } },
+                { text: 'Confirm', class: 'btn-primary', handler: () => { Modal.hide(); resolve(true); } }
+            ]);
+        });
+    }
+
+    static _escHandler = (e) => { if (e.key === 'Escape') Modal.hide(); };
 }
 
-/* ── Utils ── */
+/* ═══════════════════════════════════
+   UTILS
+   ═══════════════════════════════════ */
 const Utils = {
     formatDate(date) {
+        if (!date) return '—';
         return new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
     },
     formatDateTime(date) {
+        if (!date) return '—';
         return new Date(date).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
     },
-    truncate(str, len = 100) {
-        return str.length > len ? str.substring(0, len) + '...' : str;
+    timeAgo(date) {
+        const s = Math.floor((Date.now() - new Date(date)) / 1000);
+        if (s < 60) return 'just now';
+        if (s < 3600) return `${Math.floor(s/60)}m ago`;
+        if (s < 86400) return `${Math.floor(s/3600)}h ago`;
+        if (s < 604800) return `${Math.floor(s/86400)}d ago`;
+        return Utils.formatDate(date);
     },
-    debounce(fn, wait) {
+    truncate(str, len = 100) {
+        if (!str) return '';
+        return str.length > len ? str.substring(0, len) + '…' : str;
+    },
+    debounce(fn, wait = 300) {
         let t;
         return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), wait); };
     },
     async copyToClipboard(text) {
-        try { await navigator.clipboard.writeText(text); Toast.show('Copied to clipboard!', 'success'); }
-        catch { Toast.show('Failed to copy', 'error'); }
+        try {
+            await navigator.clipboard.writeText(text);
+            Toast.show('Copied to clipboard!', 'success', 2000);
+        } catch {
+            Toast.show('Failed to copy', 'error');
+        }
+    },
+    slugify(str) {
+        return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     }
 };
 
-/* ── Session Timeout (10 min) ── */
+/* ═══════════════════════════════════
+   SESSION TIMEOUT (10 min)
+   ═══════════════════════════════════ */
 class SessionTimeout {
     static IDLE_MS = 10 * 60 * 1000;
     static _idle = null;
@@ -175,7 +258,8 @@ class SessionTimeout {
 
     static init() {
         if (!Auth.isAuthenticated()) return;
-        ['mousedown', 'keydown', 'scroll', 'touchstart'].forEach(evt =>
+        const events = ['mousedown', 'keydown', 'scroll', 'touchstart'];
+        events.forEach(evt =>
             document.addEventListener(evt, () => this.reset(), { passive: true, capture: true })
         );
         this.reset();
@@ -184,21 +268,45 @@ class SessionTimeout {
         clearTimeout(this._idle);
         clearTimeout(this._warn);
         if (!Auth.isAuthenticated()) return;
-        this._warn = setTimeout(() => Toast.show('Session expires in 1 minute', 'warning'), this.IDLE_MS - 60000);
-        this._idle = setTimeout(() => this.logout(), this.IDLE_MS);
+        this._warn = setTimeout(() => {
+            Toast.show('Your session will expire in 1 minute. Move your mouse to stay signed in.', 'warning', 6000);
+        }, this.IDLE_MS - 60000);
+        this._idle = setTimeout(() => {
+            Auth.removeToken();
+            Toast.show('Session expired due to inactivity.', 'warning');
+            setTimeout(() => { window.location.href = 'login.html'; }, 1500);
+        }, this.IDLE_MS);
     }
-    static logout() {
-        Auth.removeToken();
-        Toast.show('Session expired. Please log in again.', 'warning');
-        setTimeout(() => { window.location.href = 'login.html'; }, 1500);
+    static destroy() {
+        clearTimeout(this._idle);
+        clearTimeout(this._warn);
     }
-    static destroy() { clearTimeout(this._idle); clearTimeout(this._warn); }
 }
 
-/* ── Init ── */
-document.addEventListener('DOMContentLoaded', () => SessionTimeout.init());
+/* ═══════════════════════════════════
+   NAVBAR SCROLL EFFECT
+   ═══════════════════════════════════ */
+function initNavbarScroll() {
+    const navbar = document.querySelector('.navbar');
+    if (!navbar) return;
+    const onScroll = () => {
+        navbar.classList.toggle('scrolled', window.scrollY > 20);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+}
 
-/* ── Exports ── */
+/* ═══════════════════════════════════
+   INIT
+   ═══════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+    SessionTimeout.init();
+    initNavbarScroll();
+});
+
+/* ═══════════════════════════════════
+   EXPORTS
+   ═══════════════════════════════════ */
 if (typeof window !== 'undefined') {
     window.Auth = Auth;
     window.Toast = Toast;

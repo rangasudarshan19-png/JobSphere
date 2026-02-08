@@ -360,19 +360,13 @@
 <body>
     <!-- Navigation -->
     <nav class="navbar">
-        <div class="container">
-            <a href="dashboard.html" class="navbar-brand">
-                ◆ JobSphere
-            </a>
-            
-            <div class="navbar-menu" id="navbarMenu">
-            </div>
-
+        <div class="navbar-container">
+            <a href="dashboard.html" class="navbar-brand">◆ JobSphere</a>
             <div class="navbar-end">
-                <a href="profile.html" class="btn btn-secondary btn-sm" style="margin-right: 10px;">Profile</a>
-                <span id="adminButton"></span>
                 <span class="navbar-item" id="userGreeting">Welcome!</span>
-                <button class="btn btn-secondary btn-sm" onclick="handleLogout()">Logout</button>
+                <a href="profile.html" class="btn btn-ghost btn-sm">👤 Profile</a>
+                <span id="adminButton"></span>
+                <button class="btn btn-ghost btn-sm" onclick="Auth.logout()">Logout</button>
             </div>
         </div>
     </nav>
@@ -512,15 +506,7 @@
         // Update user name from API
         updateUserName();
 
-        // Logout function
-        function handleLogout() {
-            Auth.removeToken();
-            localStorage.clear();
-            Toast.show('Logged out successfully', 'success');
-            setTimeout(() => {
-                window.location.href = 'login.html';
-            }, 1000);
-        }
+        // Logout handled by Auth.logout() in app.js
 
         // Admin users should not see admin button on user dashboard - they login directly to admin panel
 

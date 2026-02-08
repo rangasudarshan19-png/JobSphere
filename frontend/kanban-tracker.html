@@ -651,17 +651,12 @@
 <body>
     <!-- Navigation -->
     <nav class="navbar">
-        <div class="container">
-            <a href="dashboard.html" class="navbar-brand">
-                � JobSphere
-            </a>
-            
-            <div class="navbar-menu" id="navbarMenu">
-            </div>
-
+        <div class="navbar-container">
+            <a href="dashboard.html" class="navbar-brand">◆ JobSphere</a>
             <div class="navbar-end">
                 <span class="navbar-item" id="userGreeting">Welcome!</span>
-                <button class="btn btn-secondary btn-sm" onclick="handleLogout()">Logout</button>
+                <a href="dashboard.html" class="btn btn-ghost btn-sm">← Dashboard</a>
+                <button class="btn btn-ghost btn-sm" onclick="Auth.logout()">Logout</button>
             </div>
         </div>
     </nav>
@@ -835,18 +830,10 @@
         // Navbar burger removed - using clean navbar without hamburger menu
 
         // Set user name
-        const userName = localStorage.getItem('userName') || 'User';
+        const userName = sessionStorage.getItem('userName') || 'User';
         document.getElementById('userGreeting').textContent = `Hi, ${userName}`;
 
-        // Logout function
-        function handleLogout() {
-            Auth.removeToken();
-            localStorage.clear();
-            Toast.show('Logged out successfully', 'success');
-            setTimeout(() => {
-                window.location.href = 'login.html';
-            }, 1000);
-        }
+        // Logout handled by Auth.logout() in app.js
 
         // Column definitions
         const columns = [

@@ -97,17 +97,14 @@
 <body>
     <!-- Navigation -->
     <nav class="navbar">
-        <div class="container">
+        <div class="navbar-container">
             <a href="dashboard.html" class="navbar-brand">
                 ◆ JobSphere
             </a>
             
-            <div class="navbar-menu" id="navbarMenu">
-            </div>
-
             <div class="navbar-end">
                 <a href="dashboard.html" class="btn btn-secondary btn-sm" style="margin-right: 10px;">Dashboard</a>
-                <button class="btn btn-secondary btn-sm" onclick="handleLogout()">Logout</button>
+                <button class="btn btn-secondary btn-sm" onclick="Auth.logout()">Logout</button>
             </div>
         </div>
     </nav>
@@ -186,16 +183,6 @@
 
         let applications = [];
         let charts = {};
-
-        // Logout function
-        function handleLogout() {
-            Auth.removeToken();
-            localStorage.clear();
-            Toast.show('Logged out successfully', 'success');
-            setTimeout(() => {
-                window.location.href = 'login.html';
-            }, 1000);
-        }
 
         // Load analytics data
         async function loadAnalytics() {
