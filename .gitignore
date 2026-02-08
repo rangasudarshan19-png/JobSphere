@@ -12,7 +12,12 @@ pip-delete-this-directory.txt
 .pytest_cache/
 .coverage
 htmlcov/
+coverage.xml
+coverage_html/
+test_output.txt
+*.bak
 *.log
+logs/
 
 # Environment
 .env

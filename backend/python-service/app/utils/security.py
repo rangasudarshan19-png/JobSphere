@@ -3,8 +3,10 @@ from jose import JWTError, jwt
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 import os
-import hashlib
+import logging
 from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -34,7 +36,7 @@ def get_password_hash(password: str) -> str:
     try:
         return pwd_context.hash(password)
     except Exception as e:
-        print(f"Error hashing password: {e}")
+        logger.error(f"Error hashing password: {e}")
         raise
 
 

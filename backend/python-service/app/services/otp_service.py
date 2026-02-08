@@ -40,7 +40,7 @@ class OTPService:
             'created_at': datetime.now()
         }
         
-        logger.info(f"[EMOJI] OTP created for {email}: {otp} (expires in {self.otp_validity_minutes} min)")
+        logger.info(f"OTP created for {email} (expires in {self.otp_validity_minutes} min)")
         return otp
     
     def verify_otp(self, email: str, otp: str, mark_verified: bool = False) -> tuple[bool, str]:

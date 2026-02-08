@@ -3,152 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - JobSphere</title>
+    <title>Login — JobSphere</title>
+    <meta name="description" content="Sign in to your JobSphere account.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/components.css">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>◆</text></svg>">
 </head>
 <body>
-    <div class="container" style="max-width: 500px; padding-top: 100px; padding-bottom: 100px;">
-        <!-- Logo -->
-        <div class="text-center mb-2xl">
-            <a href="index.html" style="text-decoration: none;">
-                <h1 style="font-size: 2.5rem; margin-bottom: 10px;">
-                    <span>🎯</span>
-                    <span style="background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">JobSphere</span>
-                </h1>
-            </a>
-            <p class="text-secondary">Welcome back! Login to your account</p>
-        </div>
+    <a href="#main" class="skip-link">Skip to content</a>
 
-        <!-- Login Card -->
-        <div class="card" style="padding: 40px;">
-            <form id="loginForm" onsubmit="handleLogin(event)">
-                <div class="form-group">
-                    <label class="form-label">Email Address</label>
-                    <input 
-                        type="email" 
-                        class="form-control" 
-                        id="email" 
-                        placeholder="you@example.com"
-                        required
-                        autocomplete="email">
-                </div>
+    <main id="main" class="auth-wrapper">
+        <div class="auth-container">
+            <!-- Branding -->
+            <a href="index.html" class="auth-logo">◆ JobSphere</a>
 
-                <div class="form-group">
-                    <label class="form-label">Password</label>
-                    <input 
-                        type="password" 
-                        class="form-control" 
-                        id="password" 
-                        placeholder="Enter your password"
-                        required
-                        autocomplete="current-password">
-                </div>
+            <!-- Login Card -->
+            <div class="auth-card">
+                <h1 class="auth-title">Welcome Back</h1>
+                <p class="text-secondary text-center" style="margin-bottom:1.75rem">Sign in to continue your job search.</p>
 
-                <div class="flex-between mb-lg">
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                        <input type="checkbox" id="remember" style="width: auto;">
-                        <span class="text-secondary">Remember me</span>
-                    </label>
-                    <a href="#" class="text-secondary" style="font-size: 0.9rem;">Forgot password?</a>
-                </div>
+                <form id="loginForm" novalidate autocomplete="on">
+                    <div class="form-group">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input
+                            type="email"
+                            id="email"
+                            class="form-input"
+                            placeholder="you@example.com"
+                            required
+                            autocomplete="email"
+                            autofocus
+                        >
+                    </div>
 
-                <button type="submit" class="btn btn-primary" style="width: 100%; margin-bottom: 20px;">
-                    🚀 Login to Dashboard
-                </button>
+                    <div class="form-group">
+                        <label for="password" class="form-label">Password</label>
+                        <input
+                            type="password"
+                            id="password"
+                            class="form-input"
+                            placeholder="Enter your password"
+                            required
+                            autocomplete="current-password"
+                        >
+                    </div>
 
-                <div class="text-center">
-                    <p class="text-secondary">
-                        Don't have an account? 
-                        <a href="signup.html" style="color: var(--primary-light); font-weight: 600;">Sign up free</a>
-                    </p>
-                </div>
-            </form>
-        </div>
+                    <button type="submit" class="btn btn-primary btn-block" id="loginBtn">
+                        Sign In
+                    </button>
+                </form>
+            </div>
 
-        <!-- Features Preview -->
-        <div class="text-center mt-xl">
-            <p class="text-muted" style="font-size: 0.9rem; margin-bottom: 15px;">Join thousands using JobSphere</p>
-            <div class="flex-center gap-lg text-muted" style="font-size: 0.85rem;">
+            <!-- Footer -->
+            <p class="auth-footer">
+                Don't have an account?&nbsp; <a href="signup.html">Create one free</a>
+            </p>
+
+            <div class="auth-perks">
                 <span>✓ 100% Free</span>
-                <span>✓ AI-Powered</span>
+                <span>✓ AI-Powered Tools</span>
                 <span>✓ No Credit Card</span>
             </div>
         </div>
-    </div>
+    </main>
 
     <script src="js/app.js"></script>
     <script>
-        async function handleLogin(event) {
-            event.preventDefault();
-            
-            const email = document.getElementById('email').value;
+        // Redirect if already logged in
+        if (Auth.isAuthenticated()) {
+            window.location.href = 'dashboard.html';
+        }
+
+        const form = document.getElementById('loginForm');
+        const btn = document.getElementById('loginBtn');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
 
-            Loading.show('Logging in...');
+            if (!email || !password) {
+                Toast.show('Please fill in all fields.', 'warning');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Signing in…';
+            Loading.show();
 
             try {
-                const response = await fetch(`${API_BASE}/api/auth/login`, {
+                const res = await fetch(`${API_BASE}/api/auth/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
                 });
 
-                const data = await response.json();
+                const data = await res.json();
 
-                if (response.ok) {
-                    // Save auth token
-                    Auth.setToken(data.access_token);
-                    sessionStorage.setItem('userEmail', email);
-                    sessionStorage.setItem('userName', data.full_name || email.split('@')[0]);
-
-                    // Check if user is admin
-                    const userResponse = await fetch(`${API_BASE}/api/auth/me`, {
-                        headers: { 'Authorization': `Bearer ${data.access_token}` }
-                    });
-                    
-                    if (userResponse.ok) {
-                        const userData = await userResponse.json();
-                        
-                        if (userData.is_admin) {
-                            // Redirect admin to admin panel
-                            Toast.show('Admin login successful! Redirecting to admin panel...', 'success');
-                            setTimeout(() => {
-                                window.location.href = 'admin.html';
-                            }, 1000);
-                        } else {
-                            // Redirect regular user to dashboard
-                            Toast.show('Login successful! Redirecting...', 'success');
-                            setTimeout(() => {
-                                window.location.href = 'dashboard.html';
-                            }, 1000);
-                        }
-                    } else {
-                        // Fallback to dashboard if user check fails
-                        Toast.show('Login successful! Redirecting...', 'success');
-                        setTimeout(() => {
-                            window.location.href = 'dashboard.html';
-                        }, 1000);
-                    }
-                } else {
-                    Toast.show(data.detail || 'Login failed. Please check your credentials.', 'error');
+                if (!res.ok) {
+                    throw new Error(data.detail || 'Invalid email or password.');
                 }
-            } catch (error) {
-                console.error('Login error:', error);
-                Toast.show('Connection error. Please try again.', 'error');
+
+                Auth.setToken(data.access_token);
+                sessionStorage.setItem('userEmail', email);
+                if (data.user_name) sessionStorage.setItem('userName', data.user_name);
+
+                Toast.show('Login successful!', 'success');
+
+                // Check admin status and redirect
+                try {
+                    const me = await Auth.fetchWithAuth(`${API_BASE}/api/auth/me`);
+                    const user = await me.json();
+                    if (user.is_admin) {
+                        sessionStorage.setItem('isAdmin', 'true');
+                        setTimeout(() => { window.location.href = 'admin.html'; }, 800);
+                    } else {
+                        setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
+                    }
+                } catch {
+                    setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
+                }
+            } catch (err) {
+                Toast.show(err.message, 'error');
             } finally {
+                btn.disabled = false;
+                btn.textContent = 'Sign In';
                 Loading.hide();
             }
-        }
-
-        // Check if already logged in
-        if (Auth.isAuthenticated()) {
-            window.location.href = 'dashboard.html';
-        }
+        });
     </script>
 </body>
 </html>

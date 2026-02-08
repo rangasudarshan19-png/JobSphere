@@ -3,291 +3,364 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up - JobSphere</title>
+    <title>Sign Up — JobSphere</title>
+    <meta name="description" content="Create your free JobSphere account and start your job search.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/components.css">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>◆</text></svg>">
+    <style>
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+        .step-dot {
+            width: 10px; height: 10px; border-radius: 50%;
+            background: var(--border-color); transition: all 0.3s ease;
+        }
+        .step-dot.active {
+            background: var(--primary); transform: scale(1.3);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.2);
+        }
+        .step-bar {
+            width: 50px; height: 3px; border-radius: 3px;
+            background: var(--border-color); transition: background 0.3s ease;
+        }
+        .step-bar.active { background: var(--primary); }
+        .signup-step { display: none; }
+        .signup-step.active { display: block; animation: fadeSlide 0.35s ease; }
+        @keyframes fadeSlide { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .resend-row {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-top: 0.5rem; font-size: 0.875rem;
+        }
+        .otp-inputs {
+            display: flex; gap: 0.5rem; justify-content: center; margin-bottom: 1.25rem;
+        }
+        .otp-input {
+            width: 48px; height: 52px; text-align: center;
+            font-size: 1.25rem; font-weight: 600;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: border-color 0.2s ease;
+        }
+        .otp-input:focus {
+            outline: none; border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+        }
+        .password-strength {
+            height: 4px; border-radius: 4px; margin-top: 0.5rem;
+            background: var(--border-color); overflow: hidden;
+        }
+        .password-strength-bar {
+            height: 100%; width: 0; border-radius: 4px;
+            transition: width 0.3s ease, background 0.3s ease;
+        }
+    </style>
 </head>
 <body>
-    <div class="container" style="max-width: 500px; padding-top: 80px; padding-bottom: 80px;">
-        <!-- Logo -->
-        <div class="text-center mb-2xl">
-            <a href="index.html" style="text-decoration: none;">
-                <h1 style="font-size: 2.5rem; margin-bottom: 10px;">
-                    <span>🎯</span>
-                    <span style="background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">JobSphere</span>
-                </h1>
-            </a>
-            <p class="text-secondary">Create your free account and start your job search</p>
-        </div>
+    <a href="#main" class="skip-link">Skip to content</a>
 
-        <!-- Signup Card -->
-        <div class="card" style="padding: 40px;">
-            <!-- Step 1: Email Verification -->
-            <div id="step1" style="display: block;">
-                <h3 class="mb-md">Step 1: Verify Your Email</h3>
-                <form id="emailForm" onsubmit="handleEmailSubmit(event)">
-                    <div class="form-group">
-                        <label class="form-label">Full Name</label>
-                        <input 
-                            type="text" 
-                            class="form-control" 
-                            id="fullName" 
-                            placeholder="John Doe"
-                            required
-                            autocomplete="name">
-                    </div>
+    <main id="main" class="auth-wrapper">
+        <div class="auth-container">
+            <a href="index.html" class="auth-logo">◆ JobSphere</a>
 
-                    <div class="form-group">
-                        <label class="form-label">Email Address</label>
-                        <input 
-                            type="email" 
-                            class="form-control" 
-                            id="email" 
-                            placeholder="you@example.com"
-                            required
-                            autocomplete="email">
-                        <small class="text-muted" style="display: block; margin-top: 5px;">
-                            We'll send you a verification code to confirm your email
-                        </small>
-                    </div>
+            <div class="auth-card">
+                <h1 class="auth-title">Create Your Account</h1>
 
-                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-bottom: 20px;">
-                        📧 Send Verification Code
-                    </button>
-                </form>
-            </div>
+                <!-- Step Indicator -->
+                <div class="step-indicator" aria-label="Signup progress">
+                    <div class="step-dot active" id="dot1"></div>
+                    <div class="step-bar" id="bar1"></div>
+                    <div class="step-dot" id="dot2"></div>
+                </div>
 
-            <!-- Step 2: Verify Code & Create Password -->
-            <div id="step2" style="display: none;">
-                <h3 class="mb-md">Step 2: Verify & Create Password</h3>
-                <form id="signupForm" onsubmit="handleSignup(event)">
-                    <div class="form-group">
-                        <label class="form-label">Verification Code</label>
-                        <input 
-                            type="text" 
-                            class="form-control" 
-                            id="verificationCode" 
-                            placeholder="Enter 6-digit code"
-                            required
-                            maxlength="6"
-                            pattern="[0-9]{6}">
-                        <small class="text-muted" style="display: block; margin-top: 5px;">
-                            Check your email for the verification code. 
-                            <a href="#" onclick="resendCode(event)" style="color: var(--primary-light);">Resend code</a>
-                        </small>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Password</label>
-                        <input 
-                            type="password" 
-                            class="form-control" 
-                            id="password" 
-                            placeholder="Create a strong password"
-                            required
-                            autocomplete="new-password"
-                            minlength="8">
-                        <small class="text-muted" style="display: block; margin-top: 5px;">
-                            At least 8 characters with uppercase, lowercase, and number
-                        </small>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Confirm Password</label>
-                        <input 
-                            type="password" 
-                            class="form-control" 
-                            id="confirmPassword" 
-                            placeholder="Confirm your password"
-                            required
-                            autocomplete="new-password">
-                    </div>
-
-                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-bottom: 20px;">
-                        🚀 Create Account
-                    </button>
-
-                    <button type="button" class="btn btn-secondary" style="width: 100%;" onclick="goBackToStep1()">
-                        ← Back to Email
-                    </button>
-                </form>
-            </div>
-
-                <div class="text-center">
-                    <p class="text-secondary">
-                        Already have an account? 
-                        <a href="login.html" style="color: var(--primary-light); font-weight: 600;">Login here</a>
+                <!-- Step 1: Email -->
+                <div class="signup-step active" id="step1">
+                    <p class="text-secondary text-center" style="margin-bottom:1.5rem">
+                        Enter your email to get started.
                     </p>
+                    <form id="emailForm" novalidate>
+                        <div class="form-group">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input
+                                type="email"
+                                id="email"
+                                class="form-input"
+                                placeholder="you@example.com"
+                                required
+                                autocomplete="email"
+                                autofocus
+                            >
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block" id="emailBtn">
+                            Continue
+                        </button>
+                    </form>
                 </div>
-            </form>
-        </div>
 
-        <!-- Benefits -->
-        <div class="mt-xl">
-            <p class="text-center text-muted mb-md" style="font-size: 0.9rem;">What you get for free:</p>
-            <div class="grid grid-2" style="gap: 15px;">
-                <div class="flex gap-sm">
-                    <span>✓</span>
-                    <span class="text-secondary">Unlimited job applications</span>
-                </div>
-                <div class="flex gap-sm">
-                    <span>✓</span>
-                    <span class="text-secondary">AI resume builder</span>
-                </div>
-                <div class="flex gap-sm">
-                    <span>✓</span>
-                    <span class="text-secondary">Interview preparation</span>
-                </div>
-                <div class="flex gap-sm">
-                    <span>✓</span>
-                    <span class="text-secondary">Analytics dashboard</span>
+                <!-- Step 2: OTP + Name + Password -->
+                <div class="signup-step" id="step2">
+                    <p class="text-secondary text-center" style="margin-bottom:1.25rem">
+                        We sent a 6-digit code to <strong id="emailDisplay"></strong>
+                    </p>
+
+                    <form id="signupForm" novalidate>
+                        <div class="form-group">
+                            <label class="form-label">Verification Code</label>
+                            <div class="otp-inputs" id="otpInputs">
+                                <input type="text" maxlength="1" class="otp-input" inputmode="numeric" pattern="[0-9]" aria-label="Digit 1" autofocus>
+                                <input type="text" maxlength="1" class="otp-input" inputmode="numeric" pattern="[0-9]" aria-label="Digit 2">
+                                <input type="text" maxlength="1" class="otp-input" inputmode="numeric" pattern="[0-9]" aria-label="Digit 3">
+                                <input type="text" maxlength="1" class="otp-input" inputmode="numeric" pattern="[0-9]" aria-label="Digit 4">
+                                <input type="text" maxlength="1" class="otp-input" inputmode="numeric" pattern="[0-9]" aria-label="Digit 5">
+                                <input type="text" maxlength="1" class="otp-input" inputmode="numeric" pattern="[0-9]" aria-label="Digit 6">
+                            </div>
+                            <div class="resend-row">
+                                <button type="button" class="btn-link" id="resendBtn" onclick="resendCode()">Resend Code</button>
+                                <button type="button" class="btn-link" onclick="goBackToStep1()">Change Email</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="fullName" class="form-label">Full Name</label>
+                            <input
+                                type="text"
+                                id="fullName"
+                                class="form-input"
+                                placeholder="John Doe"
+                                required
+                                autocomplete="name"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password" class="form-label">Password</label>
+                            <input
+                                type="password"
+                                id="password"
+                                class="form-input"
+                                placeholder="Minimum 8 characters"
+                                required
+                                minlength="8"
+                                autocomplete="new-password"
+                            >
+                            <div class="password-strength">
+                                <div class="password-strength-bar" id="strengthBar"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="confirmPassword" class="form-label">Confirm Password</label>
+                            <input
+                                type="password"
+                                id="confirmPassword"
+                                class="form-input"
+                                placeholder="Re-enter your password"
+                                required
+                                autocomplete="new-password"
+                            >
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-block" id="signupBtn">
+                            Create Account
+                        </button>
+                    </form>
                 </div>
             </div>
+
+            <p class="auth-footer">
+                Already have an account?&nbsp; <a href="login.html">Sign in</a>
+            </p>
+
+            <div class="auth-perks">
+                <span>✓ 100% Free</span>
+                <span>✓ AI-Powered</span>
+                <span>✓ No Credit Card</span>
+            </div>
         </div>
-    </div>
+    </main>
 
     <script src="js/app.js"></script>
     <script>
-        let userEmail = '';
-        let userFullName = '';
-
-        async function handleEmailSubmit(event) {
-            event.preventDefault();
-            
-            userFullName = document.getElementById('fullName').value;
-            userEmail = document.getElementById('email').value;
-
-            Loading.show('Sending verification code...');
-
-            try {
-                const response = await fetch(`${API_BASE}/api/auth/send-verification`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        email: userEmail,
-                        full_name: userFullName
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    Toast.show('Verification code sent! Check your email.', 'success');
-                    // Move to step 2
-                    document.getElementById('step1').style.display = 'none';
-                    document.getElementById('step2').style.display = 'block';
-                } else {
-                    Toast.show(data.detail || 'Failed to send verification code', 'error');
-                }
-            } catch (error) {
-                console.error('Email verification error:', error);
-                Toast.show('Connection error. Please try again.', 'error');
-            } finally {
-                Loading.hide();
-            }
-        }
-
-        async function handleSignup(event) {
-            event.preventDefault();
-            
-            const verificationCode = document.getElementById('verificationCode').value;
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-
-            // Validate password match
-            if (password !== confirmPassword) {
-                Toast.show('Passwords do not match', 'error');
-                return;
-            }
-
-            // Validate password strength
-            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-            if (!passwordRegex.test(password)) {
-                Toast.show('Password must contain uppercase, lowercase, and number', 'error');
-                return;
-            }
-
-            Loading.show('Creating your account...');
-
-            try {
-                const response = await fetch(`${API_BASE}/api/auth/register`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        email: userEmail,
-                        password: password,
-                        full_name: userFullName,
-                        verification_code: verificationCode
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    Toast.show('Account created successfully! Please login.', 'success');
-                    
-                    setTimeout(() => {
-                        window.location.href = 'login.html';
-                    }, 1500);
-                } else {
-                    Toast.show(data.detail || 'Signup failed. Please try again.', 'error');
-                }
-            } catch (error) {
-                console.error('Signup error:', error);
-                Toast.show('Connection error. Please try again.', 'error');
-            } finally {
-                Loading.hide();
-            }
-        }
-
-        function goBackToStep1() {
-            document.getElementById('step2').style.display = 'none';
-            document.getElementById('step1').style.display = 'block';
-        }
-
-        async function resendCode(event) {
-            event.preventDefault();
-            
-            if (!userEmail) {
-                Toast.show('Please enter your email first', 'error');
-                return;
-            }
-
-            Loading.show('Resending verification code...');
-
-            try {
-                const response = await fetch(`${API_BASE}/api/auth/send-verification`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        email: userEmail,
-                        full_name: userFullName
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    Toast.show('New verification code sent!', 'success');
-                } else {
-                    Toast.show(data.detail || 'Failed to resend code', 'error');
-                }
-            } catch (error) {
-                console.error('Resend error:', error);
-                Toast.show('Connection error. Please try again.', 'error');
-            } finally {
-                Loading.hide();
-            }
-        }
-
-        // Check if already logged in
+        // Redirect if already logged in
         if (Auth.isAuthenticated()) {
             window.location.href = 'dashboard.html';
         }
+
+        let userEmail = '';
+
+        /* ── OTP Input Behavior ── */
+        const otpInputs = document.querySelectorAll('.otp-input');
+        otpInputs.forEach((input, i) => {
+            input.addEventListener('input', (e) => {
+                const v = e.target.value.replace(/\D/g, '');
+                e.target.value = v;
+                if (v && i < otpInputs.length - 1) otpInputs[i + 1].focus();
+            });
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && !e.target.value && i > 0) otpInputs[i - 1].focus();
+            });
+            input.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const text = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
+                text.split('').forEach((ch, idx) => { if (otpInputs[idx]) otpInputs[idx].value = ch; });
+                if (text.length > 0) otpInputs[Math.min(text.length, 5)].focus();
+            });
+        });
+
+        function getOTP() {
+            return Array.from(otpInputs).map(i => i.value).join('');
+        }
+
+        /* ── Password Strength ── */
+        document.getElementById('password').addEventListener('input', (e) => {
+            const bar = document.getElementById('strengthBar');
+            const p = e.target.value;
+            let score = 0;
+            if (p.length >= 8) score++;
+            if (/[A-Z]/.test(p)) score++;
+            if (/[0-9]/.test(p)) score++;
+            if (/[^A-Za-z0-9]/.test(p)) score++;
+
+            const pct = [0, 25, 50, 75, 100][score];
+            const col = ['#e5e7eb', '#ef4444', '#f59e0b', '#3b82f6', '#10b981'][score];
+            bar.style.width = pct + '%';
+            bar.style.background = col;
+        });
+
+        /* ── Step Navigation ── */
+        function showStep(n) {
+            document.querySelectorAll('.signup-step').forEach(s => s.classList.remove('active'));
+            document.getElementById('step' + n).classList.add('active');
+            document.getElementById('dot1').classList.toggle('active', n >= 1);
+            document.getElementById('dot2').classList.toggle('active', n >= 2);
+            document.getElementById('bar1').classList.toggle('active', n >= 2);
+        }
+
+        function goBackToStep1() {
+            showStep(1);
+            document.getElementById('email').focus();
+        }
+
+        /* ── Step 1: Send OTP ── */
+        document.getElementById('emailForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value.trim();
+            if (!email) { Toast.show('Please enter your email.', 'warning'); return; }
+
+            const btn = document.getElementById('emailBtn');
+            btn.disabled = true;
+            btn.textContent = 'Sending code…';
+            Loading.show();
+
+            try {
+                const res = await fetch(`${API_BASE}/api/auth/send-otp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Could not send verification code.');
+
+                userEmail = email;
+                document.getElementById('emailDisplay').textContent = email;
+                Toast.show('Verification code sent!', 'success');
+                showStep(2);
+                otpInputs[0].focus();
+            } catch (err) {
+                Toast.show(err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Continue';
+                Loading.hide();
+            }
+        });
+
+        /* ── Resend OTP ── */
+        async function resendCode() {
+            const btn = document.getElementById('resendBtn');
+            btn.disabled = true;
+            btn.textContent = 'Sending…';
+
+            try {
+                const res = await fetch(`${API_BASE}/api/auth/send-otp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: userEmail })
+                });
+                if (!res.ok) throw new Error('Failed to resend code.');
+                Toast.show('New code sent!', 'success');
+                otpInputs.forEach(i => (i.value = ''));
+                otpInputs[0].focus();
+            } catch (err) {
+                Toast.show(err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Resend Code';
+            }
+        }
+
+        /* ── Step 2: Verify & Register ── */
+        document.getElementById('signupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const otp = getOTP();
+            const fullName = document.getElementById('fullName').value.trim();
+            const password = document.getElementById('password').value;
+            const confirm = document.getElementById('confirmPassword').value;
+
+            if (otp.length !== 6) { Toast.show('Please enter the 6-digit code.', 'warning'); return; }
+            if (!fullName) { Toast.show('Please enter your name.', 'warning'); return; }
+            if (password.length < 8) { Toast.show('Password must be at least 8 characters.', 'warning'); return; }
+            if (password !== confirm) { Toast.show('Passwords do not match.', 'warning'); return; }
+
+            const btn = document.getElementById('signupBtn');
+            btn.disabled = true;
+            btn.textContent = 'Creating account…';
+            Loading.show();
+
+            try {
+                const res = await fetch(`${API_BASE}/api/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: userEmail,
+                        otp: otp,
+                        full_name: fullName,
+                        password: password
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Registration failed.');
+
+                // Auto-login after signup
+                if (data.access_token) {
+                    Auth.setToken(data.access_token);
+                    sessionStorage.setItem('userEmail', userEmail);
+                    sessionStorage.setItem('userName', fullName);
+                    Toast.show('Account created! Redirecting…', 'success');
+                    setTimeout(() => { window.location.href = 'dashboard.html'; }, 1000);
+                } else {
+                    Toast.show('Account created! Please sign in.', 'success');
+                    setTimeout(() => { window.location.href = 'login.html'; }, 1200);
+                }
+            } catch (err) {
+                Toast.show(err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Create Account';
+                Loading.hide();
+            }
+        });
     </script>
 </body>
 </html>

@@ -4,8 +4,8 @@ API endpoints for importing and parsing job postings
 """
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from pydantic import BaseModel, HttpUrl
-from typing import Optional, Dict
+from pydantic import BaseModel
+from typing import Optional
 
 from app.models.user import User
 from app.utils.database import get_db
@@ -142,7 +142,7 @@ def validate_job_data(
     """
     
     # Convert Pydantic model to dict
-    job_data = request.dict()
+    job_data = request.model_dump()
     
     # Parse and clean the data
     cleaned_data = scraper.parse_manual_entry(job_data)

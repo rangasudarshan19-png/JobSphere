@@ -10,7 +10,7 @@ Categories:
 """
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import desc, and_, or_
+from sqlalchemy import desc
 from datetime import datetime, timedelta
 from typing import Optional, List
 import json

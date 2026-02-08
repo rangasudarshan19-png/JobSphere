@@ -1,7 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.security import HTTPBearer
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import SQLAlchemyError
 from dotenv import load_dotenv
@@ -36,9 +35,6 @@ from slowapi.errors import RateLimitExceeded
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
-
-# Security scheme for Swagger
-security = HTTPBearer()
 
 app = FastAPI(
     title="Job Tracker API",

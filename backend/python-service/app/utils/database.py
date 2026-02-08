@@ -1,9 +1,11 @@
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import declarative_base, sessionmaker
 import os
+import logging
 from pathlib import Path
 from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -16,9 +18,8 @@ default_db_path = database_dir / "job_tracker.db"
 
 DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{default_db_path}")
 
-# Database info (using plain text for Windows terminal compatibility)
-print(f"Database URL: {DATABASE_URL}")
-print(f"Database location: {default_db_path if 'sqlite' in DATABASE_URL else 'PostgreSQL'}")
+logger.info(f"Database URL: {DATABASE_URL}")
+logger.info(f"Database location: {default_db_path if 'sqlite' in DATABASE_URL else 'PostgreSQL'}")
 
 # Create engine
 engine = create_engine(

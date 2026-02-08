@@ -1,294 +1,204 @@
 /**
- * JobSphere - Core JavaScript Utilities
+ * JobSphere — Core JavaScript
+ * Auth, Toast, Loading, Modal, Utils, Session
  */
 
-// API Configuration
-const API_BASE = 'http://127.0.0.1:8000';
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://127.0.0.1:8000'
+    : window.location.origin;
 
-// Authentication Helper
+/* ── Auth ── */
 class Auth {
     static getToken() {
         return sessionStorage.getItem('access_token') || sessionStorage.getItem('token');
     }
-
     static setToken(token) {
         sessionStorage.setItem('access_token', token);
     }
-
     static removeToken() {
         sessionStorage.removeItem('access_token');
         sessionStorage.removeItem('token');
         sessionStorage.removeItem('userEmail');
         sessionStorage.removeItem('userName');
     }
-
     static isAuthenticated() {
         return !!this.getToken();
     }
-
-    static async requireAuth(redirectUrl = '/login.html') {
+    static async requireAuth() {
         if (!this.isAuthenticated()) {
             Toast.show('Please login to continue', 'warning');
-            setTimeout(() => {
-                window.location.href = redirectUrl;
-            }, 1500);
+            setTimeout(() => { window.location.href = 'login.html'; }, 1200);
             return false;
         }
         return true;
     }
-
     static async fetchWithAuth(url, options = {}) {
         const token = this.getToken();
-        
-        const headers = {
-            'Content-Type': 'application/json',
-            ...options.headers
-        };
-
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
+        const headers = { 'Content-Type': 'application/json', ...options.headers };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        const response = await fetch(url, { ...options, headers });
+        if (response.status === 401) {
+            this.removeToken();
+            Toast.show('Session expired. Please login again.', 'error');
+            setTimeout(() => { window.location.href = 'login.html'; }, 1200);
+            throw new Error('Unauthorized');
         }
-
-        try {
-            const response = await fetch(url, { ...options, headers });
-            
-            if (response.status === 401) {
-                this.removeToken();
-                Toast.show('Session expired. Please login again.', 'error');
-                setTimeout(() => window.location.href = '/login.html', 1500);
-                throw new Error('Unauthorized');
-            }
-
-            return response;
-        } catch (error) {
-            console.error('API Error:', error);
-            throw error;
-        }
+        return response;
     }
-
     static getUserInfo() {
         return {
-            email: sessionStorage.getItem('userEmail') || 'user@example.com',
+            email: sessionStorage.getItem('userEmail') || '',
             name: sessionStorage.getItem('userName') || 'User'
         };
     }
 }
 
-// Toast Notifications
+/* ── Toast ── */
 class Toast {
-    static show(message, type = 'info', duration = 3000) {
-        const toast = document.createElement('div');
-        toast.className = `toast toast-${type}`;
-        toast.innerHTML = `
-            <span class="toast-message">${message}</span>
-            <button class="toast-close" onclick="this.parentElement.remove()">×</button>
-        `;
-
-        const container = this.getContainer();
-        container.appendChild(toast);
-
-        setTimeout(() => toast.classList.add('show'), 10);
-        
+    static show(message, type = 'info', duration = 3500) {
+        const el = document.createElement('div');
+        el.className = `toast toast-${type}`;
+        el.setAttribute('role', 'alert');
+        el.innerHTML = `
+            <span class="toast-message">${this.escapeHtml(message)}</span>
+            <button class="toast-close" aria-label="Dismiss">&times;</button>`;
+        el.querySelector('.toast-close').addEventListener('click', () => el.remove());
+        this.getContainer().appendChild(el);
+        requestAnimationFrame(() => el.classList.add('show'));
         setTimeout(() => {
-            toast.classList.remove('show');
-            setTimeout(() => toast.remove(), 300);
+            el.classList.remove('show');
+            setTimeout(() => el.remove(), 350);
         }, duration);
     }
-
     static getContainer() {
-        let container = document.getElementById('toast-container');
-        if (!container) {
-            container = document.createElement('div');
-            container.id = 'toast-container';
-            document.body.appendChild(container);
-        }
-        return container;
+        let c = document.getElementById('toast-container');
+        if (!c) { c = document.createElement('div'); c.id = 'toast-container'; document.body.appendChild(c); }
+        return c;
+    }
+    static escapeHtml(str) {
+        const d = document.createElement('div');
+        d.textContent = str;
+        return d.innerHTML;
     }
 }
 
-// Loading Overlay
+/* ── Loading ── */
 class Loading {
     static show(message = 'Loading...') {
-        const overlay = document.createElement('div');
-        overlay.id = 'loading-overlay';
-        overlay.innerHTML = `
+        if (document.getElementById('loading-overlay')) return;
+        const el = document.createElement('div');
+        el.id = 'loading-overlay';
+        el.setAttribute('role', 'status');
+        el.setAttribute('aria-live', 'polite');
+        el.innerHTML = `
             <div class="loading-card">
                 <div class="loading-spinner"></div>
-                <div class="loading-content">
-                    <p>${message}</p>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(overlay);
-        setTimeout(() => overlay.classList.add('show'), 10);
+                <div class="loading-content"><p>${this.escapeHtml(message)}</p></div>
+            </div>`;
+        document.body.appendChild(el);
+        requestAnimationFrame(() => el.classList.add('show'));
     }
-
     static hide() {
-        const overlay = document.getElementById('loading-overlay');
-        if (overlay) {
-            overlay.classList.remove('show');
-            setTimeout(() => overlay.remove(), 300);
-        }
+        const el = document.getElementById('loading-overlay');
+        if (el) { el.classList.remove('show'); setTimeout(() => el.remove(), 250); }
+    }
+    static escapeHtml(str) {
+        const d = document.createElement('div'); d.textContent = str; return d.innerHTML;
     }
 }
 
-// Modal Dialog
+/* ── Modal ── */
 class Modal {
     static show(title, content, buttons = []) {
-        const modal = document.createElement('div');
-        modal.className = 'modal-overlay';
-        
-        const buttonsHtml = buttons.map(btn => 
-            `<button class="btn ${btn.class || 'btn-primary'}" onclick="${btn.onclick}">${btn.text}</button>`
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+
+        const btnsHtml = buttons.map(btn =>
+            `<button class="btn ${btn.class || 'btn-primary'}" data-action="${btn.action || ''}">${Toast.escapeHtml(btn.text)}</button>`
         ).join('');
 
-        modal.innerHTML = `
+        overlay.innerHTML = `
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3>${title}</h3>
-                    <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button>
+                    <h3>${Toast.escapeHtml(title)}</h3>
+                    <button class="modal-close" aria-label="Close">&times;</button>
                 </div>
-                <div class="modal-body">
-                    ${content}
-                </div>
-                <div class="modal-footer">
-                    ${buttonsHtml}
-                </div>
-            </div>
-        `;
+                <div class="modal-body">${content}</div>
+                ${btnsHtml ? `<div class="modal-footer">${btnsHtml}</div>` : ''}
+            </div>`;
 
-        document.body.appendChild(modal);
-        setTimeout(() => modal.classList.add('show'), 10);
+        overlay.querySelector('.modal-close').addEventListener('click', () => Modal.hide());
+        overlay.addEventListener('click', e => { if (e.target === overlay) Modal.hide(); });
+        buttons.forEach((btn, i) => {
+            if (btn.handler) {
+                overlay.querySelectorAll('.modal-footer .btn')[i]?.addEventListener('click', btn.handler);
+            }
+        });
+
+        document.body.appendChild(overlay);
+        requestAnimationFrame(() => overlay.classList.add('show'));
     }
-
     static hide() {
-        const modal = document.querySelector('.modal-overlay');
-        if (modal) {
-            modal.classList.remove('show');
-            setTimeout(() => modal.remove(), 300);
-        }
+        const m = document.querySelector('.modal-overlay');
+        if (m) { m.classList.remove('show'); setTimeout(() => m.remove(), 250); }
     }
 }
 
-// Utility Functions
+/* ── Utils ── */
 const Utils = {
     formatDate(date) {
-        return new Date(date).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
+        return new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
     },
-
     formatDateTime(date) {
-        return new Date(date).toLocaleString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+        return new Date(date).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
     },
-
-    truncate(str, length = 100) {
-        return str.length > length ? str.substring(0, length) + '...' : str;
+    truncate(str, len = 100) {
+        return str.length > len ? str.substring(0, len) + '...' : str;
     },
-
-    debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
+    debounce(fn, wait) {
+        let t;
+        return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), wait); };
     },
-
-    copyToClipboard(text) {
-        navigator.clipboard.writeText(text).then(() => {
-            Toast.show('Copied to clipboard!', 'success');
-        }).catch(() => {
-            Toast.show('Failed to copy', 'error');
-        });
+    async copyToClipboard(text) {
+        try { await navigator.clipboard.writeText(text); Toast.show('Copied to clipboard!', 'success'); }
+        catch { Toast.show('Failed to copy', 'error'); }
     }
 };
 
-// Session Timeout Manager - 10 minutes idle time
+/* ── Session Timeout (10 min) ── */
 class SessionTimeout {
-    static IDLE_TIME = 10 * 60 * 1000; // 10 minutes in milliseconds
-    static idleTimer = null;
-    static warningTimer = null;
-    static isWarningShown = false;
+    static IDLE_MS = 10 * 60 * 1000;
+    static _idle = null;
+    static _warn = null;
 
     static init() {
-        if (!Auth.isAuthenticated()) {
-            return; // Don't initialize if user is not logged in
-        }
-
-        // Set up activity listeners
-        const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
-        events.forEach(event => {
-            document.addEventListener(event, () => this.resetTimer(), true);
-        });
-
-        // Start the idle timer
-        this.resetTimer();
-        
-        console.log(`✅ Session timeout initialized: ${this.IDLE_TIME / 60000} minutes idle time`);
+        if (!Auth.isAuthenticated()) return;
+        ['mousedown', 'keydown', 'scroll', 'touchstart'].forEach(evt =>
+            document.addEventListener(evt, () => this.reset(), { passive: true, capture: true })
+        );
+        this.reset();
     }
-
-    static resetTimer() {
-        // Clear existing timers
-        clearTimeout(this.idleTimer);
-        clearTimeout(this.warningTimer);
-        this.isWarningShown = false;
-
-        // Check if user is still authenticated
-        if (!Auth.isAuthenticated()) {
-            return;
-        }
-
-        // Show warning at 9 minutes
-        this.warningTimer = setTimeout(() => {
-            if (!this.isWarningShown) {
-                this.isWarningShown = true;
-                Toast.show('⏰ Your session will expire in 1 minute due to inactivity', 'warning');
-            }
-        }, (this.IDLE_TIME - 60000)); // 9 minutes
-
-        // Logout at 10 minutes
-        this.idleTimer = setTimeout(() => {
-            this.logout();
-        }, this.IDLE_TIME);
+    static reset() {
+        clearTimeout(this._idle);
+        clearTimeout(this._warn);
+        if (!Auth.isAuthenticated()) return;
+        this._warn = setTimeout(() => Toast.show('Session expires in 1 minute', 'warning'), this.IDLE_MS - 60000);
+        this._idle = setTimeout(() => this.logout(), this.IDLE_MS);
     }
-
     static logout() {
         Auth.removeToken();
-        localStorage.clear();
-        Toast.show('🔒 Session expired due to inactivity. Please log in again.', 'warning');
-        setTimeout(() => {
-            window.location.href = 'login.html';
-        }, 2000);
+        Toast.show('Session expired. Please log in again.', 'warning');
+        setTimeout(() => { window.location.href = 'login.html'; }, 1500);
     }
-
-    static destroy() {
-        clearTimeout(this.idleTimer);
-        clearTimeout(this.warningTimer);
-    }
+    static destroy() { clearTimeout(this._idle); clearTimeout(this._warn); }
 }
 
-// Auto-initialize session timeout on page load
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        SessionTimeout.init();
-    });
-} else {
-    SessionTimeout.init();
-}
+/* ── Init ── */
+document.addEventListener('DOMContentLoaded', () => SessionTimeout.init());
 
-// Export for use in modules
+/* ── Exports ── */
 if (typeof window !== 'undefined') {
     window.Auth = Auth;
     window.Toast = Toast;

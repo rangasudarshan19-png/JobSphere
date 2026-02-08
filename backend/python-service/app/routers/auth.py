@@ -126,7 +126,7 @@ def get_current_user_optional(
         
         user = db.query(User).filter(User.email == email).first()
         return user
-    except:
+    except Exception:
         return None
 
 
