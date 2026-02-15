@@ -364,7 +364,7 @@
             <a class="navbar-brand" href="index.html"><img src="images/logo.svg" alt="" width="28" height="28"> JobSphere</a>
             <div class="navbar-end">
                 <span class="navbar-item" id="userGreeting">Welcome!</span>
-                <a href="profile.html" class="btn btn-ghost btn-sm">👤 Profile</a>
+                <a href="profile.html" class="btn btn-ghost btn-sm">Profile</a>
                 <span id="adminButton"></span>
                 <button class="btn btn-ghost btn-sm" onclick="Auth.logout()">Logout</button>
             </div>
@@ -375,7 +375,7 @@
     <div class="container" style="margin-top: 120px; padding-bottom: 60px;">
         <!-- Welcome Header -->
         <div class="mb-2xl">
-            <h1 id="welcomeHeading" style="margin-bottom: 10px;">Welcome, <span id="userName">User</span>! 👋</h1>
+            <h1 id="welcomeHeading" style="margin-bottom: 10px;">Welcome, <span id="userName">User</span>!</h1>
             <p class="text-secondary">Here's your job search overview</p>
         </div>
 
@@ -458,6 +458,15 @@
                             </div>
                         </div>
                     </a>
+                    <a href="profile.html#my-review" class="flowing-menu-item" data-title="Write a Review" data-desc="Share your JobSphere experience">
+                        <span class="flowing-menu-name">Write a Review</span>
+                        <div class="flowing-menu-hover">
+                            <div class="flowing-menu-content">
+                                <div class="flowing-menu-title">Write a Review</div>
+                                <div class="flowing-menu-desc">Share your JobSphere experience</div>
+                            </div>
+                        </div>
+                    </a>
                 </div>
             </div>
         </div>
@@ -492,9 +501,9 @@
                         
                         // Check if first login
                         if (userData.first_login) {
-                            document.getElementById('welcomeHeading').innerHTML = `Welcome, <span id="userName">${firstName}</span>! 👋`;
+                            document.getElementById('welcomeHeading').innerHTML = `Welcome, <span id="userName">${firstName}</span>!`;
                         } else {
-                            document.getElementById('welcomeHeading').innerHTML = `Welcome back, <span id="userName">${firstName}</span>! 👋`;
+                            document.getElementById('welcomeHeading').innerHTML = `Welcome back, <span id="userName">${firstName}</span>!`;
                         }
                     }
                 }
@@ -518,14 +527,16 @@
                 if (response.ok) {
                     const applications = await response.json();
                     
-                    // Update stats
-                    document.getElementById('totalApps').textContent = applications.length;
-                    document.getElementById('activeApps').textContent = 
-                        applications.filter(app => ['applied', 'screening', 'interview'].includes(app.status)).length;
-                    document.getElementById('interviews').textContent = 
-                        applications.filter(app => ['interview', 'interview_scheduled'].includes(app.status)).length;
-                    document.getElementById('offers').textContent = 
-                        applications.filter(app => app.status === 'offer').length;
+                    // Update stats with animations
+                    const total = applications.length;
+                    const active = applications.filter(app => ['applied', 'screening', 'interview'].includes(app.status)).length;
+                    const interviews = applications.filter(app => ['interview', 'interview_scheduled'].includes(app.status)).length;
+                    const offers = applications.filter(app => app.status === 'offer').length;
+
+                    Utils.animateCounter(document.getElementById('totalApps'), total);
+                    Utils.animateCounter(document.getElementById('activeApps'), active);
+                    Utils.animateCounter(document.getElementById('interviews'), interviews);
+                    Utils.animateCounter(document.getElementById('offers'), offers);
                 }
             } catch (error) {
                 console.error('Failed to load dashboard data:', error);

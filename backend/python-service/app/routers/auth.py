@@ -190,7 +190,7 @@ def send_verification(request: SendVerificationRequest, db: Session = Depends(ge
                 detail="Failed to send verification code"
             )
         
-        logger.info(f"[EMOJI] Verification code sent to {request.email} for {request.full_name}")
+        logger.info(f"Verification code sent to {request.email} for {request.full_name}")
         
         return {
             "success": True,
@@ -213,17 +213,9 @@ def send_verification(request: SendVerificationRequest, db: Session = Depends(ge
 def send_otp(request: SendOTPRequest, db: Session = Depends(get_db)):
     """
     Send OTP to email for verification
-    Used for password reset flow
+    Used for password reset flow - allows existing users
     """
     try:
-        # Check if user already exists
-        existing_user = db.query(User).filter(User.email == request.email).first()
-        if existing_user:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email already registered"
-            )
-        
         # Generate and send OTP
         otp = otp_service.create_otp(request.email)
         
@@ -241,7 +233,7 @@ def send_otp(request: SendOTPRequest, db: Session = Depends(get_db)):
                 detail="Failed to send OTP email"
             )
         
-        logger.info(f"[EMOJI] OTP sent to {request.email}")
+        logger.info(f"OTP sent to {request.email}")
         
         return {
             "success": True,
@@ -284,7 +276,7 @@ def verify_otp(request: VerifyOTPRequest):
                 detail=error_message
             )
         
-        logger.info(f"[SYMBOL] OTP verified for {request.email} (purpose: {request.purpose})")
+        logger.info(f"OTP verified for {request.email} (purpose: {request.purpose})")
         
         return {
             "success": True,
@@ -330,7 +322,7 @@ def resend_otp(request: SendOTPRequest):
                 detail="Failed to send OTP email"
             )
         
-        logger.info(f"[EMOJI] OTP resent to {request.email}")
+        logger.info(f"OTP resent to {request.email}")
         
         return {
             "success": True,
@@ -377,7 +369,14 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
                     detail=error_message or "Invalid verification code"
                 )
             
-            logger.info(f"[SYMBOL] Email verified for {normalized_email}")
+            logger.info(f"Email verified for {normalized_email}")
+        
+        # Validate password strength
+        if len(user.password) < 8:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Password must be at least 8 characters long"
+            )
         
         # Create new user (regular user by default)
         hashed_password = get_password_hash(user.password)
@@ -394,7 +393,7 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
         
         # Send welcome email (non-blocking)
         try:
-            logger.info(f"[EMOJI] Sending welcome email to {db_user.email}")
+            logger.info(f"Sending welcome email to {db_user.email}")
             email_service.send_welcome_email(
                 to_email=db_user.email,
                 user_name=db_user.full_name or "User"
@@ -408,9 +407,7 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
         raise
     except Exception as e:
         db.rollback()
-        print(f"Error during user registration: {str(e)}")
-        import traceback
-        traceback.print_exc()
+        logger.error(f"Error during user registration: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create user: {str(e)}"
@@ -560,7 +557,7 @@ def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db
                 detail="Failed to send OTP email"
             )
         
-        logger.info(f"[EMOJI] Password reset OTP sent to {request.email}")
+        logger.info(f"Password reset OTP sent to {request.email}")
         
         return {
             "success": True,
@@ -606,10 +603,10 @@ def reset_password(request: ResetPasswordRequest, db: Session = Depends(get_db))
             )
         
         # Validate new password
-        if len(request.new_password) < 6:
+        if len(request.new_password) < 8:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Password must be at least 6 characters long"
+                detail="Password must be at least 8 characters long"
             )
         
         # Update password
@@ -619,7 +616,7 @@ def reset_password(request: ResetPasswordRequest, db: Session = Depends(get_db))
         # Clean up OTP after successful password reset
         otp_service.complete_otp_verification(request.email)
         
-        logger.info(f"[SYMBOL] Password reset successful for {request.email}")
+        logger.info(f"Password reset successful for {request.email}")
         
         return {
             "success": True,

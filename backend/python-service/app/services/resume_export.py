@@ -9,6 +9,9 @@ from docx import Document
 from docx.shared import Pt, Inches, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 import base64
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class ResumeExporter:
@@ -103,7 +106,7 @@ class ResumeExporter:
                         last_paragraph = doc.paragraphs[-1]
                         last_paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 except Exception as e:
-                    print(f"[SYMBOL]️ Could not add profile picture: {e}")
+                    logger.error(f"Could not add profile picture: {e}")
             
             # Header - Name
             name = doc.add_heading(contact.get("full_name", ""), 0)
@@ -236,7 +239,7 @@ class ResumeExporter:
             return buffer.getvalue()
             
         except Exception as e:
-            print(f"[SYMBOL] DOCX generation error: {e}")
+            logger.error(f"DOCX generation error: {e}")
             raise e
     
     async def generate_pdf(
@@ -255,16 +258,16 @@ class ResumeExporter:
             bytes: PDF file content
         """
         try:
-            print("[INFO] Starting PDF generation...")
+            logger.info("[INFO] Starting PDF generation...")
             try:
                 from reportlab.lib.pagesizes import letter
                 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
                 from reportlab.lib.units import inch
                 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
                 from reportlab.lib.enums import TA_CENTER, TA_LEFT
-                print("[INFO] Reportlab imported successfully")
+                logger.info("[INFO] Reportlab imported successfully")
             except ImportError as ie:
-                print(f"[ERROR] Failed to import reportlab: {ie}")
+                logger.error(f"[ERROR] Failed to import reportlab: {ie}")
                 raise Exception(f"PDF library not available: {ie}")
             
             # Get template config
@@ -421,21 +424,21 @@ class ResumeExporter:
             doc.build(story)
             buffer.seek(0)
             
-            print("[SYMBOL] PDF generated successfully")
+            logger.info("PDF generated successfully")
             return buffer.getvalue()
             
         except ImportError:
             # If reportlab not installed, return DOCX as fallback
-            print("[SYMBOL]️ reportlab not installed. Falling back to DOCX format.")
+            logger.info("reportlab not installed. Falling back to DOCX format.")
             return await self.generate_docx(resume_data, template_style)
         except Exception as e:
-            print(f"[SYMBOL] PDF generation error: {str(e)[:200]}")
+            logger.error(f"PDF generation error: {str(e)[:200]}")
             # Fallback to DOCX
-            print("   Falling back to DOCX format...")
+            logger.info("   Falling back to DOCX format...")
             try:
                 return await self.generate_docx(resume_data, template_style)
             except Exception as docx_error:
-                print(f"[SYMBOL] DOCX fallback also failed: {str(docx_error)[:200]}")
+                logger.error(f"DOCX fallback also failed: {str(docx_error)[:200]}")
                 raise Exception(f"Failed to generate resume: {str(e)}")
     
     def _add_section(self, doc, title: str, content: str, config: Dict):

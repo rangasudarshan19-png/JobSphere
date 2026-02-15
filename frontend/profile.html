@@ -70,6 +70,86 @@
             font-size: 3rem;
             margin-bottom: 10px;
         }
+        /* My Review section */
+        .my-review-card {
+            background: rgba(15, 20, 50, 0.6);
+            border: 1px solid rgba(99, 102, 241, 0.15);
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 15px;
+        }
+        .my-review-stars {
+            color: #f59e0b;
+            font-size: 1.25rem;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+        .my-review-title {
+            font-size: 1.0625rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+        .my-review-text {
+            color: rgba(255,255,255,0.65);
+            font-size: 0.9375rem;
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+        .my-review-meta {
+            font-size: 0.8125rem;
+            color: rgba(255,255,255,0.35);
+        }
+        .my-review-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+        .star-rating-input {
+            display: flex;
+            gap: 4px;
+            cursor: pointer;
+        }
+        .star-rating-input .star {
+            font-size: 2rem;
+            color: rgba(255,255,255,0.15);
+            transition: color 0.15s;
+            cursor: pointer;
+            user-select: none;
+        }
+        .star-rating-input .star.active { color: #f59e0b; }
+        .star-rating-input .star:hover, .star-rating-input .star.hover { color: #fbbf24; }
+        .review-form .form-group { margin-bottom: 1.25rem; }
+        .review-form label {
+            display: block;
+            margin-bottom: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: rgba(255,255,255,0.7);
+        }
+        .review-form input, .review-form textarea {
+            width: 100%;
+            padding: 0.625rem 0.875rem;
+            background: rgba(15, 20, 50, 0.8);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 0.9375rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+        .review-form input:focus, .review-form textarea:focus {
+            outline: none;
+            border-color: rgba(99, 102, 241, 0.5);
+        }
+        .review-form textarea { min-height: 100px; resize: vertical; }
+        .review-char-count {
+            text-align: right;
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.3);
+            margin-top: 4px;
+        }
+        .review-modal .modal-content { max-width: 480px; }
     </style>
 </head>
 <body>
@@ -88,7 +168,7 @@
     <div class="container" style="margin-top: 80px; padding-bottom: 60px;">
         <!-- Profile Header -->
         <div class="profile-header">
-            <div class="avatar">👤</div>
+            <div class="avatar"></div>
             <h1 style="margin-bottom: 5px;" id="profileName">Loading...</h1>
             <p class="text-secondary" id="profileEmail">Loading...</p>
         </div>
@@ -99,7 +179,7 @@
                 <!-- Personal Information -->
                 <div class="profile-section">
                     <div class="section-header">
-                        <h3>👤 Personal Information</h3>
+                        <h3>Personal Information</h3>
                         <button class="btn btn-secondary btn-sm" onclick="editPersonalInfo()">Edit</button>
                     </div>
                     
@@ -122,7 +202,7 @@
                 <!-- Account Settings -->
                 <div class="profile-section">
                     <div class="section-header">
-                        <h3>🔒 Account Settings</h3>
+                        <h3>Account Settings</h3>
                     </div>
                     
                     <div class="form-group">
@@ -147,13 +227,13 @@
                 <!-- Resume Data -->
                 <div class="profile-section">
                     <div class="section-header">
-                        <h3>📄 Resume</h3>
+                        <h3>Resume</h3>
                         <button class="btn btn-secondary btn-sm" onclick="window.location.href='ai-resume-builder.html'">Upload Resume</button>
                     </div>
                     
                     <div id="resumeSection">
                         <div class="empty-state">
-                            <div class="empty-state-icon">📄</div>
+                            <div class="empty-state-icon"></div>
                             <p>No resume uploaded yet</p>
                             <p class="text-secondary" style="font-size: 0.9rem;">Upload your resume to automatically fill your profile</p>
                             <button class="btn btn-primary" style="margin-top: 15px;" onclick="window.location.href='ai-resume-builder.html'">Upload Resume</button>
@@ -164,23 +244,111 @@
                 <!-- Quick Actions -->
                 <div class="profile-section">
                     <div class="section-header">
-                        <h3>⚡ Quick Actions</h3>
+                        <h3>Quick Actions</h3>
                     </div>
                     
                     <div style="display: flex; flex-direction: column; gap: 10px;">
                         <button class="btn btn-secondary" onclick="window.location.href='ai-resume-builder.html'" style="justify-content: flex-start;">
-                            📄 Build Resume
+                            Build Resume
                         </button>
                         <button class="btn btn-secondary" onclick="window.location.href='job-matching.html'" style="justify-content: flex-start;">
-                            🎯 Find Matching Jobs
+                            Find Matching Jobs
                         </button>
                         <button class="btn btn-secondary" onclick="window.location.href='dashboard.html'" style="justify-content: flex-start;">
-                            📊 View Applications
+                            View Applications
                         </button>
                         <button class="btn btn-secondary" onclick="window.location.href='analytics.html'" style="justify-content: flex-start;">
-                            📈 View Analytics
+                            View Analytics
                         </button>
                     </div>
+                </div>
+
+                <!-- My Review -->
+                <div class="profile-section" id="my-review">
+                    <div class="section-header">
+                        <h3>My Review</h3>
+                        <button class="btn btn-secondary btn-sm" id="reviewActionBtn" onclick="openReviewModal()">Write a Review</button>
+                    </div>
+                    
+                    <div id="myReviewDisplay">
+                        <div class="empty-state" id="noReviewState">
+                            <div class="empty-state-icon">&#9733;</div>
+                            <p>You haven't written a review yet</p>
+                            <p class="text-secondary" style="font-size: 0.9rem;">Share your experience with JobSphere to help other job seekers</p>
+                            <button class="btn btn-primary" style="margin-top: 15px;" onclick="openReviewModal()">Write a Review</button>
+                        </div>
+                        <div id="existingReview" style="display:none">
+                            <div class="my-review-card">
+                                <div class="my-review-stars" id="myReviewStars"></div>
+                                <div class="my-review-title" id="myReviewTitle"></div>
+                                <div class="my-review-text" id="myReviewText"></div>
+                                <div class="my-review-meta" id="myReviewMeta"></div>
+                                <div class="my-review-actions">
+                                    <button class="btn btn-secondary btn-sm" onclick="openReviewModal()">Edit Review</button>
+                                    <button class="btn btn-ghost btn-sm" style="color:#ef4444;" onclick="confirmDeleteReview()">Delete Review</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review Modal -->
+    <div id="reviewModal" class="modal-overlay review-modal" onclick="if(event.target===this)closeReviewModal()">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="reviewModalTitle">Write a Review</h3>
+                <button class="modal-close" onclick="closeReviewModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form class="review-form" id="reviewForm" onsubmit="submitReview(event)">
+                    <div class="form-group">
+                        <label>Rating</label>
+                        <div class="star-rating-input" id="starRatingInput">
+                            <span class="star" data-value="1" onclick="setRating(1)" onmouseenter="hoverRating(1)" onmouseleave="resetHover()">&#9733;</span>
+                            <span class="star" data-value="2" onclick="setRating(2)" onmouseenter="hoverRating(2)" onmouseleave="resetHover()">&#9733;</span>
+                            <span class="star" data-value="3" onclick="setRating(3)" onmouseenter="hoverRating(3)" onmouseleave="resetHover()">&#9733;</span>
+                            <span class="star" data-value="4" onclick="setRating(4)" onmouseenter="hoverRating(4)" onmouseleave="resetHover()">&#9733;</span>
+                            <span class="star" data-value="5" onclick="setRating(5)" onmouseenter="hoverRating(5)" onmouseleave="resetHover()">&#9733;</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="reviewTitle">Title</label>
+                        <input type="text" id="reviewTitle" placeholder="Summarize your experience" maxlength="200" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reviewContent">Your Review</label>
+                        <textarea id="reviewContent" placeholder="Share what you liked about JobSphere..." maxlength="2000" required oninput="updateCharCount()"></textarea>
+                        <div class="review-char-count"><span id="charCount">0</span>/2000</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="reviewName">Display Name (optional)</label>
+                        <input type="text" id="reviewName" placeholder="Your name (defaults to your profile name)" maxlength="100">
+                    </div>
+                    <input type="hidden" id="editReviewId" value="">
+                    <div style="display:flex;gap:0.75rem;justify-content:flex-end;margin-top:1.5rem">
+                        <button type="button" class="btn btn-secondary" onclick="closeReviewModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="reviewSubmitBtn">Submit Review</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteReviewModal" class="modal-overlay" onclick="if(event.target===this)closeDeleteModal()">
+        <div class="modal-content" style="max-width:400px">
+            <div class="modal-header">
+                <h3>Delete Review</h3>
+                <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="color:rgba(255,255,255,0.7);margin-bottom:1.5rem">Are you sure you want to delete your review? This action cannot be undone.</p>
+                <div style="display:flex;gap:0.75rem;justify-content:flex-end">
+                    <button class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+                    <button class="btn btn-primary" style="background:#ef4444" onclick="deleteReview()" id="deleteConfirmBtn">Delete</button>
                 </div>
             </div>
         </div>
@@ -283,24 +451,24 @@
             if (normalized.contact) {
                 html += '<h4 style="margin-bottom: 15px;">Personal Information</h4>';
                 html += '<div style="padding: 15px; background: var(--bg-darker); border-radius: 8px; margin-bottom: 20px;">';
-                if (normalized.contact.full_name) html += `<p><strong>Name:</strong> ${normalized.contact.full_name}</p>`;
-                if (normalized.contact.email) html += `<p><strong>Email:</strong> ${normalized.contact.email}</p>`;
-                if (normalized.contact.phone) html += `<p><strong>Phone:</strong> ${normalized.contact.phone}</p>`;
-                if (normalized.contact.location) html += `<p><strong>Location:</strong> ${normalized.contact.location}</p>`;
-                if (normalized.contact.linkedin) html += `<p><strong>LinkedIn:</strong> ${normalized.contact.linkedin}</p>`;
+                if (normalized.contact.full_name) html += `<p><strong>Name:</strong> ${Toast.escape(normalized.contact.full_name)}</p>`;
+                if (normalized.contact.email) html += `<p><strong>Email:</strong> ${Toast.escape(normalized.contact.email)}</p>`;
+                if (normalized.contact.phone) html += `<p><strong>Phone:</strong> ${Toast.escape(normalized.contact.phone)}</p>`;
+                if (normalized.contact.location) html += `<p><strong>Location:</strong> ${Toast.escape(normalized.contact.location)}</p>`;
+                if (normalized.contact.linkedin) html += `<p><strong>LinkedIn:</strong> ${Toast.escape(normalized.contact.linkedin)}</p>`;
                 html += '</div>';
             }
             
             if (normalized.summary) {
                 html += '<h4 style="margin-bottom: 15px;">Professional Summary</h4>';
-                html += `<p class="text-secondary" style="margin-bottom: 20px;">${normalized.summary}</p>`;
+                html += `<p class="text-secondary" style="margin-bottom: 20px;">${Toast.escape(normalized.summary)}</p>`;
             }
             
             if (normalized.skills && normalized.skills.length > 0) {
                 html += '<h4 style="margin-bottom: 15px;">Skills</h4>';
                 html += '<div style="margin-bottom: 20px;">';
                 normalized.skills.forEach(skill => {
-                    html += `<span class="skill-tag">${skill}</span>`;
+                    html += `<span class="skill-tag">${Toast.escape(skill)}</span>`;
                 });
                 html += '</div>';
             }
@@ -309,13 +477,13 @@
                 html += '<h4 style="margin-bottom: 15px;">Experience</h4>';
                 normalized.experience.forEach(exp => {
                     html += '<div class="experience-item">';
-                    html += `<h5>${exp.title || exp.position || 'Position'}</h5>`;
+                    html += `<h5>${Toast.escape(exp.title || exp.position || 'Position')}</h5>`;
                     const company = exp.company || exp.organization || 'Company';
                     const duration = exp.duration || exp.period || `${exp.start_date || ''} ${exp.end_date ? ' - ' + exp.end_date : ''}`.trim();
-                    html += `<p class="text-secondary">${company}${duration ? ' • ' + duration : ''}</p>`;
-                    if (exp.description) html += `<p class="text-muted">${Array.isArray(exp.description) ? exp.description.join(' ') : exp.description}</p>`;
+                    html += `<p class="text-secondary">${Toast.escape(company)}${duration ? ' \u2022 ' + Toast.escape(duration) : ''}</p>`;
+                    if (exp.description) html += `<p class="text-muted">${Array.isArray(exp.description) ? exp.description.map(d => Toast.escape(d)).join(' ') : Toast.escape(exp.description)}</p>`;
                     if (exp.achievements && Array.isArray(exp.achievements)) {
-                        html += `<p class="text-muted">${exp.achievements.join(' ')}</p>`;
+                        html += `<p class="text-muted">${exp.achievements.map(a => Toast.escape(a)).join(' ')}</p>`;
                     }
                     html += '</div>';
                 });
@@ -325,10 +493,10 @@
                 html += '<h4 style="margin-bottom: 15px;">Education</h4>';
                 normalized.education.forEach(edu => {
                     html += '<div class="experience-item">';
-                    html += `<h5>${edu.degree || 'Degree'}</h5>`;
+                    html += `<h5>${Toast.escape(edu.degree || 'Degree')}</h5>`;
                     const inst = edu.institution || edu.school || 'Institution';
                     const year = edu.graduation_date || edu.year || '';
-                    html += `<p class="text-secondary">${inst}${year ? ' • ' + year : ''}</p>`;
+                    html += `<p class="text-secondary">${Toast.escape(inst)}${year ? ' \u2022 ' + Toast.escape(year) : ''}</p>`;
                     html += '</div>';
                 });
             }
@@ -409,16 +577,16 @@
                 `
                     <div class="form-group">
                         <label class="form-label">Full Name</label>
-                        <input type="text" class="form-control" id="editFullName" value="${currentUser?.full_name || ''}">
+                        <input type="text" class="form-control" id="editFullName" value="${Toast.escape(currentUser?.full_name || '')}">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Phone</label>
-                        <input type="tel" class="form-control" id="editPhone" value="${currentUser?.phone || ''}">
+                        <input type="tel" class="form-control" id="editPhone" value="${Toast.escape(currentUser?.phone || '')}">
                     </div>
                 `,
                 [
-                    { text: 'Cancel', class: 'btn-secondary', onclick: 'Modal.hide()' },
-                    { text: 'Save', class: 'btn-primary', onclick: 'savePersonalInfo()' }
+                    { text: 'Cancel', class: 'btn-secondary', handler: () => Modal.hide() },
+                    { text: 'Save', class: 'btn-primary', handler: () => savePersonalInfo() }
                 ]
             );
         }
@@ -484,8 +652,8 @@
                     </div>
                 `,
                 [
-                    { text: 'Cancel', class: 'btn-secondary', onclick: 'Modal.hide()' },
-                    { text: 'Update Password', class: 'btn-primary', onclick: 'updatePassword()' }
+                    { text: 'Cancel', class: 'btn-secondary', handler: () => Modal.hide() },
+                    { text: 'Update Password', class: 'btn-primary', handler: () => updatePassword() }
                 ]
             );
         }
@@ -534,12 +702,6 @@
                 
                 Loading.hide();
                 Toast.show('Password changed successfully!', 'success');
-                document.getElementById('currentPassword').value = '';
-                document.getElementById('newPassword').value = '';
-                document.getElementById('confirmPassword').value = '';
-                
-                Loading.hide();
-                Toast.show('Password updated successfully!', 'success');
             } catch (error) {
                 Loading.hide();
                 console.error('Failed to update password:', error);
@@ -547,9 +709,18 @@
             }
         }
 
-        function toggleEmailNotifications() {
+        async function toggleEmailNotifications() {
             const enabled = document.getElementById('emailNotifications').checked;
-            Toast.show(enabled ? 'Email notifications enabled' : 'Email notifications disabled', 'success');
+            try {
+                const res = await Auth.fetchWithAuth(`${API_BASE}/api/notifications/preferences`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ email_enabled: enabled })
+                });
+                if (res.ok) Toast.show(enabled ? 'Email notifications enabled' : 'Email notifications disabled', 'success');
+                else Toast.show('Failed to update preference', 'error');
+            } catch {
+                Toast.show('Failed to update preference', 'error');
+            }
         }
 
         function handleLogout() {
@@ -559,6 +730,224 @@
 
         // Load profile on page load
         document.addEventListener('DOMContentLoaded', loadProfile);
+
+        // ── Review Management ──
+        const REVIEWS_API = `${API_BASE}/api/reviews`;
+        let selectedRating = 0;
+        let myReview = null;
+
+        function renderStars(rating) {
+            let s = '';
+            for (let i = 1; i <= 5; i++) s += i <= rating ? '\u2605' : '\u2606';
+            return s;
+        }
+
+        function setRating(val) {
+            selectedRating = val;
+            document.querySelectorAll('#starRatingInput .star').forEach((star, i) => {
+                star.classList.toggle('active', i < val);
+            });
+        }
+
+        function hoverRating(val) {
+            document.querySelectorAll('#starRatingInput .star').forEach((star, i) => {
+                star.classList.toggle('hover', i < val);
+            });
+        }
+
+        function resetHover() {
+            document.querySelectorAll('#starRatingInput .star').forEach(star => star.classList.remove('hover'));
+        }
+
+        function updateCharCount() {
+            const len = document.getElementById('reviewContent').value.length;
+            document.getElementById('charCount').textContent = len;
+        }
+
+        function formatReviewDate(iso) {
+            if (!iso) return '';
+            const d = new Date(iso);
+            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        async function loadMyReview() {
+            try {
+                const token = Auth.getToken();
+                if (!token) return;
+
+                const resp = await fetch(REVIEWS_API + '/mine', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                const noReview = document.getElementById('noReviewState');
+                const existing = document.getElementById('existingReview');
+                const actionBtn = document.getElementById('reviewActionBtn');
+
+                if (resp.ok) {
+                    const data = await resp.json();
+                    myReview = data.review;
+
+                    if (myReview) {
+                        noReview.style.display = 'none';
+                        existing.style.display = 'block';
+                        actionBtn.textContent = 'Edit Review';
+                        document.getElementById('myReviewStars').textContent = renderStars(myReview.rating);
+                        document.getElementById('myReviewTitle').textContent = myReview.title;
+                        document.getElementById('myReviewText').textContent = myReview.content;
+                        document.getElementById('myReviewMeta').innerHTML =
+                            (myReview.reviewer_name ? Toast.escape(myReview.reviewer_name) + ' &middot; ' : '') +
+                            formatReviewDate(myReview.created_at);
+                    } else {
+                        noReview.style.display = 'block';
+                        existing.style.display = 'none';
+                        actionBtn.textContent = 'Write a Review';
+                    }
+                } else if (resp.status === 404) {
+                    myReview = null;
+                    noReview.style.display = 'block';
+                    existing.style.display = 'none';
+                    actionBtn.textContent = 'Write a Review';
+                }
+            } catch (err) {
+                console.error('Error loading review:', err);
+            }
+        }
+
+        function openReviewModal() {
+            const modal = document.getElementById('reviewModal');
+            const title = document.getElementById('reviewModalTitle');
+            const submitBtn = document.getElementById('reviewSubmitBtn');
+
+            if (myReview) {
+                title.textContent = 'Edit Your Review';
+                submitBtn.textContent = 'Update Review';
+                document.getElementById('editReviewId').value = myReview.id;
+                document.getElementById('reviewTitle').value = myReview.title;
+                document.getElementById('reviewContent').value = myReview.content;
+                document.getElementById('reviewName').value = myReview.reviewer_name || '';
+                setRating(myReview.rating);
+                updateCharCount();
+            } else {
+                title.textContent = 'Write a Review';
+                submitBtn.textContent = 'Submit Review';
+                document.getElementById('editReviewId').value = '';
+                document.getElementById('reviewForm').reset();
+                setRating(0);
+                document.getElementById('charCount').textContent = '0';
+            }
+
+            modal.classList.add('show');
+        }
+
+        function closeReviewModal() {
+            document.getElementById('reviewModal').classList.remove('show');
+        }
+
+        async function submitReview(e) {
+            e.preventDefault();
+
+            if (selectedRating === 0) { Toast.show('Please select a star rating', 'warning'); return; }
+
+            const titleVal = document.getElementById('reviewTitle').value.trim();
+            const contentVal = document.getElementById('reviewContent').value.trim();
+            const nameVal = document.getElementById('reviewName').value.trim();
+            const editId = document.getElementById('editReviewId').value;
+
+            if (titleVal.length < 3) { Toast.show('Title must be at least 3 characters', 'warning'); return; }
+            if (contentVal.length < 10) { Toast.show('Review must be at least 10 characters', 'warning'); return; }
+
+            const submitBtn = document.getElementById('reviewSubmitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = editId ? 'Updating...' : 'Submitting...';
+
+            try {
+                const url = editId ? `${REVIEWS_API}/${editId}` : REVIEWS_API;
+                const method = editId ? 'PUT' : 'POST';
+                const body = { rating: selectedRating, title: titleVal, content: contentVal };
+                if (nameVal) body.reviewer_name = nameVal;
+
+                const resp = await fetch(url, {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + Auth.getToken()
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                if (resp.status === 409) {
+                    Toast.show('You already have a review. Edit it instead.', 'warning');
+                    closeReviewModal();
+                    await loadMyReview();
+                    return;
+                }
+
+                if (!resp.ok) {
+                    const err = await resp.json().catch(() => ({}));
+                    throw new Error(err.detail || 'Failed to submit review');
+                }
+
+                Toast.show(editId ? 'Review updated!' : 'Review submitted!', 'success');
+                closeReviewModal();
+                await loadMyReview();
+            } catch (err) {
+                Toast.show(err.message, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = editId ? 'Update Review' : 'Submit Review';
+            }
+        }
+
+        function confirmDeleteReview() {
+            document.getElementById('deleteReviewModal').classList.add('show');
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteReviewModal').classList.remove('show');
+        }
+
+        async function deleteReview() {
+            if (!myReview) return;
+
+            const deleteBtn = document.getElementById('deleteConfirmBtn');
+            deleteBtn.disabled = true;
+            deleteBtn.textContent = 'Deleting...';
+
+            try {
+                const resp = await fetch(`${REVIEWS_API}/${myReview.id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': 'Bearer ' + Auth.getToken() }
+                });
+
+                if (!resp.ok) {
+                    const err = await resp.json().catch(() => ({}));
+                    throw new Error(err.detail || 'Failed to delete review');
+                }
+
+                Toast.show('Review deleted successfully', 'success');
+                myReview = null;
+                closeDeleteModal();
+                await loadMyReview();
+            } catch (err) {
+                Toast.show(err.message, 'error');
+            } finally {
+                deleteBtn.disabled = false;
+                deleteBtn.textContent = 'Delete';
+            }
+        }
+
+        // Load review after profile loads
+        document.addEventListener('DOMContentLoaded', () => {
+            // Small delay to let profile load first
+            setTimeout(loadMyReview, 500);
+            // Scroll to review section if hash is #my-review
+            if (window.location.hash === '#my-review') {
+                setTimeout(() => {
+                    const el = document.getElementById('my-review');
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 800);
+            }
+        });
     </script>
 </body>
 </html>

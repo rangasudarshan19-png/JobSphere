@@ -76,17 +76,17 @@ class OTPService:
             if mark_verified:
                 # Mark as verified but keep in storage for password reset
                 stored_data['verified'] = True
-                logger.info(f"[SYMBOL] OTP verified and marked for {email}")
+                logger.info(f"OTP verified and marked for {email}")
             else:
                 # Success - remove OTP (for registration flow)
                 del self.otp_storage[email]
-                logger.info(f"[SYMBOL] OTP verified successfully for {email}")
+                logger.info(f"OTP verified successfully for {email}")
             return True, ""
         else:
             # Increment attempts
             stored_data['attempts'] += 1
             remaining = self.max_attempts - stored_data['attempts']
-            logger.warning(f"[SYMBOL] Invalid OTP for {email}. Attempts remaining: {remaining}")
+            logger.warning(f"Invalid OTP for {email}. Attempts remaining: {remaining}")
             return False, f"Invalid OTP. {remaining} attempts remaining."
     
     def is_otp_verified(self, email: str) -> bool:
@@ -125,7 +125,7 @@ class OTPService:
         """
         if email in self.otp_storage:
             del self.otp_storage[email]
-            logger.info(f"[EMOJI]️ OTP verification completed and cleaned up for {email}")
+            logger.info(f"OTP verification completed and cleaned up for {email}")
     
     def resend_otp(self, email: str) -> Optional[str]:
         """
@@ -153,7 +153,7 @@ class OTPService:
         
         for email in expired_emails:
             del self.otp_storage[email]
-            logger.info(f"[EMOJI]️ Cleaned up expired OTP for {email}")
+            logger.info(f"Cleaned up expired OTP for {email}")
         
         return len(expired_emails)
 

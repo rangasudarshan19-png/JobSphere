@@ -6,6 +6,9 @@ import os
 import json
 import google.generativeai as genai
 from typing import Dict, List
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Configure Gemini AI
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -21,10 +24,10 @@ class JobMatcher:
         self.ai_enabled = GEMINI_API_KEY is not None
         if self.ai_enabled:
             try:
-                self.model = genai.GenerativeModel('gemini-2.0-flash-exp')
-                print("[SYMBOL] Job Matcher initialized with Gemini AI")
+                self.model = genai.GenerativeModel('gemini-2.0-flash')
+                logger.info("Job Matcher initialized with Gemini AI")
             except Exception as e:
-                print(f"[SYMBOL] Failed to initialize Gemini model: {e}")
+                logger.error(f"Failed to initialize Gemini model: {e}")
                 self.ai_enabled = False
     
     async def calculate_match(self, profile: Dict, job: Dict) -> Dict:
@@ -48,47 +51,62 @@ class JobMatcher:
             return self._fallback_match(profile, job)
         
         try:
-            prompt = f"""
-            You are an expert job matcher. Analyze how well this candidate's profile matches the job posting.
+            import json as _json
+            # Format list fields properly for the prompt
+            skills_str = ', '.join(profile.get('skills', [])) or 'Not provided'
+            titles_str = ', '.join(profile.get('job_titles', [])) or 'Not provided'
+            education_str = ', '.join(profile.get('education', [])) or 'Not provided'
+            certs_str = ', '.join(profile.get('certifications', [])) or 'Not provided'
             
-            CANDIDATE PROFILE:
-            - Skills: {', '.join(profile.get('skills', []))}
-            - Experience: {profile.get('experience_years', 0)} years
-            - Job Titles: {', '.join(profile.get('job_titles', []))}
-            - Location Preference: {profile.get('location_preference', 'Not specified')}
-            - Education: {', '.join(profile.get('education', []))}
-            - Certifications: {', '.join(profile.get('certifications', []))}
+            # Handle requirements - could be list or string
+            requirements = job.get('requirements', [])
+            if isinstance(requirements, list):
+                requirements_str = ', '.join(str(r) for r in requirements) if requirements else 'Not specified'
+            else:
+                requirements_str = str(requirements)[:800] if requirements else 'Not specified'
             
-            JOB POSTING:
-            - Title: {job.get('title', '')}
-            - Company: {job.get('company', '')}
-            - Location: {job.get('location', '')}
-            - Type: {job.get('job_type', '')}
-            - Description: {job.get('description', '')[:500]}...
-            - Requirements: {job.get('requirements', [])}
+            description = job.get('description', '')
+            desc_str = description[:1200] if description else 'Not provided'
             
-            Calculate a match score (0-100) based on:
-            1. Skills overlap (40% weight) - How many required skills does candidate have?
-            2. Experience level (30% weight) - Does experience match job seniority?
-            3. Job title relevance (20% weight) - Do previous titles align?
-            4. Location fit (10% weight) - Does location match preferences?
-            
-            Return ONLY valid JSON in this exact format:
-            {{
-                "score": 85,
-                "matching_skills": ["skill1", "skill2", "skill3"],
-                "missing_skills": ["skill4", "skill5"],
-                "reason": "Brief explanation of why this is a good/bad match",
-                "confidence": "high"
-            }}
-            
-            Be realistic with scores:
-            - 90-100: Excellent match, highly qualified
-            - 80-89: Strong match, well qualified
-            - 70-79: Good match, qualified with minor gaps
-            - 60-69: Fair match, some gaps
-            - Below 60: Weak match, significant gaps
-            """
+            prompt = f"""You are a senior technical recruiter evaluating candidate-job fit (2026). Analyze how well this candidate matches the job posting.
+
+CANDIDATE PROFILE:
+- Skills: {skills_str}
+- Experience: {profile.get('experience_years', 0)} years
+- Previous Titles: {titles_str}
+- Location Preference: {profile.get('location_preference', 'Not specified')}
+- Education: {education_str}
+- Certifications: {certs_str}
+
+JOB POSTING:
+- Title: {job.get('title', '')}
+- Company: {job.get('company', '')}
+- Location: {job.get('location', '')}
+- Type: {job.get('job_type', '')}
+- Description: {desc_str}
+- Requirements: {requirements_str}
+
+SCORING CRITERIA (apply these weights):
+1. Skills overlap (40%): Count matching skills vs. required skills. Partial credit for related skills (e.g., "React" partially matches "Frontend Development").
+2. Experience level (30%): Does years of experience match seniority implied by the title? Senior typically needs 5+, Mid 2-5, Junior 0-2.
+3. Title relevance (20%): Do previous titles indicate progression toward this role? Consider lateral moves and career pivots.
+4. Location fit (10%): Remote jobs match everyone. On-site must match candidate's location/preference.
+
+SCORING GUIDELINES (be realistic):
+- 90-100: Excellent match - candidate exceeds most requirements
+- 80-89: Strong match - candidate meets core requirements with minor gaps
+- 70-79: Good match - qualified but has some skill gaps to bridge
+- 60-69: Fair match - notable gaps but transferable experience
+- Below 60: Weak match - significant gaps in requirements
+
+Return ONLY valid JSON:
+{{
+    "score": 85,
+    "matching_skills": ["skill1", "skill2", "skill3"],
+    "missing_skills": ["skill4", "skill5"],
+    "reason": "Brief explanation of the match assessment",
+    "confidence": "high"
+}}"""
             
             response = self.model.generate_content(
                 prompt,
@@ -111,23 +129,21 @@ class JobMatcher:
             
             match_data = json.loads(result_text)
             
-            print(f"[SYMBOL] Match score calculated: {match_data.get('score', 0)}% for {job.get('title', 'Unknown')}")
-            
+            logger.info(f"Match score calculated: {match_data.get('score', 0)}% for {job.get('title', 'Unknown')}")
             return match_data
             
         except json.JSONDecodeError as e:
-            print(f"[SYMBOL] Failed to parse AI response: {e}")
+            logger.error(f"Failed to parse AI response: {e}")
             return self._fallback_match(profile, job)
         except Exception as e:
-            print(f"[SYMBOL] Match calculation failed: {e}")
+            logger.error(f"Match calculation failed: {e}")
             return self._fallback_match(profile, job)
     
     def _fallback_match(self, profile: Dict, job: Dict) -> Dict:
         """
         Fallback matching using simple keyword overlap (when AI unavailable)
         """
-        print("[SYMBOL]️ Using fallback matching (keyword-based)")
-        
+        logger.info("Using fallback matching (keyword-based)")
         profile_skills = set(s.lower() for s in profile.get('skills', []))
         
         # Extract keywords from job description and requirements
@@ -170,8 +186,7 @@ class JobMatcher:
         matched_jobs = []
         
         for i, job in enumerate(jobs):
-            print(f"[EMOJI] Matching job {i+1}/{len(jobs)}: {job.get('title', 'Unknown')}")
-            
+            logger.info(f"Matching job {i+1}/{len(jobs)}: {job.get('title', 'Unknown')}")
             match_data = await self.calculate_match(profile, job)
             score = match_data.get('score', 0)
             
@@ -188,8 +203,7 @@ class JobMatcher:
         # Sort by score (highest first)
         matched_jobs.sort(key=lambda x: x['match_score'], reverse=True)
         
-        print(f"[SYMBOL] Found {len(matched_jobs)} jobs with {min_score}%+ match score")
-        
+        logger.info(f"Found {len(matched_jobs)} jobs with {min_score}%+ match score")
         return matched_jobs
 
 

@@ -5,6 +5,9 @@ from pydantic import BaseModel
 from app.routers.auth import get_current_user_optional
 from app.models.user import User
 from app.services.job_search_aggregator import JobSearchAggregator
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/jobs", tags=["Jobs"])
 job_search_aggregator = JobSearchAggregator()
@@ -35,10 +38,9 @@ async def search_jobs(
         location = request.location or "Remote"
 
         if current_user:
-            print(f"[EMOJI] Job search by user {current_user.id}: '{query}' in {location}")
+            logger.info(f"Job search by user {current_user.id}: '{query}' in {location}")
         else:
-            print(f"[EMOJI] Job search (anonymous): '{query}' in {location}")
-
+            logger.info(f"Job search (anonymous): '{query}' in {location}")
         result = await job_search_aggregator.search_jobs(
             query=query,
             location=location,
@@ -57,7 +59,7 @@ async def search_jobs(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[SYMBOL] Job search endpoint error: {e}")
+        logger.error(f"Job search endpoint error: {e}")
         raise HTTPException(
             status_code=500,
             detail=f"Job search failed: {str(e)}"

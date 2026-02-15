@@ -104,7 +104,7 @@
             background: var(--bg-card);
         }
         .search-box::after {
-            content: '🔍';
+            content: '';
             position: absolute;
             right: 14px;
             top: 50%;
@@ -671,22 +671,22 @@
         <!-- Statistics Dashboard -->
         <div class="stats-dashboard" id="statsDashboard">
             <div class="stat-card">
-                <div class="stat-icon">📊</div>
+                <div class="stat-icon"></div>
                 <div class="stat-value" id="totalApps">0</div>
                 <div class="stat-label">Total Applications</div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">🎯</div>
+                <div class="stat-icon"></div>
                 <div class="stat-value" id="activeApps">0</div>
                 <div class="stat-label">In Progress</div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">🎤</div>
+                <div class="stat-icon"></div>
                 <div class="stat-value" id="interviewApps">0</div>
                 <div class="stat-label">Interviews</div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">🎉</div>
+                <div class="stat-icon"></div>
                 <div class="stat-value" id="offerApps">0</div>
                 <div class="stat-label">Offers</div>
             </div>
@@ -705,7 +705,7 @@
                     <option value="company-desc">Company Z-A</option>
                 </select>
                 <button class="btn-add" onclick="openAddModal()">
-                    ➕ Add Application
+                    Add Application
                 </button>
             </div>
         </div>
@@ -716,11 +716,11 @@
         </div>
 
         <div id="emptyState" class="text-center" style="padding: 80px 20px; display: none;">
-            <div style="font-size: 4rem; margin-bottom: 24px; animation: float 3s ease-in-out infinite;">📋</div>
+            <div style="font-size: 4rem; margin-bottom: 24px; animation: float 3s ease-in-out infinite;"></div>
             <h3 style="margin-bottom: 12px;">No applications yet</h3>
             <p class="text-secondary" style="margin-bottom: 32px;">Start tracking your job search journey by adding your first application!</p>
             <button class="btn btn-primary" style="padding: 14px 32px;" onclick="openAddModal()">
-                ➕ Add Your First Application
+                Add Your First Application
             </button>
         </div>
     </div>
@@ -807,7 +807,7 @@
 
                 <div class="form-check">
                     <input type="checkbox" class="form-check-input" id="sendNotifications" checked />
-                    <label class="form-check-label" for="sendNotifications">📧 Send email notifications</label>
+                    <label class="form-check-label" for="sendNotifications">Send email notifications</label>
                 </div>
 
                 <div class="modal-actions">
@@ -837,11 +837,11 @@
 
         // Column definitions
         const columns = [
-            { id: 'applied', title: 'Applied', icon: '📝', status: 'applied' },
-            { id: 'screening', title: 'Screening', icon: '👀', status: 'screening' },
-            { id: 'interview', title: 'Interview', icon: '🎤', status: 'interview' },
-            { id: 'offer', title: 'Offer', icon: '🎉', status: 'offer' },
-            { id: 'rejected', title: 'Rejected', icon: '❌', status: 'rejected' }
+            { id: 'applied', title: 'Applied', icon: '', status: 'applied' },
+            { id: 'screening', title: 'Screening', icon: '', status: 'screening' },
+            { id: 'interview', title: 'Interview', icon: '', status: 'interview' },
+            { id: 'offer', title: 'Offer', icon: '', status: 'offer' },
+            { id: 'rejected', title: 'Rejected', icon: '', status: 'rejected' }
         ];
 
         let applicationsData = [];
@@ -940,39 +940,39 @@
                                     <div class="empty-text">No applications<br/>in this stage</div>
                                 </div>
                             ` : appsInColumn.map(app => `
-                                <div class="kanban-card" draggable="true" data-id="${app.id}" data-status="${app.status}"
+                                <div class="kanban-card" draggable="true" data-id="${app.id}" data-status="${Toast.escape(app.status)}"
                                      ondragstart="drag(event)" ondragend="dragEnd(event)">
                                     <div class="card-header">
                                         <div style="flex: 1;">
-                                            <div class="card-company">${app.company_name || 'Company'}</div>
-                                            <div class="card-position">${app.position || 'Position'}</div>
+                                            <div class="card-company">${Toast.escape(app.company_name || 'Company')}</div>
+                                            <div class="card-position">${Toast.escape(app.position || 'Position')}</div>
                                         </div>
                                         <div class="card-actions">
                                             <button class="card-btn edit-btn" onclick="editApplication(${app.id})" title="Edit">
-                                                ✏️
+                                                Edit
                                             </button>
                                             <button class="card-btn delete-btn" onclick="deleteApplication(${app.id})" title="Delete">
-                                                🗑️
+                                                Delete
                                             </button>
                                         </div>
                                     </div>
                                     <div class="card-meta">
                                         ${app.applied_date ? `
                                             <div class="card-meta-item">
-                                                <span class="card-icon">📅</span>
+                                                <span class="card-icon"></span>
                                                 ${new Date(app.applied_date).toLocaleDateString()}
                                             </div>
                                         ` : ''}
                                         ${app.location ? `
                                             <div class="card-meta-item">
-                                                <span class="card-icon">📍</span>
-                                                ${app.location}
+                                                <span class="card-icon"></span>
+                                                ${Toast.escape(app.location)}
                                             </div>
                                         ` : ''}
                                         ${app.salary ? `
                                             <div class="card-meta-item">
-                                                <span class="card-icon">💰</span>
-                                                ${app.salary}
+                                                <span class="card-icon"></span>
+                                                ${Toast.escape(app.salary)}
                                             </div>
                                         ` : ''}
                                     </div>

@@ -10,6 +10,9 @@ import json
 import random
 import time
 import requests
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Optional provider clients (lazy initialization)
 OPENAI_CLIENT = None
@@ -40,7 +43,7 @@ def _load_gemini_keys():
             else:
                 break
         
-        print(f"[KEY] Loaded {len(GEMINI_API_KEYS)} Gemini API key(s)")
+        logger.info(f"[KEY] Loaded {len(GEMINI_API_KEYS)} Gemini API key(s)")
     return GEMINI_API_KEYS
 
 def _get_next_gemini_key():
@@ -52,7 +55,7 @@ def _get_next_gemini_key():
     
     key = keys[CURRENT_GEMINI_INDEX]
     CURRENT_GEMINI_INDEX = (CURRENT_GEMINI_INDEX + 1) % len(keys)
-    print(f"[EMOJI] Using Gemini key #{CURRENT_GEMINI_INDEX + 1}/{len(keys)}")
+    logger.info(f"Using Gemini key #{CURRENT_GEMINI_INDEX + 1}/{len(keys)}")
     return key
 
 def _init_openai():
@@ -63,9 +66,9 @@ def _init_openai():
             api_key = os.getenv('OPENAI_API_KEY')
             if api_key:
                 OPENAI_CLIENT = OpenAI(api_key=api_key)
-                print("[SYMBOL] OpenAI client ready")
+                logger.info("OpenAI client ready")
         except Exception as e:
-            print(f"[SYMBOL]️ OpenAI init failed: {e}")
+            logger.error(f"OpenAI init failed: {e}")
     return OPENAI_CLIENT
 
 def _init_groq():
@@ -76,9 +79,9 @@ def _init_groq():
             api_key = os.getenv('GROQ_API_KEY')
             if api_key:
                 GROQ_CLIENT = Groq(api_key=api_key)
-                print("[SYMBOL] Groq client ready")
+                logger.info("Groq client ready")
         except Exception as e:
-            print(f"[SYMBOL]️ Groq init failed: {e}")
+            logger.error(f"Groq init failed: {e}")
     return GROQ_CLIENT
 
 def _init_hf():
@@ -90,9 +93,9 @@ def _init_hf():
             if api_key:
                 # Use a general instruct model (adjust as needed)
                 HF_CLIENT = InferenceClient(token=api_key, model="meta-llama/Meta-Llama-3-8B-Instruct")
-                print("[SYMBOL] HuggingFace client ready")
+                logger.info("HuggingFace client ready")
         except Exception as e:
-            print(f"[SYMBOL]️ HuggingFace init failed: {e}")
+            logger.error(f"HuggingFace init failed: {e}")
     return HF_CLIENT
 
 def _init_cohere():
@@ -103,9 +106,9 @@ def _init_cohere():
             api_key = os.getenv('COHERE_API_KEY')
             if api_key:
                 COHERE_CLIENT = cohere.Client(api_key, timeout=15)  # 15 second timeout
-                print("[SYMBOL] Cohere client ready")
+                logger.info("Cohere client ready")
         except Exception as e:
-            print(f"[SYMBOL]️ Cohere init failed: {e}")
+            logger.error(f"Cohere init failed: {e}")
     return COHERE_CLIENT
 
 def _call_xai_grok(prompt: str) -> str:
@@ -133,9 +136,9 @@ def _call_xai_grok(prompt: str) -> str:
             # Attempt to extract content path similar to OpenAI
             return data.get('choices', [{}])[0].get('message', {}).get('content', '')
         else:
-            print(f"[SYMBOL]️ Grok API non-200 status: {resp.status_code} {resp.text[:200]}")
+            logger.info(f"Grok API non-200 status: {resp.status_code} {resp.text[:200]}")
     except Exception as e:
-        print(f"[SYMBOL]️ Grok call failed: {e}")
+        logger.error(f"Grok call failed: {e}")
     return ""
 
 # Try to import Gemini AI
@@ -144,8 +147,7 @@ try:
     GEMINI_AVAILABLE = True
 except ImportError:
     GEMINI_AVAILABLE = False
-    print("[SYMBOL]️ google-generativeai not installed. Using template questions.")
-
+    logger.info("google-generativeai not installed. Using template questions.")
 class InterviewQuestionGenerator:
     """Generate interview questions using Gemini AI with multi-account rotation or pattern matching"""
     
@@ -159,15 +161,14 @@ class InterviewQuestionGenerator:
             # Initialize Gemini model with first key
             try:
                 genai.configure(api_key=self.gemini_keys[0])
-                self.ai_model = genai.GenerativeModel('gemini-2.0-flash-exp')
+                self.ai_model = genai.GenerativeModel('gemini-2.0-flash')
                 self.use_ai = True
-                print(f"[SYMBOL] Gemini AI initialized with {len(self.gemini_keys)} account(s) for rotation!")
+                logger.info(f"Gemini AI initialized with {len(self.gemini_keys)} account(s) for rotation!")
             except Exception as e:
-                print(f"[SYMBOL]️ Gemini initialization failed: {e}")
+                logger.error(f"Gemini initialization failed: {e}")
                 self.ai_model = None
         else:
-            print("[INFO]️ No GEMINI_API_KEY found. Using fallback providers.")
-
+            logger.info("[INFO]️ No GEMINI_API_KEY found. Using fallback providers.")
         # Detect availability of other providers for fallback sequence
         # Prioritize OpenRouter as it has better models for interview generation
         self.providers_order = []
@@ -178,8 +179,7 @@ class InterviewQuestionGenerator:
         if os.getenv('COHERE_API_KEY'): self.providers_order.append('cohere')
         if os.getenv('XAI_API_KEY'): self.providers_order.append('xai')
         if os.getenv('HUGGINGFACE_API_KEY'): self.providers_order.append('huggingface')
-        print(f"[EMOJI] AI provider fallback chain: {self.providers_order or ['templates only']}")
-        
+        logger.info(f"AI provider fallback chain: {self.providers_order or ['templates only']}")
         # Common technical keywords and their associated questions
         self.tech_keywords = {
             'python': [
@@ -402,16 +402,16 @@ class InterviewQuestionGenerator:
 
         for provider in self.providers_order:
             try:
-                print(f"\n[EMOJI] Attempting provider: {provider} for {prompt_job_title}")
+                logger.info(f"\nAttempting provider: {provider} for {prompt_job_title}")
                 if provider == 'openrouter':
                     content = self._call_openrouter(job_title, job_description, company_name)
                     if content:
                         parsed = self._parse_questions_json(content)
                         if parsed and len(parsed.get('technical', [])) >= 8:
-                            print(f"[SYMBOL] OpenRouter generated {sum(len(v) for v in parsed.values())} questions successfully!")
+                            logger.info(f"OpenRouter generated {sum(len(v) for v in parsed.values())} questions successfully!")
                             return parsed
                         else:
-                            print(f"[SYMBOL]️ OpenRouter response incomplete or invalid, trying next provider")
+                            logger.info(f"OpenRouter response incomplete or invalid, trying next provider")
                 elif provider == 'gemini' and self.ai_model:
                     return self._generate_with_gemini(job_title, job_description, company_name)
                 elif provider == 'groq':
@@ -444,24 +444,25 @@ class InterviewQuestionGenerator:
                         if parsed: return parsed
             except Exception as e:
                 provider_errors[provider] = f"{type(e).__name__}: {e}"[:180]
-                print(f"[SYMBOL]️ Provider {provider} failed: {provider_errors[provider]}")
-
+                logger.error(f"Provider {provider} failed: {provider_errors[provider]}")
         if provider_errors:
-            print("\n[SYMBOL] All AI providers failed; errors summary:")
+            logger.error("\nAll AI providers failed; errors summary:")
             for p, msg in provider_errors.items():
-                print(f"   - {p}: {msg}")
-        
+                logger.info(f"   - {p}: {msg}")
         # Template-based generation (fallback)
-        print(f"[EMOJI] Using template generation for: {job_title}")
+        logger.info(f"Using template generation for: {job_title}")
         return self._generate_with_templates(job_title, job_description, company_name, num_questions)
 
     # ---- Provider-specific helpers ----
     def _build_core_prompt(self, job_title: str, job_description: str, company_name: str) -> str:
         return (
-            f"Generate structured JSON interview questions for job '{job_title}' at '{company_name or 'Unknown Company'}'. "
-            f"Job description: {job_description[:600] if job_description else 'N/A'}. "
+            f"You are a senior technical interviewer. Generate realistic interview questions for '{job_title}' "
+            f"at '{company_name or 'a leading company'}'. "
+            f"Job description: {job_description[:800] if job_description else 'Not provided — use industry standards for this role'}. "
+            "Extract specific technologies, tools, and skills from the description and tailor every technical question to them. "
+            "Match question difficulty to the seniority implied by the title (e.g., 'Senior' = system design & architecture, 'Junior' = fundamentals). "
             "Return ONLY valid JSON with keys: technical (10 items), behavioral (5 items), company (3 items), general (2 items). "
-            "No explanations, no markdown."
+            "No explanations, no markdown, no code fences."
         )
 
     def _call_cohere(self, job_title: str, job_description: str, company_name: str) -> str:
@@ -483,46 +484,51 @@ class InterviewQuestionGenerator:
             )
             return response.text
         except Exception as e:
-            print(f"[SYMBOL]️ Cohere call failed: {e}")
+            logger.error(f"Cohere call failed: {e}")
             return ""
 
     def _call_openrouter(self, job_title: str, job_description: str, company_name: str) -> str:
         """Call OpenRouter API with better models for interview generation"""
         api_key = os.getenv('OPENROUTER_API_KEY')
         if not api_key:
-            print("[SYMBOL]️ No OpenRouter API key found")
+            logger.info("No OpenRouter API key found")
             return ""
         
         # Build comprehensive prompt
-        prompt = f"""Generate interview questions as valid JSON for this position:
+        prompt = f"""You are a senior hiring manager conducting real interviews (2026). Generate interview questions as valid JSON for this position:
 
 Job Title: {job_title}
 Company: {company_name or 'Not specified'}
-Job Description: {job_description[:800] if job_description else 'Not provided - use industry standards for this role'}
+Job Description: {job_description[:1200] if job_description else 'Not provided - use industry standards for this role'}
 
-Generate UNIQUE, SPECIFIC questions based on the job description. Extract technologies, tools, and skills mentioned.
+INSTRUCTIONS:
+1. Extract specific technologies, tools, certifications, and domain knowledge from the job description
+2. Tailor every technical question to the ACTUAL requirements listed (not generic questions)
+3. Match difficulty to seniority: Senior → architecture & system design; Mid → implementation & best practices; Junior → fundamentals & concepts
+4. Behavioral questions should use situational prompts relevant to THIS role (not generic "tell me about a time")
+5. Each question must be distinct — no rephrasing of the same concept
 
-Return ONLY valid JSON (no markdown, no explanations):
+Return ONLY valid JSON (no markdown, no explanations, no code fences):
 {{
-  "technical": ["10 technical questions based on job requirements"],
-  "behavioral": ["5 behavioral questions for this role"],
-  "company": ["3 questions about the company/role fit"],
-  "general": ["2 general career questions"]
+  "technical": ["10 technical questions directly from job requirements"],
+  "behavioral": ["5 situational questions specific to this role"],
+  "company": ["3 questions about company/role fit"],
+  "general": ["2 career growth questions"]
 }}
 
-Make questions varied and avoid repetition. Timestamp: {int(time.time())}"""
+Variety seed: {int(time.time())}"""
         
         # Try multiple models for best quality
         models_to_try = [
             "deepseek/deepseek-chat",  # Best for technical content
             "meta-llama/llama-3.1-70b-instruct",  # High quality, good reasoning
-            "google/gemini-2.0-flash-exp:free",  # Free Gemini via OpenRouter
+            "google/gemini-2.0-flash:free",  # Free Gemini via OpenRouter
             "meta-llama/llama-3.2-3b-instruct:free"  # Fallback free model
         ]
         
         for model in models_to_try:
             try:
-                print(f"[EMOJI] Trying OpenRouter with model: {model}")
+                logger.info(f"Trying OpenRouter with model: {model}")
                 url = "https://openrouter.ai/api/v1/chat/completions"
                 headers = {
                     "Authorization": f"Bearer {api_key}",
@@ -547,18 +553,18 @@ Make questions varied and avoid repetition. Timestamp: {int(time.time())}"""
                     data = resp.json()
                     content = data.get('choices', [{}])[0].get('message', {}).get('content', '')
                     if content:
-                        print(f"[SYMBOL] OpenRouter ({model}) generated response ({len(content)} chars)")
+                        logger.info(f"OpenRouter ({model}) generated response ({len(content)} chars)")
                         return content
                 else:
-                    print(f"[SYMBOL]️ OpenRouter {model} returned {resp.status_code}: {resp.text[:200]}")
+                    logger.info(f"OpenRouter {model} returned {resp.status_code}: {resp.text[:200]}")
                     # Try next model
                     continue
             except Exception as e:
-                print(f"[SYMBOL]️ OpenRouter {model} failed: {e}")
+                logger.error(f"OpenRouter {model} failed: {e}")
                 # Try next model
                 continue
         
-        print("[SYMBOL]️ All OpenRouter models failed")
+        logger.error("All OpenRouter models failed")
         return ""
 
     def _call_openai(self, job_title: str, job_description: str, company_name: str) -> str:
@@ -578,7 +584,7 @@ Make questions varied and avoid repetition. Timestamp: {int(time.time())}"""
             )
             return resp.choices[0].message.content
         except Exception as e:
-            print(f"[SYMBOL]️ OpenAI call failed: {e}")
+            logger.error(f"OpenAI call failed: {e}")
             return ""
 
     def _call_groq(self, job_title: str, job_description: str, company_name: str) -> str:
@@ -598,7 +604,7 @@ Make questions varied and avoid repetition. Timestamp: {int(time.time())}"""
             )
             return resp.choices[0].message.content
         except Exception as e:
-            print(f"[SYMBOL]️ Groq call failed: {e}")
+            logger.error(f"Groq call failed: {e}")
             return ""
 
     def _call_huggingface(self, job_title: str, job_description: str, company_name: str) -> str:
@@ -613,7 +619,7 @@ Make questions varied and avoid repetition. Timestamp: {int(time.time())}"""
                 text += chunk
             return text
         except Exception as e:
-            print(f"[SYMBOL]️ HuggingFace call failed: {e}")
+            logger.error(f"HuggingFace call failed: {e}")
             return ""
 
     def _parse_questions_json(self, raw: str) -> Dict[str, List[str]]:
@@ -640,15 +646,14 @@ Make questions varied and avoid repetition. Timestamp: {int(time.time())}"""
         """Generate questions using Gemini AI"""
         
         # Debug logging
-        print(f"\n{'='*60}")
-        print(f"[EMOJI] GENERATING AI QUESTIONS")
-        print(f"{'='*60}")
-        print(f"Job Title: {job_title}")
-        print(f"Company: {company_name}")
-        print(f"Description Length: {len(job_description)} chars")
-        print(f"Description Preview: {job_description[:200] if job_description else 'None'}...")
-        print(f"{'='*60}\n")
-        
+        logger.info(f"\n{'='*60}")
+        logger.info(f"GENERATING AI QUESTIONS")
+        logger.info(f"{'='*60}")
+        logger.info(f"Job Title: {job_title}")
+        logger.info(f"Company: {company_name}")
+        logger.info(f"Description Length: {len(job_description)} chars")
+        logger.info(f"Description Preview: {job_description[:200] if job_description else 'None'}...")
+        logger.info(f"{'='*60}\n")
         # Detect job type and create appropriate context
         job_title_lower = job_title.lower()
         job_desc_lower = (job_description or "").lower()
@@ -672,100 +677,49 @@ Make questions varied and avoid repetition. Timestamp: {int(time.time())}"""
         import time
         timestamp = int(time.time())
         
-        # Create simplified but explicit prompt
-        prompt = f"""You are a professional technical interviewer conducting an interview. Generate UNIQUE and VARIED questions.
+        # Create comprehensive, role-adaptive prompt
+        prompt = f"""You are a senior hiring manager at a top-tier company conducting a real interview (2026). Generate UNIQUE, SPECIFIC questions tailored to the exact role.
 
-[EMOJI] POSITION DETAILS:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+POSITION DETAILS:
 JOB TITLE: {job_title}
 COMPANY: {company_name if company_name else 'Not specified'}
-
 JOB DESCRIPTION:
-{job_description if job_description and len(job_description.strip()) > 0 else 'Not provided - generate general questions for this role'}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{job_description[:2000] if job_description and len(job_description.strip()) > 0 else 'Not provided - generate industry-standard questions for this role'}
 
-[SYMBOL]️ CRITICAL INSTRUCTIONS:
-1. READ THE JOB DESCRIPTION CAREFULLY - Extract specific requirements, technologies, and responsibilities
-2. Generate questions that are DIRECTLY RELEVANT to what's written in the job description
-3. If job description mentions specific tools/technologies (e.g., Guidewire, Selenium, Python), ASK ABOUT THEM
-4. If job description is empty/minimal, generate industry-standard questions for "{job_title}" role
-5. Generate DIFFERENT questions each time - avoid repetitive patterns
-6. Match the technical depth to the role (junior vs senior)
+INSTRUCTIONS:
+1. READ THE JOB DESCRIPTION CAREFULLY - extract specific technologies, responsibilities, and domain requirements
+2. Every technical question MUST map to a skill, tool, or technology mentioned in the description
+3. If the description is empty/minimal, generate standard questions for "{job_title}" roles
+4. Match depth to seniority: Senior = architecture, system design, trade-offs; Mid = implementation, best practices; Junior = fundamentals, concepts
+5. Generate DIFFERENT questions each time (variety seed: {timestamp % 1000})
 
-[EMOJI] VARIETY SEED: {timestamp % 1000} - Use this to add randomness to your questions
+ROLE-ADAPTIVE EXAMPLES:
+- "Python Developer" + "Django, PostgreSQL" -> Django ORM queries, PostgreSQL indexing, REST API design
+- "DevOps Engineer" + "Kubernetes, Terraform" -> container orchestration, IaC patterns, CI/CD pipelines
+- "Data Scientist" + "PyTorch, SQL" -> model training, feature engineering, SQL window functions
+- "Frontend Developer" + "React, TypeScript" -> component lifecycle, state management, type inference
+- "QA Engineer" + "Selenium, API testing" -> test automation frameworks, API contract testing, defect triage
+- "Project Manager" + "Agile, JIRA" -> sprint planning, stakeholder management, risk mitigation
+{context_note}
 
-EXAMPLES OF CORRECT MATCHING:
-- If title is "Manual Tester" and description mentions "Guidewire" → Ask about Guidewire testing, test case design, bug tracking
-- If title is "Python Developer" and description mentions "Django, PostgreSQL" → Ask about Django ORM, PostgreSQL optimization
-- If title is "QA Engineer" and description mentions "Selenium" → Ask about automation frameworks, Page Object Model
-- If title is "Data Analyst" and description mentions "SQL, Tableau" → Ask about SQL queries, data visualization
+QUESTION DESIGN RULES:
+- DO NOT ask about technologies NOT mentioned in the description (unless the description is empty)
+- DO NOT ask generic "tell me about yourself" questions as technical questions
+- DO ask about specific tools/platforms listed (e.g., if "AWS Lambda" is mentioned, ask about serverless patterns)
+- DO match question style to the role: testing roles get test design questions (not coding); development roles get implementation questions; leadership roles get architecture and decision-making questions
+- DO make each question distinct - no rephrasing the same concept
 
-[EMOJI] YOUR TASK:
+GENERATE EXACTLY 20 QUESTIONS:
 
-STEP 1: ANALYZE THE JOB
-- Job Title: "{job_title}"
-- Job Description Length: {len(job_description) if job_description else 0} characters
-- Key Technologies: Extract from description above (e.g., Guidewire, Python, React, AWS, Selenium, etc.)
-- Role Type: Identify if Testing/QA, Development, Data, DevOps, Management, etc.
-- Seniority: Junior, Mid-level, or Senior based on title
+Technical (10): Questions directly testing skills from the job description. Include tool-specific, concept, and scenario-based questions.
 
-STEP 2: EXTRACT REQUIREMENTS FROM JOB DESCRIPTION
-Look for these in the job description:
-[SYMBOL] Specific tools/platforms (Guidewire, Salesforce, SAP, etc.)
-[SYMBOL] Programming languages (Python, Java, JavaScript, etc.)
-[SYMBOL] Frameworks (React, Django, Spring, etc.)
-[SYMBOL] Testing types (Manual, Automation, API, Performance, etc.)
-[SYMBOL] Methodologies (Agile, Scrum, TDD, BDD, etc.)
-[SYMBOL] Domain knowledge (Finance, Healthcare, E-commerce, etc.)
+Behavioral (5): Situational questions relevant to THIS role (not generic). Use "Describe a situation where..." or "How would you handle..." phrased for the specific domain.
 
-STEP 3: GENERATE TAILORED QUESTIONS
-Create questions that directly test the skills mentioned in the job description.
+Company (3): About {company_name if company_name else 'the company'} - role fit, motivation, and understanding of the business.
 
-[SYMBOL]️ CRITICAL RULES:
-[SYMBOL] DO NOT ask programming/coding questions for MANUAL TESTING roles
-[SYMBOL] DO NOT ask about technologies NOT mentioned in the description
-[SYMBOL] DO NOT use generic template questions - be specific
-[SYMBOL] DO ask about specific tools mentioned (e.g., if "Guidewire" → ask about Guidewire modules)
-[SYMBOL] DO match question difficulty to seniority level
-[SYMBOL] DO generate VARIED questions - avoid patterns
+General (2): Career growth and professional development relevant to this field.
 
-[EMOJI] GENERATE EXACTLY 20 QUESTIONS IN THESE CATEGORIES:
-
-**Technical (10 questions)** - Based on ACTUAL requirements from job description:
-
-IF TESTING/QA ROLE:
-- Test strategy and planning questions
-- Questions about specific testing types mentioned (functional, regression, integration, etc.)
-- Tool-specific questions (JIRA, TestRail, Postman, Selenium - only if mentioned)
-- Defect lifecycle and documentation
-- Test case design techniques (boundary value, equivalence partitioning)
-- If "Guidewire" in description: Ask about PolicyCenter/BillingCenter/ClaimCenter testing workflows
-- If "API testing" mentioned: Ask about REST APIs, HTTP methods, status codes, Postman
-- If automation mentioned: Then ask about frameworks (Selenium, Cypress, TestNG)
-- If NO automation: Focus on manual testing, exploratory testing, test documentation
-
-IF DEVELOPMENT ROLE:
-- Language-specific questions (Python, Java, JavaScript - from description)
-- Framework questions (React, Django, Spring - from description)
-- Database questions (SQL, PostgreSQL, MongoDB - from description)
-- Architecture and design patterns
-- Code quality and best practices
-
-**Behavioral (5 questions)** - Scenarios relevant to THIS specific role:
-- For testers: Bug discovery, working with developers, test planning under pressure
-- For developers: Code reviews, technical debt, debugging complex issues
-- For leads: Team management, conflict resolution, technical decisions
-
-**Company (3 questions)** - About {company_name if company_name else 'the company'}:
-- Why this company?
-- What do you know about our products/services?
-- How does this role align with your career goals?
-
-**General (2 questions)** - Career and motivation:
-- Career progression and goals
-- Learning approach and staying updated
-
-RETURN ONLY THIS JSON (no extra text, no markdown):
+RETURN ONLY THIS JSON (no extra text, no markdown, no code fences):
 {{
   "technical": ["q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8", "q9", "q10"],
   "behavioral": ["q1", "q2", "q3", "q4", "q5"],
@@ -777,11 +731,10 @@ RETURN ONLY THIS JSON (no extra text, no markdown):
         for attempt in range(len(self.gemini_keys)):
             try:
                 api_key = _get_next_gemini_key()
-                print(f"[EMOJI] Attempting Gemini account {attempt + 1}/{len(self.gemini_keys)}...")
-                
+                logger.info(f"Attempting Gemini account {attempt + 1}/{len(self.gemini_keys)}...")
                 # Initialize model with current key
                 genai.configure(api_key=api_key)
-                model = genai.GenerativeModel('gemini-2.0-flash-exp')
+                model = genai.GenerativeModel('gemini-2.0-flash')
                 
                 # Generate content with timeout
                 generation_config = genai.types.GenerationConfig(
@@ -793,12 +746,10 @@ RETURN ONLY THIS JSON (no extra text, no markdown):
                     generation_config=generation_config,
                     request_options={"timeout": 15}  # 15 second timeout
                 )
-                print(f"[SYMBOL] Gemini API responded successfully!")
-                
+                logger.info(f"Gemini API responded successfully!")
                 # Clean the response text
                 text = response.text.strip()
-                print(f"[EMOJI] Response length: {len(text)} chars")
-                
+                logger.info(f"Response length: {len(text)} chars")
                 # Remove markdown code blocks if present
                 if text.startswith('```'):
                     # Extract JSON from code block
@@ -821,37 +772,36 @@ RETURN ONLY THIS JSON (no extra text, no markdown):
                     raise ValueError("Invalid JSON structure from AI")
                 
                 # Debug: Show sample questions
-                print(f"\n[SYMBOL] Generated {sum(len(q) for q in questions_dict.values())} AI-powered questions!")
-                print(f"[EMOJI] Sample Technical Questions:")
+                logger.info(f"\nGenerated {sum(len(q) for q in questions_dict.values())} AI-powered questions!")
+                logger.info(f"Sample Technical Questions:")
                 for i, q in enumerate(questions_dict.get('technical', [])[:3], 1):
-                    print(f"   {i}. {q[:80]}...")
-                print(f"{'='*60}\n")
-                
+                    logger.info(f"   {i}. {q[:80]}...")
+                logger.info(f"{'='*60}\n")
                 return questions_dict
                 
             except json.JSONDecodeError as e:
-                print(f"[SYMBOL] JSON parse error with account {attempt + 1}: {e}")
+                logger.error(f"JSON parse error with account {attempt + 1}: {e}")
                 if attempt < len(self.gemini_keys) - 1:
-                    print("⏭️ Trying next Gemini account...")
+                    logger.info("⏭️ Trying next Gemini account...")
                     continue
                 else:
-                    print("[SYMBOL] All Gemini accounts failed JSON parsing")
+                    logger.error("All Gemini accounts failed JSON parsing")
                     raise
                     
             except Exception as e:
                 error_msg = str(e).lower()
                 # Check if it's a quota/rate limit error
                 if '429' in error_msg or 'quota' in error_msg or 'rate limit' in error_msg or 'resourceexhausted' in error_msg:
-                    print(f"[SYMBOL]️ Gemini account {attempt + 1} quota exceeded: {str(e)[:100]}")
+                    logger.info(f"Gemini account {attempt + 1} quota exceeded: {str(e)[:100]}")
                     if attempt < len(self.gemini_keys) - 1:
-                        print("[EMOJI] Rotating to next Gemini account...")
+                        logger.info("Rotating to next Gemini account...")
                         continue
                     else:
-                        print("[SYMBOL] All Gemini accounts exhausted")
+                        logger.info("All Gemini accounts exhausted")
                         raise
                 else:
                     # Other error - don't retry
-                    print(f"[SYMBOL] Gemini error: {type(e).__name__}: {str(e)[:200]}")
+                    logger.error(f"Gemini error: {type(e).__name__}: {str(e)[:200]}")
                     raise
         
         # If we get here, all accounts failed
@@ -913,15 +863,15 @@ RETURN ONLY THIS JSON (no extra text, no markdown):
         
         # Choose appropriate questions based on role
         if is_testing:
-            print(f"[EMOJI] Detected TESTING role - using testing-specific questions")
+            logger.info(f"Detected TESTING role - using testing-specific questions")
             questions['technical'].extend(random.sample(testing_questions, min(6, len(testing_questions))))
             
             if has_guidewire:
-                print(f"[EMOJI] Guidewire mentioned - adding Guidewire questions")
+                logger.info(f"Guidewire mentioned - adding Guidewire questions")
                 questions['technical'].extend(random.sample(guidewire_questions, min(3, len(guidewire_questions))))
             
             if has_api_testing:
-                print(f"[EMOJI] API testing mentioned - adding API questions")
+                logger.info(f"API testing mentioned - adding API questions")
                 questions['technical'].extend(random.sample(api_testing_questions, min(2, len(api_testing_questions))))
         else:
             # For development roles, use keyword extraction
@@ -965,7 +915,7 @@ RETURN ONLY THIS JSON (no extra text, no markdown):
             questions['company'].append(f"Why do you want to work at {company_name}?")
             questions['company'].append(f"How do you think you can contribute to {company_name}'s success?")
         
-        print(f"[EMOJI] Generated {sum(len(q) for q in questions.values())} randomized template questions")
+        logger.info(f"Generated {sum(len(q) for q in questions.values())} randomized template questions")
         return questions
     
     def generate_tips(self, job_title: str) -> List[str]:
@@ -1004,54 +954,122 @@ RETURN ONLY THIS JSON (no extra text, no markdown):
         """
         if self.use_ai and self.ai_model:
             try:
-                prompt = f"""You are an expert resume reviewer and career counselor. Analyze the following resume and provide comprehensive feedback.
+                # Truncate to avoid token overflow
+                truncated_resume = resume_content[:8000] if len(resume_content) > 8000 else resume_content
+                prompt = f"""You are a certified professional resume writer (CPRW) and ATS optimization expert with 15+ years of experience reviewing resumes across all industries (2026).
 
 RESUME:
-{resume_content}
+{truncated_resume}
 
-Please provide a detailed analysis covering:
+Provide a comprehensive, structured analysis covering:
 
-1. **Overall Score (0-100)**: Rate the resume overall and explain the score
+1. **Overall Score (0-100)**: Rate the resume and justify with specific observations
 
-2. **Strengths**: What are the strong points of this resume?
+2. **Strengths** (3-5 items): What the candidate does well - cite specific sections or phrases
 
-3. **Weaknesses**: What areas need improvement?
+3. **Weaknesses** (3-5 items): What needs improvement - be specific, not generic
 
 4. **Content Analysis**:
-   - Is the professional summary compelling?
-   - Are work experiences quantified with achievements?
-   - Are skills relevant and well-organized?
-   - Is education information complete?
+   - Professional summary: Is it compelling and tailored, or generic?
+   - Work experience: Are achievements quantified (metrics, percentages, dollar amounts)?
+   - Skills: Are they relevant, organized, and ATS-optimized?
+   - Education: Complete and properly formatted?
 
-5. **Formatting & Structure**:
-   - Is the layout professional and easy to read?
-   - Are sections well-organized?
-   - Is the length appropriate?
+5. **ATS Optimization** (critical for modern job search):
+   - Keyword density for likely target roles
+   - Formatting issues that break ATS parsers (tables, images, headers/footers)
+   - Missing standard section headers
+   - Score estimate: Would this pass a typical ATS? (Yes/Likely/Unlikely)
 
-6. **ATS Optimization**:
-   - Does it use relevant keywords?
-   - Will it pass Applicant Tracking Systems?
-   - Suggestions for better keyword usage
+6. **Actionable Improvements** (5-7 specific suggestions):
+   - For each suggestion, provide a BEFORE/AFTER example using actual content from the resume
+   - Prioritize by impact (highest impact first)
 
-7. **Specific Improvements**: Provide 5-7 actionable suggestions with examples
+7. **Red Flags**: Any gaps, inconsistencies, or concerning elements
 
-8. **Industry Alignment**: How well does this resume align with current industry standards?
+8. **Next Steps**: Top 3 actions the candidate should take immediately
 
-9. **Red Flags**: Any concerning elements that should be addressed?
-
-10. **Next Steps**: What should the candidate do to improve this resume?
-
-Please be constructive, specific, and provide examples where possible. Format your response in a clear, organized manner."""
+Be constructive, specific, and reference actual content from the resume. Avoid generic advice.
+Format your response in clear markdown with headers and bullet points."""
 
                 response = self.ai_model.generate_content(prompt)
                 return response.text
                 
             except Exception as e:
-                print(f"AI resume analysis error: {e}")
-                return self._generate_template_analysis(resume_content)
-        else:
-            return self._generate_template_analysis(resume_content)
+                logger.error(f"Gemini resume analysis error: {e}")
+                logger.info("Trying OpenRouter for resume analysis...")
+        
+        # Try OpenRouter as fallback
+        try:
+            truncated_resume = resume_content[:5000] if len(resume_content) > 5000 else resume_content
+            analysis = self._analyze_resume_with_openrouter(truncated_resume)
+            if analysis and len(analysis) > 100:
+                return analysis
+        except Exception as e:
+            logger.error(f"OpenRouter resume analysis failed: {e}")
+        
+        # Last resort - template analysis
+        return self._generate_template_analysis(resume_content)
     
+    def _analyze_resume_with_openrouter(self, resume_content: str) -> str:
+        """Analyze resume using OpenRouter API as fallback"""
+        api_key = os.getenv('OPENROUTER_API_KEY')
+        if not api_key:
+            raise Exception("No OpenRouter API key")
+        
+        prompt = f"""You are a certified professional resume writer (CPRW) and ATS optimization expert.
+
+RESUME:
+{resume_content}
+
+Provide a comprehensive analysis covering:
+1. **Overall Score (0-100)**: Rate and justify
+2. **Strengths** (3-5 items): What's done well
+3. **Weaknesses** (3-5 items): What needs improvement
+4. **Content Analysis**: Summary, experience, skills, education quality
+5. **ATS Optimization**: Keyword density, formatting issues, pass estimate
+6. **Actionable Improvements** (5-7 specific BEFORE/AFTER suggestions)
+7. **Red Flags**: Gaps or inconsistencies
+8. **Next Steps**: Top 3 immediate actions
+
+Be constructive and specific. Format in clear markdown."""
+
+        import requests
+        models_to_try = ["deepseek/deepseek-chat", "meta-llama/llama-3.1-70b-instruct"]
+        
+        for model in models_to_try:
+            try:
+                response = requests.post(
+                    "https://openrouter.ai/api/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {api_key}",
+                        "Content-Type": "application/json",
+                        "HTTP-Referer": "https://jobsphere.app",
+                        "X-Title": "JobSphere Resume Analysis"
+                    },
+                    json={
+                        "model": model,
+                        "messages": [
+                            {"role": "system", "content": "You are an expert resume reviewer and ATS optimization specialist."},
+                            {"role": "user", "content": prompt}
+                        ],
+                        "temperature": 0.6,
+                        "max_tokens": 3000,
+                    },
+                    timeout=30
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    analysis = data.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
+                    if analysis and len(analysis) > 100:
+                        logger.info(f"OpenRouter ({model}) resume analysis: {len(analysis)} chars")
+                        return analysis
+            except Exception as e:
+                logger.error(f"OpenRouter ({model}) resume analysis failed: {str(e)[:100]}")
+                continue
+        
+        raise Exception("All OpenRouter models failed for resume analysis")
+
     def _generate_template_analysis(self, resume_content: str) -> str:
         """Generate template-based resume analysis when AI is not available"""
         
@@ -1081,25 +1099,25 @@ Please be constructive, specific, and provide examples where possible. Format yo
         
         score = min(score, 100)
         
-        analysis = f"""[EMOJI] **Resume Analysis Results**
+        analysis = f"""**Resume Analysis Results**
 
 **Overall Score: {score}/100**
 
-{'[SYMBOL] Good' if score >= 75 else '[SYMBOL]️ Needs Improvement' if score >= 60 else '[SYMBOL] Significant Improvement Needed'}
+{'Good' if score >= 75 else 'Needs Improvement' if score >= 60 else 'Significant Improvement Needed'}
 
 ---
 
-**[EMOJI] Structure Analysis**
+**Structure Analysis**
 
-[SYMBOL] Contact Information: {'Present' if (has_email and has_phone) else 'Missing or Incomplete'}
-[SYMBOL] Professional Summary: {'Present' if sections['summary'] else 'Missing'}
-[SYMBOL] Work Experience: {'Present' if sections['experience'] else 'Missing'}
-[SYMBOL] Education: {'Present' if sections['education'] else 'Missing'}
-[SYMBOL] Skills Section: {'Present' if sections['skills'] else 'Missing'}
+Contact Information: {'Present' if (has_email and has_phone) else 'Missing or Incomplete'}
+Professional Summary: {'Present' if sections['summary'] else 'Missing'}
+Work Experience: {'Present' if sections['experience'] else 'Missing'}
+Education: {'Present' if sections['education'] else 'Missing'}
+Skills Section: {'Present' if sections['skills'] else 'Missing'}
 
 ---
 
-**[EMOJI] Strengths Identified:**
+**Strengths Identified:**
 
 {f'• Strong quantifiable achievements ({achievement_count} found)' if achievement_count >= 3 else ''}
 {f'• Comprehensive resume with all major sections' if sum(sections.values()) >= 4 else ''}
@@ -1107,7 +1125,7 @@ Please be constructive, specific, and provide examples where possible. Format yo
 
 ---
 
-**[SYMBOL]️ Areas for Improvement:**
+**Areas for Improvement:**
 
 {f'• Add contact information (email and phone)' if not (has_email and has_phone) else ''}
 {f'• Include a professional summary at the top' if not sections['summary'] else ''}
@@ -1116,7 +1134,7 @@ Please be constructive, specific, and provide examples where possible. Format yo
 
 ---
 
-**[EMOJI] Specific Recommendations:**
+**Specific Recommendations:**
 
 1. **Quantify Your Achievements**: 
    - Instead of: "Improved system performance"
@@ -1151,7 +1169,7 @@ Please be constructive, specific, and provide examples where possible. Format yo
 
 ---
 
-**[EMOJI] ATS (Applicant Tracking System) Tips:**
+**ATS (Applicant Tracking System) Tips:**
 
 • Use standard fonts (Arial, Calibri, Times New Roman)
 • Avoid headers/footers, tables, and text boxes
@@ -1161,7 +1179,7 @@ Please be constructive, specific, and provide examples where possible. Format yo
 
 ---
 
-**[EMOJI] Next Steps:**
+**Next Steps:**
 
 1. Review each section and ensure it's complete and well-formatted
 2. Add 3-5 quantifiable achievements to each role
@@ -1171,7 +1189,7 @@ Please be constructive, specific, and provide examples where possible. Format yo
 
 ---
 
-**[EMOJI] Pro Tip:** Keep multiple versions of your resume tailored to different types of roles or industries. This increases your chances of passing ATS screening and catching the recruiter's attention.
+**Pro Tip:** Keep multiple versions of your resume tailored to different types of roles or industries. This increases your chances of passing ATS screening and catching the recruiter's attention.
 
 {'Note: AI analysis is not available. This is a template-based analysis. For more detailed feedback, please ensure Gemini AI is properly configured.' if not self.use_ai else ''}"""
 
@@ -1187,87 +1205,151 @@ Please be constructive, specific, and provide examples where possible. Format yo
         Returns:
             Detailed answer with explanation, key points, and examples
         """
-        print(f"\n{'='*70}")
-        print(f"[EMOJI] ANSWER GENERATION WITH MULTI-PROVIDER FALLBACK")
-        print(f"{'='*70}")
-        print(f"Question: {question}")
-        print(f"Available providers: {self.providers_order}")
-        print(f"{'='*70}\n")
-        
+        logger.info(f"\n{'='*70}")
+        logger.info(f"ANSWER GENERATION WITH MULTI-PROVIDER FALLBACK")
+        logger.info(f"{'='*70}")
+        logger.info(f"Question: {question}")
+        logger.info(f"Available providers: {self.providers_order}")
+        logger.info(f"{'='*70}\n")
         provider_errors = {}
         
         # Try each provider in order
         for provider in self.providers_order:
             try:
-                print(f"\n[EMOJI] Attempting {provider} for answer generation...")
-                
-                if provider == 'gemini' and self.ai_model:
+                logger.info(f"\nAttempting {provider} for answer generation...")
+                if provider == 'openrouter':
+                    answer = self._generate_answer_with_openrouter(question)
+                    if answer and len(answer) > 50:
+                        logger.info(f"{provider.upper()} SUCCESS! Answer: {len(answer)} chars")
+                        return answer
+
+                elif provider == 'gemini' and self.ai_model:
                     answer = self._generate_answer_with_gemini(question)
                     if answer and len(answer) > 50:
-                        print(f"[SYMBOL] {provider.upper()} SUCCESS! Answer: {len(answer)} chars")
+                        logger.info(f"{provider.upper()} SUCCESS! Answer: {len(answer)} chars")
                         return answer
                         
                 elif provider == 'cohere':
                     answer = self._generate_answer_with_cohere(question)
                     if answer and len(answer) > 50:
-                        print(f"[SYMBOL] {provider.upper()} SUCCESS! Answer: {len(answer)} chars")
+                        logger.info(f"{provider.upper()} SUCCESS! Answer: {len(answer)} chars")
                         return answer
                         
                 elif provider == 'openai':
                     answer = self._generate_answer_with_openai(question)
                     if answer and len(answer) > 50:
-                        print(f"[SYMBOL] {provider.upper()} SUCCESS! Answer: {len(answer)} chars")
+                        logger.info(f"{provider.upper()} SUCCESS! Answer: {len(answer)} chars")
                         return answer
                         
                 elif provider == 'groq':
                     answer = self._generate_answer_with_groq(question)
                     if answer and len(answer) > 50:
-                        print(f"[SYMBOL] {provider.upper()} SUCCESS! Answer: {len(answer)} chars")
+                        logger.info(f"{provider.upper()} SUCCESS! Answer: {len(answer)} chars")
                         return answer
                         
                 elif provider == 'xai':
                     answer = self._generate_answer_with_xai(question)
                     if answer and len(answer) > 50:
-                        print(f"[SYMBOL] {provider.upper()} SUCCESS! Answer: {len(answer)} chars")
+                        logger.info(f"{provider.upper()} SUCCESS! Answer: {len(answer)} chars")
                         return answer
                         
                 elif provider == 'huggingface':
                     answer = self._generate_answer_with_huggingface(question)
                     if answer and len(answer) > 50:
-                        print(f"[SYMBOL] {provider.upper()} SUCCESS! Answer: {len(answer)} chars")
+                        logger.info(f"{provider.upper()} SUCCESS! Answer: {len(answer)} chars")
                         return answer
                         
             except Exception as e:
                 error_msg = f"{type(e).__name__}: {str(e)}"[:200]
                 provider_errors[provider] = error_msg
-                print(f"[SYMBOL]️ {provider} failed: {error_msg}")
-        
+                logger.error(f"{provider} failed: {error_msg}")
         # All providers failed - use template-based answer
-        print("\n[SYMBOL] All AI providers failed for answer generation")
+        logger.error("\nAll AI providers failed for answer generation")
         for p, err in provider_errors.items():
-            print(f"   - {p}: {err}")
-        
-        print("[EMOJI] Falling back to template-based answer generation")
+            logger.info(f"   - {p}: {err}")
+        logger.info("Falling back to last-resort answer generation")
         return self._generate_template_answer(question)
     
+    def _generate_answer_with_openrouter(self, question: str) -> str:
+        """Generate answer using OpenRouter API"""
+        api_key = os.getenv('OPENROUTER_API_KEY')
+        if not api_key:
+            raise Exception("No OpenRouter API key")
+        
+        prompt = f"""You are a senior professional with 8+ years of industry experience. Answer this interview question as if YOU are the candidate in a real interview.
+
+Question: {question}
+
+RULES:
+1. Answer in FIRST PERSON ("I", "In my experience", "At my previous company")
+2. Minimum 200 words with substantive, specific content
+3. For behavioral questions: Use STAR format (Situation, Task, Action, Result) with a realistic scenario
+4. For technical questions: Explain the concept clearly, then provide a concrete example or code snippet
+5. Include 2-3 quantified achievements (e.g., "reduced latency by 40%", "managed a team of 6")
+6. Format with markdown: **bold** for key terms, bullet points for lists
+7. End with a concise takeaway
+
+CRITICAL: Give the ACTUAL ANSWER as the candidate - do NOT give tips or advice on how to answer.
+
+Answer:"""
+
+        import requests
+        models_to_try = [
+            "deepseek/deepseek-chat",
+            "meta-llama/llama-3.1-70b-instruct",
+        ]
+        
+        for model in models_to_try:
+            try:
+                response = requests.post(
+                    "https://openrouter.ai/api/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {api_key}",
+                        "Content-Type": "application/json",
+                        "HTTP-Referer": "https://jobsphere.app",
+                        "X-Title": "JobSphere Interview Prep"
+                    },
+                    json={
+                        "model": model,
+                        "messages": [
+                            {"role": "system", "content": "You are an experienced professional answering interview questions as the candidate."},
+                            {"role": "user", "content": prompt}
+                        ],
+                        "temperature": 0.8,
+                        "max_tokens": 2048,
+                    },
+                    timeout=20
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    answer = data.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
+                    if answer and len(answer) > 50:
+                        logger.info(f"OpenRouter ({model}) answer: {len(answer)} chars")
+                        return answer
+            except Exception as e:
+                logger.error(f"OpenRouter ({model}) answer failed: {str(e)[:100]}")
+                continue
+        
+        raise Exception("All OpenRouter models failed for answer generation")
+
     def _generate_answer_with_gemini(self, question: str) -> str:
         """Generate answer using Gemini AI with account rotation"""
         
         # Enhanced prompt that demands specific, complete answers
-        prompt = f"""You are a senior interview coach. Answer this interview question as if YOU are the candidate being interviewed. Give a complete, specific answer.
+        prompt = f"""You are a senior professional with 8+ years of experience interviewing at top companies. Answer this interview question as if YOU are the candidate in a real interview.
 
 Question: {question}
 
-Requirements:
-[SYMBOL] Answer AS the candidate (first person: "I would...", "In my experience...")
-[SYMBOL] Give COMPLETE answer (minimum 200 words)
-[SYMBOL] Include 2-3 specific examples or scenarios
-[SYMBOL] For behavioral questions: Use full STAR format with real scenario
-[SYMBOL] For technical questions: Explain concept + give code example or detailed use case
-[SYMBOL] Format with markdown: **bold** for emphasis, bullet points for lists
-[SYMBOL] End with a brief summary or key takeaway
+ANSWER RULES:
+1. Speak in FIRST PERSON ("I", "In my experience", "At my previous company")
+2. Minimum 200 words - give a thorough, complete answer
+3. For behavioral questions: Use the STAR format (Situation, Task, Action, Result) with a realistic scenario
+4. For technical questions: Explain the concept clearly, then provide a concrete example or code snippet
+5. Include 2-3 specific, quantified achievements or scenarios (e.g., "reduced latency by 40%", "managed a team of 6")
+6. Format with markdown: **bold** for key terms, bullet points for lists, code blocks for code
+7. End with a concise takeaway or lesson learned
 
-CRITICAL: Do NOT give advice on "how to answer". Give the ACTUAL ANSWER as if you're in the interview.
+CRITICAL: Give the ACTUAL ANSWER as the candidate - do NOT give tips or coaching on how to answer.
 
 Answer:"""
 
@@ -1275,10 +1357,9 @@ Answer:"""
         for attempt in range(len(self.gemini_keys)):
             try:
                 api_key = _get_next_gemini_key()
-                print(f"[EMOJI] Gemini account {attempt + 1}/{len(self.gemini_keys)} for answer...")
-                
+                logger.info(f"Gemini account {attempt + 1}/{len(self.gemini_keys)} for answer...")
                 genai.configure(api_key=api_key)
-                model = genai.GenerativeModel('gemini-2.0-flash-exp')
+                model = genai.GenerativeModel('gemini-2.0-flash')
                 
                 response = model.generate_content(
                     prompt,
@@ -1291,8 +1372,7 @@ Answer:"""
                     }
                 )
                 answer = response.text.strip()
-                print(f"[SYMBOL] Answer generated: {len(answer)} chars")
-                
+                logger.info(f"Answer generated: {len(answer)} chars")
                 if len(answer) < 50:
                     raise Exception("Answer too short")
                 
@@ -1301,15 +1381,15 @@ Answer:"""
             except Exception as e:
                 error_msg = str(e).lower()
                 if '429' in error_msg or 'quota' in error_msg or 'rate limit' in error_msg or 'resourceexhausted' in error_msg:
-                    print(f"[SYMBOL]️ Gemini account {attempt + 1} quota exceeded")
+                    logger.info(f"Gemini account {attempt + 1} quota exceeded")
                     if attempt < len(self.gemini_keys) - 1:
-                        print("[EMOJI] Trying next account...")
+                        logger.info("Trying next account...")
                         continue
                     else:
-                        print("[SYMBOL] All Gemini accounts exhausted for answers")
+                        logger.info("All Gemini accounts exhausted for answers")
                         raise
                 else:
-                    print(f"[SYMBOL] Gemini error: {str(e)[:100]}")
+                    logger.error(f"Gemini error: {str(e)[:100]}")
                     raise
         
         raise Exception("All Gemini accounts failed for answer")
@@ -1331,14 +1411,24 @@ Answer:"""
         style = random.choice(perspectives)
         seed = random.randint(1000, 9999)
         
-        prompt = f"""Answer this interview question as an experienced candidate. Give a complete, unique answer (200+ words).
+        prompt = f"""You are an experienced professional answering in a real job interview. Respond to this question with a complete, authentic answer.
 
 Question: {question}
 
 Style: {style}
+
+RULES:
+- Answer in first person as the candidate ("I", "In my role at...", "When I led...")
+- Minimum 200 words with substantive content
+- Include 2-3 specific scenarios with quantified outcomes (percentages, team sizes, timelines)
+- For behavioral questions: Use STAR format (Situation → Task → Action → Result)
+- For technical questions: Explain the concept, then give a practical implementation example
+- Be authentic and specific — avoid generic platitudes
+- DO NOT give coaching or advice — give the actual answer
+
 Generation ID: {seed}{int(time.time())}
 
-Answer in first person with genuine, specific scenarios. Make it unique and authentic."""
+Answer:"""
         
         response = client.chat(
             model='command-r-08-2024',  # Latest command-r model available
@@ -1421,109 +1511,51 @@ Answer:"""
         return response.strip()
     
     def _generate_template_answer(self, question: str) -> str:
-        """Generate template-based answer for common question patterns"""
+        """Generate a dynamic answer when all AI providers fail - uses Gemini with a simplified prompt as last resort"""
         
-        question_lower = question.lower()
+        # Last-resort attempt with simplified prompt and fresh Gemini key
+        for attempt in range(len(self.gemini_keys)):
+            try:
+                api_key = _get_next_gemini_key()
+                genai.configure(api_key=api_key)
+                model = genai.GenerativeModel('gemini-2.0-flash')
+                
+                simple_prompt = f"""Answer this interview question directly as the candidate in first person. Be specific and give real examples.
+
+Question: {question}
+
+Answer (200+ words):"""
+                
+                response = model.generate_content(
+                    simple_prompt,
+                    generation_config={
+                        'temperature': 0.9,
+                        'max_output_tokens': 1500,
+                    },
+                    request_options={"timeout": 20}
+                )
+                answer = response.text.strip()
+                if len(answer) > 50:
+                    logger.info(f"Last-resort Gemini answer generated: {len(answer)} chars")
+                    return answer
+            except Exception as e:
+                logger.error(f"Last-resort Gemini attempt {attempt + 1} failed: {str(e)[:100]}")
+                continue
         
-        # Check for common question patterns
-        if any(word in question_lower for word in ['tell me about yourself', 'introduce yourself']):
-            return """**Structured Approach:**
+        # Absolute last resort - return a message asking user to retry
+        return f"""**AI Answer Generation Temporarily Unavailable**
 
-Start with your current role and highlight 2-3 key achievements. Then briefly mention your professional background (1-2 previous roles). Finally, explain why you're interested in this position and what you bring to the team.
+We were unable to generate an AI-powered answer for this question at the moment. All AI providers are currently experiencing high demand or rate limits.
 
-**Example Framework:**
-"I'm currently a [Role] at [Company] where I [key achievement]. Before this, I spent [X years] working on [relevant experience]. I'm particularly excited about this opportunity because [specific reason], and I believe my experience in [relevant skill] would contribute significantly to your team."
+**Your Question:** {question}
 
-**Key Tips:**
-- Keep it to 60-90 seconds
-- Focus on professional highlights, not personal life
-- Connect your experience to the role you're applying for
-- End with enthusiasm about the opportunity"""
+**Please try again in a few moments.** The AI service typically recovers within 30-60 seconds.
 
-        elif any(word in question_lower for word in ['strength', 'strengths']):
-            return """**How to Answer:**
-
-Choose a strength that's directly relevant to the job. Support it with specific examples and quantifiable results.
-
-**Structure:**
-1. State the strength clearly
-2. Explain why it's valuable in your field
-3. Give a concrete example with results
-4. Connect it to the role you're applying for
-
-**Example:**
-"One of my key strengths is problem-solving. In my previous role, I identified a bottleneck in our deployment process and implemented an automated solution that reduced deployment time by 60%. I believe this analytical approach would be valuable for tackling the challenges mentioned in this role."
-
-**Tips:**
-- Be specific, not generic ("I'm good at communication" is too vague)
-- Use the STAR method (Situation, Task, Action, Result)
-- Choose strengths mentioned in the job description"""
-
-        elif any(word in question_lower for word in ['weakness', 'weaknesses', 'areas of improvement']):
-            return """**The Right Approach:**
-
-Choose a real weakness (not a strength in disguise), but show how you're actively working to improve it.
-
-**Structure:**
-1. Name the weakness honestly
-2. Explain the context or why it's challenging
-3. Describe specific steps you're taking to improve
-4. Share progress you've made
-
-**Example:**
-"I've found that I can sometimes focus too much on perfecting details, which affected my efficiency. I've been working on this by setting clear priorities and timeboxing tasks. For example, I now use the 80/20 rule - getting 80% done quickly, then evaluating if the remaining 20% is truly necessary. This has helped me deliver projects faster while maintaining quality."
-
-**Avoid:**
-- "I'm a perfectionist" or "I work too hard" (clichés)
-- Critical weaknesses for the role
-- Not showing self-awareness or improvement efforts"""
-
-        elif 'handle' in question_lower and any(word in question_lower for word in ['conflict', 'disagreement', 'difficult']):
-            return """**Use the STAR Method:**
-
-**Situation:** Briefly set the context
-**Task:** Explain your responsibility
-**Action:** Detail the specific steps you took
-**Result:** Share the positive outcome
-
-**Example Answer Framework:**
-"In my previous role, I had a disagreement with a colleague about [specific situation]. Instead of letting it escalate, I scheduled a one-on-one meeting to understand their perspective. I actively listened to their concerns and found that we actually wanted the same outcome but had different approaches. We compromised by [specific solution], which led to [positive result]. This experience taught me the importance of direct communication and finding common ground."
-
-**Key Principles:**
-- Stay professional and focus on resolution
-- Show emotional intelligence and empathy
-- Emphasize positive outcomes
-- Demonstrate your communication skills
-- Never badmouth colleagues"""
-
-        else:
-            # Generic answer structure
-            return """**Suggested Approach:**
-
-**1. Understand the Question:**
-Take a moment to think about what they're really asking. Are they testing your technical knowledge, problem-solving ability, or cultural fit?
-
-**2. Structure Your Answer:**
-- Start with a clear, direct response
-- Provide specific examples from your experience
-- Explain your thought process
-- End with results or lessons learned
-
-**3. Use the STAR Method:**
-- **Situation:** Set the context
-- **Task:** Explain your responsibility
-- **Action:** Detail what you did
-- **Result:** Share the outcome
-
-**4. Keep It Relevant:**
-Connect your answer to the role and company. Show how your experience applies to their needs.
-
-**5. Be Concise:**
-Aim for 1-2 minutes. Provide enough detail to be credible, but don't ramble.
-
-**Pro Tip:** Practice your answer out loud. This helps you refine it and builds confidence for the actual interview."""
-
-        return answer
+**In the meantime, here's a quick framework to structure your own answer:**
+- Open with a direct response to the question
+- Support with 1-2 specific examples from your experience
+- Use the STAR method (Situation, Task, Action, Result) for behavioral questions
+- End with a key takeaway or lesson learned"""
     
     def generate_cover_letter(
         self,
@@ -1546,20 +1578,19 @@ Aim for 1-2 minutes. Provide enough detail to be credible, but don't ramble.
         Returns:
             Complete formatted cover letter
         """
-        print(f"\n{'='*70}")
-        print(f"[EMOJI] COVER LETTER GENERATION CALLED")
-        print(f"{'='*70}")
-        print(f"Company: {company_name}")
-        print(f"Position: {job_title}")
-        print(f"Tone: {tone}")
-        print(f"use_ai: {self.use_ai}")
-        print(f"ai_model exists: {self.ai_model is not None}")
-        print(f"{'='*70}\n")
-        
-        # FORCE AI if model exists
+        logger.info(f"\n{'='*70}")
+        logger.info(f"COVER LETTER GENERATION CALLED")
+        logger.info(f"{'='*70}")
+        logger.info(f"Company: {company_name}")
+        logger.info(f"Position: {job_title}")
+        logger.info(f"Tone: {tone}")
+        logger.info(f"use_ai: {self.use_ai}")
+        logger.info(f"ai_model exists: {self.ai_model is not None}")
+        logger.info(f"{'='*70}\n")
+        # Try Gemini first
         if self.ai_model is not None:
             try:
-                print(f"[EMOJI] Calling Gemini AI for cover letter...")
+                logger.info(f"Calling Gemini AI for cover letter...")
                 letter = self._generate_cover_letter_with_gemini(
                     company_name,
                     job_title,
@@ -1567,18 +1598,27 @@ Aim for 1-2 minutes. Provide enough detail to be credible, but don't ramble.
                     user_experience,
                     tone
                 )
-                print(f"[SYMBOL] AI SUCCESS! Cover letter length: {len(letter)} chars")
+                logger.info(f"AI SUCCESS! Cover letter length: {len(letter)} chars")
                 return letter
             except Exception as e:
-                print(f"[SYMBOL] AI FAILED: {type(e).__name__}: {str(e)}")
-                import traceback
-                traceback.print_exc()
-                print("[EMOJI] Falling back to template...")
+                logger.error(f"Gemini FAILED: {type(e).__name__}: {str(e)}")
+                logger.info("Trying OpenRouter fallback...")
         else:
-            print(f"[SYMBOL]️ AI MODEL IS NONE - Cannot use AI")
+            logger.info(f"Gemini not available - trying OpenRouter...")
         
-        # Template fallback
-        print("Using template cover letter")
+        # Try OpenRouter as fallback
+        try:
+            letter = self._generate_cover_letter_with_openrouter(
+                company_name, job_title, job_description, user_experience, tone
+            )
+            if letter and len(letter) > 100:
+                logger.info(f"OpenRouter SUCCESS! Cover letter length: {len(letter)} chars")
+                return letter
+        except Exception as e:
+            logger.error(f"OpenRouter FAILED: {type(e).__name__}: {str(e)}")
+        
+        # Last resort fallback
+        logger.info("All AI providers failed for cover letter")
         return self._generate_template_cover_letter(
             company_name,
             job_title,
@@ -1587,6 +1627,77 @@ Aim for 1-2 minutes. Provide enough detail to be credible, but don't ramble.
             tone
         )
     
+    def _generate_cover_letter_with_openrouter(
+        self,
+        company_name: str,
+        job_title: str,
+        job_description: str,
+        user_experience: str,
+        tone: str
+    ) -> str:
+        """Generate cover letter using OpenRouter API as fallback"""
+        api_key = os.getenv('OPENROUTER_API_KEY')
+        if not api_key:
+            raise Exception("No OpenRouter API key")
+        
+        tone_guides = {
+            'professional': 'formal, business-like, and respectful',
+            'enthusiastic': 'energetic, passionate, and excited about the opportunity',
+            'confident': 'bold, assertive, and self-assured while remaining professional'
+        }
+        tone_guide = tone_guides.get(tone, 'professional and engaging')
+        
+        prompt = f"""Write a professional cover letter for {job_title} at {company_name}.
+
+Job Description: {job_description[:1000] if job_description else 'Not provided - tailor to the job title'}
+Applicant Background: {user_experience if user_experience else 'Experienced professional'}
+Tone: {tone_guide}
+
+Requirements:
+1. Opening: Hook the reader - avoid clichés like "I am writing to apply"
+2. Body (2-3 paragraphs): Match skills to job requirements, include 2-3 quantified achievements
+3. Closing: Express enthusiasm with a clear call to action
+4. 300-400 words, active voice, strong verbs
+5. Start with date, "Dear Hiring Manager,", end with "Sincerely, [Your Name]"
+
+Generate the complete cover letter now."""
+
+        import requests
+        models_to_try = ["deepseek/deepseek-chat", "meta-llama/llama-3.1-70b-instruct"]
+        
+        for model in models_to_try:
+            try:
+                response = requests.post(
+                    "https://openrouter.ai/api/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {api_key}",
+                        "Content-Type": "application/json",
+                        "HTTP-Referer": "https://jobsphere.app",
+                        "X-Title": "JobSphere Cover Letter"
+                    },
+                    json={
+                        "model": model,
+                        "messages": [
+                            {"role": "system", "content": "You are an expert career coach and professional copywriter specializing in compelling cover letters."},
+                            {"role": "user", "content": prompt}
+                        ],
+                        "temperature": 0.7,
+                        "max_tokens": 1500,
+                    },
+                    timeout=25
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    letter = data.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
+                    if letter and len(letter) > 100:
+                        logger.info(f"OpenRouter ({model}) cover letter: {len(letter)} chars")
+                        return letter
+            except Exception as e:
+                logger.error(f"OpenRouter ({model}) cover letter failed: {str(e)[:100]}")
+                continue
+        
+        raise Exception("All OpenRouter models failed for cover letter generation")
+
     def _generate_cover_letter_with_gemini(
         self,
         company_name: str,
@@ -1607,37 +1718,34 @@ Aim for 1-2 minutes. Provide enough detail to be credible, but don't ramble.
         tone_guide = tone_guides.get(tone, 'professional and engaging')
         
         # Build context-aware prompt
-        prompt = f"""Write a personalized cover letter for a job application.
+        prompt = f"""You are an expert career coach and professional copywriter who specializes in compelling, personalized cover letters that win interviews.
 
 JOB DETAILS:
 - Company: {company_name}
 - Position: {job_title}
-- Job Description: {job_description if job_description else 'Not provided'}
+- Job Description: {job_description[:1500] if job_description else 'Not provided — tailor the letter to the job title and company'}
 
 APPLICANT BACKGROUND:
-{user_experience if user_experience else 'Not provided - use general professional experience'}
+{user_experience if user_experience else 'Not provided — write a strong letter based on the job requirements, using placeholder achievements the candidate can customize'}
 
 TONE: {tone_guide}
 
-REQUIREMENTS:
-1. Start with professional header (Date, Company, Greeting)
-2. Opening paragraph: Express interest and briefly state why you're a fit
-3. Body paragraphs (2-3):
-   - Highlight relevant skills matching the job
-   - Provide specific examples of achievements
-   - Show knowledge about {company_name}
-   - Explain what you can contribute
-4. Closing: Express enthusiasm, thank them, call to action
-5. Professional sign-off
+COVER LETTER REQUIREMENTS:
+1. Opening paragraph: Hook the reader immediately — avoid clichés like "I am writing to apply." Instead, lead with a compelling connection to the role or company.
+2. Body paragraphs (2-3):
+   - Match the candidate's skills and experience to the SPECIFIC requirements in the job description
+   - Include 2-3 concrete, quantified achievements (e.g., "increased efficiency by 30%", "managed a team of 8")
+   - Demonstrate genuine knowledge of {company_name} — reference their products, mission, or recent initiatives ONLY if you have reliable information; otherwise, keep it role-focused
+   - Explain what unique value the candidate brings
+3. Closing: Express enthusiasm, propose next steps, include a clear call to action
+4. Professional sign-off
 
 STYLE GUIDELINES:
-- Length: 300-400 words
+- Length: 300-400 words (concise and impactful)
 - Tone: {tone_guide}
-- Be specific and personalized to {company_name} and {job_title}
-- Use active voice and strong action verbs
-- Avoid generic phrases like "I am writing to apply"
-- Show passion and knowledge about the company
-- Quantify achievements when possible
+- Use active voice throughout; favor strong verbs (spearheaded, delivered, optimized)
+- Every sentence must earn its place — no filler or generic phrases
+- Do NOT fabricate specific company details if unsure; focus on the role instead
 
 FORMAT:
 [Date]
@@ -1655,7 +1763,7 @@ Sincerely,
 Generate the complete cover letter now."""
 
         try:
-            print(f"[EMOJI] Calling Gemini AI for cover letter...")
+            logger.info(f"Calling Gemini AI for cover letter...")
             response = self.ai_model.generate_content(
                 prompt,
                 generation_config={
@@ -1666,11 +1774,11 @@ Generate the complete cover letter now."""
                 }
             )
             letter = response.text.strip()
-            print(f"[SYMBOL] AI generated {len(letter)} chars")
+            logger.info(f"AI generated {len(letter)} chars")
             return letter
             
         except Exception as e:
-            print(f"[SYMBOL] Gemini API error: {str(e)}")
+            logger.error(f"Gemini API error: {str(e)}")
             import traceback
             traceback.print_exc()
             raise
@@ -1683,65 +1791,42 @@ Generate the complete cover letter now."""
         user_experience: str,
         tone: str
     ) -> str:
-        """Generate template-based cover letter"""
+        """Last-resort cover letter generation - retry AI with simplified prompt, then return minimal dynamic letter"""
         
-        from datetime import datetime
-        date_str = datetime.now().strftime("%B %d, %Y")
+        # Last-resort: try Gemini with a simpler prompt
+        for attempt in range(len(self.gemini_keys)):
+            try:
+                api_key = _get_next_gemini_key()
+                genai.configure(api_key=api_key)
+                model = genai.GenerativeModel('gemini-2.0-flash')
+                
+                simple_prompt = f"""Write a professional cover letter for {job_title} at {company_name}.
+Applicant background: {user_experience if user_experience else 'Experienced professional'}
+Job description: {job_description[:500] if job_description else 'Not provided'}
+Tone: {tone}
+
+Write 300-400 words. Start with the date, then "Dear Hiring Manager,". End with "Sincerely, [Your Name]"."""
+
+                response = model.generate_content(
+                    simple_prompt,
+                    generation_config={'temperature': 0.8, 'max_output_tokens': 1500},
+                    request_options={"timeout": 20}
+                )
+                letter = response.text.strip()
+                if len(letter) > 100:
+                    logger.info(f"Last-resort cover letter generated: {len(letter)} chars")
+                    return letter
+            except Exception as e:
+                logger.error(f"Last-resort cover letter attempt {attempt + 1} failed: {str(e)[:100]}")
+                continue
         
-        # Adjust language based on tone
-        if tone == 'enthusiastic':
-            opening = f"I am thrilled to apply for the {job_title} position at {company_name}!"
-            closing = "I would be absolutely delighted to discuss how my passion and skills can contribute to your team's success."
-        elif tone == 'confident':
-            opening = f"I am writing to express my strong interest in the {job_title} role at {company_name}."
-            closing = "I am confident that my experience and expertise make me an excellent fit for this position."
-        else:  # professional
-            opening = f"I am writing to apply for the {job_title} position at {company_name}."
-            closing = "I would welcome the opportunity to discuss how my qualifications align with your needs."
-        
-        # Build experience section
-        experience_section = ""
-        if user_experience:
-            experience_section = f"My background includes {user_experience}, which I believe aligns well with the requirements of this role."
-        else:
-            experience_section = f"With my extensive experience and proven track record, I am well-prepared to contribute to {company_name}'s success."
-        
-        # Build job-specific section
-        job_section = ""
-        if job_description:
-            if 'python' in job_description.lower():
-                job_section = "I notice your emphasis on Python development. I have extensive experience with Python, including building scalable applications, data processing pipelines, and API development."
-            elif 'javascript' in job_description.lower() or 'react' in job_description.lower():
-                job_section = "I see that frontend development is crucial for this role. I have strong expertise in modern JavaScript frameworks and creating responsive, user-friendly interfaces."
-            elif 'test' in job_description.lower() or 'qa' in job_description.lower():
-                job_section = "I understand the importance of quality assurance in your team. My experience in designing comprehensive test strategies and ensuring software reliability would be valuable."
-            else:
-                job_section = f"After reviewing the job description, I am confident that my skills and experience align perfectly with what {company_name} is seeking."
-        else:
-            job_section = f"I am particularly drawn to this opportunity at {company_name} because of your commitment to excellence and innovation."
-        
-        letter = f"""{date_str}
+        # Absolute last resort - return error message
+        return f"""AI Cover Letter Generation Temporarily Unavailable
 
-Hiring Manager
-{company_name}
+We were unable to generate an AI-powered cover letter for {job_title} at {company_name} at this moment. 
+All AI providers are currently experiencing high demand or rate limits.
 
-Dear Hiring Manager,
-
-{opening} {experience_section}
-
-{job_section} Throughout my career, I have consistently delivered results by combining technical expertise with strong problem-solving abilities. I take pride in writing clean, maintainable code and collaborating effectively with cross-functional teams.
-
-What particularly excites me about {company_name} is your dedication to innovation and creating impactful solutions. I am eager to bring my skills, enthusiasm, and commitment to excellence to your team. I believe my experience would enable me to make immediate contributions while continuing to grow professionally.
-
-{closing} Thank you for considering my application. I look forward to the possibility of discussing this exciting opportunity with you.
-
-Sincerely,
-[Your Name]
-
----
-Note: This is a template-generated cover letter. For best results, please review and personalize with specific details about your experience and achievements."""
-
-        return letter
+Please try again in 30-60 seconds. The AI service typically recovers quickly."""
 
     def generate_improved_resume(
         self,
@@ -1772,12 +1857,11 @@ Note: This is a template-generated cover letter. For best results, please review
         Returns:
             str: Improved resume in structured HTML format
         """
-        print(f"\n{'='*70}")
-        print(f"[EMOJI] Generating Improved Resume")
-        print(f"Template: {template}")
-        print(f"Target Role: {target_role if target_role else 'General'}")
-        print(f"{'='*70}\n")
-        
+        logger.info(f"\n{'='*70}")
+        logger.info(f"Generating Improved Resume")
+        logger.info(f"Template: {template}")
+        logger.info(f"Target Role: {target_role if target_role else 'General'}")
+        logger.info(f"{'='*70}\n")
         # Define template styles
         template_styles = {
             "modern": {
@@ -1816,7 +1900,7 @@ Note: This is a template-generated cover letter. For best results, please review
         
         try:
             # Build comprehensive prompt for AI with template styling
-            prompt = f"""You are an expert resume writer and career coach. Generate a professional, ATS-optimized resume based on the following information.
+            prompt = f"""You are an expert resume writer (CPRW-certified) specializing in ATS-optimized, visually compelling resumes (2026).
 
 **PERSONAL INFORMATION:**
 {self._format_dict(personal_info)}
@@ -1847,64 +1931,155 @@ Note: This is a template-generated cover letter. For best results, please review
 **Primary Color:** {selected_template['color']}
 **Accent Color:** {selected_template['accent_color']}
 
-**INSTRUCTIONS:**
+**CRITICAL CONSTRAINTS:**
+1. Use ONLY the information provided above - DO NOT fabricate companies, job titles, dates, degrees, or achievements
+2. Enhance the LANGUAGE (stronger action verbs, better phrasing) but preserve ALL facts
+3. If information is missing for a section, omit that section - do not invent content
+4. Quantify achievements only where the source data supports it
+
+**RESUME INSTRUCTIONS:**
 1. Create a professional resume using the "{template}" template style
-2. Follow the template layout style: {selected_template['style']}
-3. Use the specified color scheme (primary: {selected_template['color']}, accent: {selected_template['accent_color']})
-4. Use strong action verbs and quantifiable achievements
-5. Optimize for the target role (if specified)
-6. Include all the improvements suggested in the analysis
-7. Format the resume with clear sections and professional structure
-8. Use bullet points for experience and achievements
-9. Make it concise yet comprehensive (1-2 pages worth of content)
-10. Include relevant keywords for the target role
-11. Ensure it's ATS-friendly (especially for the 'ats' template)
+2. Follow the template layout: {selected_template['style']}
+3. Use the color scheme (primary: {selected_template['color']}, accent: {selected_template['accent_color']})
+4. Rewrite bullet points with strong action verbs (Led, Spearheaded, Architected, Delivered, Optimized)
+5. Optimize keywords for the target role: {target_role if target_role else 'the candidate\'s field'}
+6. Apply the improvements suggested above
+7. Keep content concise: 1-2 pages worth, no filler
+8. Ensure ATS compatibility (especially for 'ats' template)
+
+**TEMPLATE-SPECIFIC LAYOUT:**
+- "modern": Two-column layout with colored sidebar for contact/skills
+- "professional": Traditional single-column, conservative formatting
+- "creative": Bold section headers, accent colors, unique design elements
+- "ats": Simple plain formatting, no tables/columns/graphics, standard section headers
+- "tech": Projects section prominent, GitHub/portfolio links, technical skills grid
 
 **OUTPUT FORMAT:**
-Generate the resume as clean, structured HTML with inline CSS for styling. Include:
-- Professional header with contact information (styled according to template)
+Generate COMPLETE, VALID HTML with inline CSS. Include:
+- Professional header with contact info (styled per template)
 - Professional summary/objective
-- Work experience with bullet points
+- Work experience with achievement-focused bullet points
 - Education section
-- Skills section (organized by category if applicable)
-- Projects section (if provided)
-- Certifications section (if provided)
+- Skills section (categorized if applicable)
+- Projects section (if data provided)
+- Certifications section (if data provided)
 
-Use the template's styling that looks good on screen and prints well. Include proper spacing, typography, and layout matching the template style.
+The HTML must render correctly in a browser and print cleanly. Use proper spacing, typography, and responsive layout.
 
-**IMPORTANT:** 
-- For "modern" template: Use two-column layout with sidebar
-- For "professional" template: Use traditional single-column format
-- For "creative" template: Use bold colors and unique section designs
-- For "ats" template: Use simple, clean formatting with no fancy styling (ATS systems priority)
-- For "tech" template: Emphasize projects and GitHub, use tech-friendly layout
-
-Generate the complete, improved resume now in the {template} style:"""
+Generate the complete resume now:"""
 
             # Generate improved resume using Gemini AI
             response = self.model.generate_content(
                 prompt,
                 generation_config=genai.types.GenerationConfig(
                     temperature=0.7,  # Balanced creativity and consistency
-                    max_output_tokens=2500,  # Longer output for full resume
+                    max_output_tokens=4096,  # Full resume needs more tokens
                 )
             )
             
             improved_resume = response.text.strip()
             
-            print(f"[SYMBOL] Successfully generated improved resume")
-            print(f"Resume length: {len(improved_resume)} characters")
-            
+            logger.info(f"Successfully generated improved resume")
+            logger.info(f"Resume length: {len(improved_resume)} characters")
             return improved_resume
             
         except Exception as e:
-            print(f"[SYMBOL] Error generating improved resume: {str(e)}")
-            # Return a formatted template as fallback
-            return self._generate_template_resume(
-                personal_info, experience, education, skills, 
-                projects, certifications, target_role
+            logger.error(f"Gemini improved resume error: {str(e)}")
+            logger.info("Trying OpenRouter for improved resume...")
+        
+        # Try OpenRouter as fallback
+        try:
+            resume = self._generate_improved_resume_with_openrouter(
+                personal_info, experience, education, skills,
+                projects, certifications, target_role, improvements, template
             )
+            if resume and len(resume) > 200:
+                return resume
+        except Exception as e:
+            logger.error(f"OpenRouter improved resume failed: {str(e)}")
+        
+        # Last resort - template
+        return self._generate_template_resume(
+            personal_info, experience, education, skills, 
+            projects, certifications, target_role
+        )
     
+    def _generate_improved_resume_with_openrouter(
+        self,
+        personal_info: dict,
+        experience: str,
+        education: str,
+        skills: str,
+        projects: str,
+        certifications: str,
+        target_role: str,
+        improvements: str,
+        template: str
+    ) -> str:
+        """Generate improved resume using OpenRouter API as fallback"""
+        api_key = os.getenv('OPENROUTER_API_KEY')
+        if not api_key:
+            raise Exception("No OpenRouter API key")
+        
+        prompt = f"""You are an expert resume writer (CPRW-certified). Generate a professional resume in HTML format.
+
+PERSONAL INFO: {', '.join(f'{k}: {v}' for k, v in personal_info.items())}
+EXPERIENCE: {experience[:2000]}
+EDUCATION: {education[:500]}
+SKILLS: {skills[:500]}
+PROJECTS: {projects[:500] if projects else 'Not provided'}
+CERTIFICATIONS: {certifications[:300] if certifications else 'Not provided'}
+TARGET ROLE: {target_role if target_role else 'General professional role'}
+IMPROVEMENTS: {improvements[:500] if improvements else 'Apply best practices'}
+TEMPLATE: {template}
+
+CRITICAL: Use ONLY the information provided - do NOT fabricate any details.
+
+Generate a complete, valid HTML resume with inline CSS that:
+1. Has a professional header with contact info
+2. Uses strong action verbs for bullet points
+3. Organizes skills into categories
+4. Is ATS-friendly
+5. Looks professional when printed
+
+Output ONLY the HTML code."""
+
+        import requests
+        models_to_try = ["deepseek/deepseek-chat", "meta-llama/llama-3.1-70b-instruct"]
+        
+        for model in models_to_try:
+            try:
+                response = requests.post(
+                    "https://openrouter.ai/api/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {api_key}",
+                        "Content-Type": "application/json",
+                        "HTTP-Referer": "https://jobsphere.app",
+                        "X-Title": "JobSphere Resume Builder"
+                    },
+                    json={
+                        "model": model,
+                        "messages": [
+                            {"role": "system", "content": "You are an expert resume writer. Output only valid HTML with inline CSS."},
+                            {"role": "user", "content": prompt}
+                        ],
+                        "temperature": 0.7,
+                        "max_tokens": 4096,
+                    },
+                    timeout=30
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    resume = data.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
+                    if resume and len(resume) > 200:
+                        logger.info(f"OpenRouter ({model}) improved resume: {len(resume)} chars")
+                        return resume
+            except Exception as e:
+                logger.error(f"OpenRouter ({model}) improved resume failed: {str(e)[:100]}")
+                continue
+        
+        raise Exception("All OpenRouter models failed for improved resume generation")
+
     def _format_dict(self, data: dict) -> str:
         """Format dictionary data for prompt"""
         return "\n".join([f"- {key}: {value}" for key, value in data.items()])

@@ -18,7 +18,7 @@ setup_logging(
 )
 
 from app.utils.database import engine, Base
-from app.routers import auth, applications, admin, analytics, scraper, ai_features, resume, job_matching, jobs
+from app.routers import auth, applications, admin, analytics, scraper, ai_features, resume, job_matching, jobs, reviews
 from app.api import notifications
 from app.middleware import RequestTrackingMiddleware
 from app.middleware.security_headers import SecurityHeadersMiddleware
@@ -83,6 +83,7 @@ app.include_router(ai_features.router)
 app.include_router(resume.router)
 app.include_router(job_matching.router)
 app.include_router(jobs.router)
+app.include_router(reviews.router)
 app.include_router(notifications.router)
 
 # Exception handlers

@@ -25,10 +25,10 @@ class AdzunaJobSearchService:
         self.enabled = ADZUNA_APP_ID and ADZUNA_APP_KEY
         
         if self.enabled:
-            logger.info("[SYMBOL] Adzuna API enabled (5,000 free searches/month)")
+            logger.info("Adzuna API enabled (5,000 free searches/month)")
             logger.info(f"   App ID: {self.app_id}")
         else:
-            logger.warning("[SYMBOL]️ Adzuna API not configured")
+            logger.warning("Adzuna API not configured")
     
     async def search_jobs(
         self,
@@ -73,30 +73,30 @@ class AdzunaJobSearchService:
             # Construct URL
             url = f"{ADZUNA_BASE_URL}/{country}/search/{page}"
             
-            logger.info(f"[EMOJI] Searching Adzuna: '{query}' in '{location or 'any location'}' ({country})")
+            logger.info(f"Searching Adzuna: '{query}' in '{location or 'any location'}' ({country})")
             
             async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.get(url, params=params)
                 
                 if response.status_code != 200:
-                    logger.error(f"[SYMBOL] Adzuna API error: {response.status_code} - {response.text}")
+                    logger.error(f"Adzuna API error: {response.status_code} - {response.text}")
                     return []
                 
                 data = response.json()
                 jobs = data.get("results", [])
                 
                 if not jobs:
-                    logger.info(f"[SYMBOL]️ No jobs found on Adzuna for: {query}")
+                    logger.info(f"No jobs found on Adzuna for: {query}")
                     return []
                 
-                logger.info(f"[SYMBOL] Found {len(jobs)} jobs from Adzuna")
+                logger.info(f"Found {len(jobs)} jobs from Adzuna")
                 
                 # Transform to our format
                 transformed = [self._transform_job(job) for job in jobs]
                 return transformed
         
         except Exception as e:
-            logger.error(f"[SYMBOL] Adzuna search failed: {e}")
+            logger.error(f"Adzuna search failed: {e}")
             return []
     
     def _transform_job(self, job: Dict) -> Dict:

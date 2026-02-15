@@ -39,11 +39,11 @@ class MultiSourceJobSearchService:
             "remotive": 0
         }
         
-        logger.info("[EMOJI] Multi-Source Job Search Service initialized")
-        logger.info(f"   [SYMBOL] JSearch: {'Enabled' if self.jsearch.enabled else 'Disabled'}")
-        logger.info(f"   [SYMBOL] Adzuna: {'Enabled' if self.adzuna.enabled else 'Disabled'}")
-        logger.info(f"   [SYMBOL] The Muse: Enabled")
-        logger.info(f"   [SYMBOL] Remotive: Enabled")
+        logger.info("Multi-Source Job Search Service initialized")
+        logger.info(f"   JSearch: {'Enabled' if self.jsearch.enabled else 'Disabled'}")
+        logger.info(f"   Adzuna: {'Enabled' if self.adzuna.enabled else 'Disabled'}")
+        logger.info(f"   The Muse: Enabled")
+        logger.info(f"   Remotive: Enabled")
     
     async def search_jobs(
         self,
@@ -68,7 +68,7 @@ class MultiSourceJobSearchService:
         Returns:
             Dict with jobs and metadata
         """
-        logger.info(f"[EMOJI] Multi-source search: '{query}' in '{location or 'any'}' (strategy: {strategy})")
+        logger.info(f"Multi-source search: '{query}' in '{location or 'any'}' (strategy: {strategy})")
         
         if strategy == "smart":
             return await self._smart_search(query, location, max_results)
@@ -93,7 +93,7 @@ class MultiSourceJobSearchService:
                 jobs = await self.jsearch.search_jobs(query, location, num_pages=1)
                 if jobs:
                     self.api_usage["jsearch"] += 1
-                    logger.info(f"[SYMBOL] Success with JSearch: {len(jobs)} jobs")
+                    logger.info(f"Success with JSearch: {len(jobs)} jobs")
                     return {
                         "jobs": jobs[:max_results],
                         "total": len(jobs),
@@ -102,7 +102,7 @@ class MultiSourceJobSearchService:
                         "strategy": "smart"
                     }
             except Exception as e:
-                logger.warning(f"[SYMBOL]️ JSearch failed: {e}")
+                logger.warning(f"JSearch failed: {e}")
         
         # Fallback to Adzuna (5,000/month free)
         if self.adzuna.enabled:
@@ -111,7 +111,7 @@ class MultiSourceJobSearchService:
                 jobs = await self.adzuna.search_jobs(query, location)
                 if jobs:
                     self.api_usage["adzuna"] += 1
-                    logger.info(f"[SYMBOL] Success with Adzuna: {len(jobs)} jobs")
+                    logger.info(f"Success with Adzuna: {len(jobs)} jobs")
                     return {
                         "jobs": jobs[:max_results],
                         "total": len(jobs),
@@ -120,7 +120,7 @@ class MultiSourceJobSearchService:
                         "strategy": "smart"
                     }
             except Exception as e:
-                logger.warning(f"[SYMBOL]️ Adzuna failed: {e}")
+                logger.warning(f"Adzuna failed: {e}")
         
         # Fallback to The Muse (unlimited free)
         try:
@@ -128,7 +128,7 @@ class MultiSourceJobSearchService:
             jobs = await self.themuse.search_jobs(query, location)
             if jobs:
                 self.api_usage["themuse"] += 1
-                logger.info(f"[SYMBOL] Success with The Muse: {len(jobs)} jobs")
+                logger.info(f"Success with The Muse: {len(jobs)} jobs")
                 return {
                     "jobs": jobs[:max_results],
                     "total": len(jobs),
@@ -137,7 +137,7 @@ class MultiSourceJobSearchService:
                     "strategy": "smart"
                 }
         except Exception as e:
-            logger.warning(f"[SYMBOL]️ The Muse failed: {e}")
+            logger.warning(f"The Muse failed: {e}")
         
         # Last resort: Remotive (remote jobs only)
         try:
@@ -146,7 +146,7 @@ class MultiSourceJobSearchService:
             jobs = await self.remotive.search_jobs(category=category, search=query)
             if jobs:
                 self.api_usage["remotive"] += 1
-                logger.info(f"[SYMBOL] Success with Remotive: {len(jobs)} jobs")
+                logger.info(f"Success with Remotive: {len(jobs)} jobs")
                 return {
                     "jobs": jobs[:max_results],
                     "total": len(jobs),
@@ -155,10 +155,10 @@ class MultiSourceJobSearchService:
                     "strategy": "smart"
                 }
         except Exception as e:
-            logger.warning(f"[SYMBOL]️ Remotive failed: {e}")
+            logger.warning(f"Remotive failed: {e}")
         
         # All APIs failed
-        logger.error("[SYMBOL] All job search APIs failed")
+        logger.error("All job search APIs failed")
         return {
             "jobs": [],
             "total": 0,
@@ -173,7 +173,7 @@ class MultiSourceJobSearchService:
         Aggregate results from all APIs in parallel
         Combine and deduplicate results
         """
-        logger.info("[EMOJI] Aggregating results from all APIs...")
+        logger.info("Aggregating results from all APIs...")
         
         # Search all APIs in parallel
         tasks = []
@@ -204,12 +204,12 @@ class MultiSourceJobSearchService:
             if jobs:
                 all_jobs.extend(jobs)
                 sources_succeeded.append(sources_attempted[i])
-                logger.info(f"   [SYMBOL] {sources_attempted[i]}: {len(jobs)} jobs")
+                logger.info(f"   {sources_attempted[i]}: {len(jobs)} jobs")
         
         # Deduplicate by URL and title
         unique_jobs = self._deduplicate_jobs(all_jobs)
         
-        logger.info(f"[SYMBOL] Aggregated {len(unique_jobs)} unique jobs from {len(sources_succeeded)} sources")
+        logger.info(f"Aggregated {len(unique_jobs)} unique jobs from {len(sources_succeeded)} sources")
         
         return {
             "jobs": unique_jobs[:max_results],

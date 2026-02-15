@@ -8,6 +8,9 @@ from app.models.user import User
 from app.services.resume_generator import resume_generator
 from app.services.job_search_aggregator import JobSearchAggregator
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/resume", tags=["resume"])
 
@@ -120,7 +123,7 @@ def save_resume(
         if resume.email.lower() != current_user.email.lower():
             email_mismatch_warning = {
                 "type": "email_mismatch",
-                "message": f"[SYMBOL]️ Resume email ({resume.email}) differs from your verified account email ({current_user.email})",
+                "message": f"Resume email ({resume.email}) differs from your verified account email ({current_user.email})",
                 "suggestion": "Companies will contact you at the resume email. Make sure it's correct!",
                 "verified_email": current_user.email,
                 "resume_email": resume.email
@@ -301,11 +304,10 @@ async def research_company(
     Returns company type, culture keywords, template style, and tips
     """
     try:
-        print(f"\n{'='*60}")
-        print(f"[EMOJI] Company Research Request from: {current_user.email if current_user else 'Anonymous'}")
-        print(f"   Company: {request.company_name}")
-        print(f"{'='*60}\n")
-        
+        logger.info(f"\n{'='*60}")
+        logger.info(f"Company Research Request from: {current_user.email if current_user else 'Anonymous'}")
+        logger.info(f"   Company: {request.company_name}")
+        logger.info(f"{'='*60}\n")
         research = await resume_generator.research_company(request.company_name)
         
         return {
@@ -314,7 +316,7 @@ async def research_company(
         }
         
     except Exception as e:
-        print(f"[SYMBOL] Company research error: {e}")
+        logger.error(f"Company research error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to research company: {str(e)}"
@@ -337,32 +339,30 @@ async def generate_ai_resume(
     4. Warn if contact email differs from verified account email
     """
     try:
-        print(f"\n{'='*60}")
-        print(f"[EMOJI] AI Resume Generation Request")
-        print(f"   User: {current_user.email if current_user else 'Anonymous'}")
-        print(f"   Company: {request.company_name}")
-        print(f"   Target Role: {request.job_title or 'Not specified'}")
-        print(f"{'='*60}\n")
-        
+        logger.info(f"\n{'='*60}")
+        logger.info(f"AI Resume Generation Request")
+        logger.info(f"   User: {current_user.email if current_user else 'Anonymous'}")
+        logger.info(f"   Company: {request.company_name}")
+        logger.info(f"   Target Role: {request.job_title or 'Not specified'}")
+        logger.info(f"{'='*60}\n")
         # Check email mismatch if user is authenticated
         email_warning = None
         if current_user and request.email.lower() != current_user.email.lower():
             email_warning = {
                 "type": "email_mismatch",
                 "severity": "warning",
-                "message": f"[SYMBOL]️ Resume email ({request.email}) differs from your verified account email ({current_user.email})",
+                "message": f"Resume email ({request.email}) differs from your verified account email ({current_user.email})",
                 "suggestion": "Make sure this is the correct email where you want to receive job offers!",
                 "verified_email": current_user.email,
                 "resume_email": request.email
             }
-            print(f"[SYMBOL]️  Email mismatch detected: {request.email} vs {current_user.email}")
-        
+            logger.info(f"Email mismatch detected: {request.email} vs {current_user.email}")
         # Step 1: Research company
-        print("Step 1: Researching company...")
+        logger.info("Step 1: Researching company...")
         company_research = await resume_generator.research_company(request.company_name)
         
         # Step 2: Prepare user info
-        print("Step 2: Processing user information...")
+        logger.info("Step 2: Processing user information...")
         user_info = {
             "full_name": request.full_name,
             "email": request.email,
@@ -382,7 +382,7 @@ async def generate_ai_resume(
         }
         
         # Step 3: Generate AI resume content
-        print("Step 3: Generating AI-optimized resume content...")
+        logger.info("Step 3: Generating AI-optimized resume content...")
         resume_content = await resume_generator.generate_resume_content(
             user_info=user_info,
             company_research=company_research,
@@ -390,11 +390,10 @@ async def generate_ai_resume(
             ai_suggestions=request.ai_suggestions
         )
         
-        print(f"\n[SYMBOL] Resume generated successfully!")
-        print(f"   Template: {company_research.get('recommended_template')}")
-        print(f"   Tone: {company_research.get('tone')}")
-        print(f"   Keywords: {len(resume_content.get('keywords_optimized', []))} optimized\n")
-        
+        logger.info(f"\nResume generated successfully!")
+        logger.info(f"   Template: {company_research.get('recommended_template')}")
+        logger.info(f"   Tone: {company_research.get('tone')}")
+        logger.info(f"   Keywords: {len(resume_content.get('keywords_optimized', []))} optimized\n")
         response = {
             "success": True,
             "company_research": company_research,
@@ -428,7 +427,7 @@ async def generate_ai_resume(
         return response
         
     except Exception as e:
-        print(f"[SYMBOL] Resume generation error: {e}")
+        logger.error(f"Resume generation error: {e}")
         import traceback
         traceback.print_exc()
         raise HTTPException(
@@ -462,8 +461,7 @@ async def download_resume(
         format_lower = request.format.lower() if request.format else "pdf"
         template = request.template_style or "Professional"
         
-        print(f"[EMOJI] Download: {format_lower.upper()} format, template={template}")
-        
+        logger.info(f"Download: {format_lower.upper()} format, template={template}")
         # Transform resume_data into the structure expected by exporter
         # Frontend sends proper structure, just ensure all fields are present
         resume_data_normalized = _normalize_resume_data(request.resume_data)
@@ -476,7 +474,7 @@ async def download_resume(
                     template
                 )
             except Exception as pdf_error:
-                print(f"[SYMBOL]️  PDF failed: {str(pdf_error)[:100]} - using DOCX instead")
+                logger.error(f"PDF failed: {str(pdf_error)[:100]} - using DOCX instead")
                 file_content = await resume_exporter.generate_docx(
                     resume_data_normalized,
                     template
@@ -503,8 +501,7 @@ async def download_resume(
         
         filename = f"resume_{full_name}.{format_lower}"
         
-        print(f"[SYMBOL] Generated: {filename} ({len(file_content)} bytes)")
-        
+        logger.info(f"Generated: {filename} ({len(file_content)} bytes)")
         from fastapi.responses import Response
         return Response(
             content=file_content,
@@ -518,8 +515,8 @@ async def download_resume(
         
     except Exception as e:
         import traceback
-        print(f"[SYMBOL] Download error: {str(e)[:200]}")
-        print(traceback.format_exc()[:200])
+        logger.error(f"Download error: {str(e)[:200]}")
+        logger.info(traceback.format_exc()[:200])
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Download failed: {str(e)[:100]}"
@@ -737,16 +734,14 @@ async def search_jobs(
                 if not resume_skills and resume_data.get("skills"):
                     resume_skills = derived_skills
             except Exception as e:
-                print(f"Resume parsing failed, falling back: {e}")
-
+                logger.error(f"Resume parsing failed, falling back: {e}")
         search_query = search_query or "Software Tester"
         search_location = search_location or "Remote"
 
         if current_user:
-            print(f"[EMOJI] Job search by user {current_user.id}: '{search_query}' in {search_location}")
+            logger.info(f"Job search by user {current_user.id}: '{search_query}' in {search_location}")
         else:
-            print(f"[EMOJI] Job search (anonymous): '{search_query}' in {search_location}")
-
+            logger.info(f"Job search (anonymous): '{search_query}' in {search_location}")
         result = await job_search_aggregator.search_jobs(
             query=search_query,
             location=search_location,
@@ -777,7 +772,7 @@ async def search_jobs(
         return result
         
     except Exception as e:
-        print(f"[SYMBOL] Job search endpoint error: {e}")
+        logger.error(f"Job search endpoint error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Job search failed: {str(e)}"

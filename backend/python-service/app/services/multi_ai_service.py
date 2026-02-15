@@ -8,6 +8,9 @@ import asyncio
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 import httpx
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Import all AI SDKs
 try:
@@ -57,12 +60,11 @@ class MultiAIService:
             if gemini_key:
                 try:
                     genai.configure(api_key=gemini_key)
-                    self.gemini_model = genai.GenerativeModel('gemini-2.0-flash-exp')
+                    self.gemini_model = genai.GenerativeModel('gemini-2.0-flash')
                     self.providers.append("gemini")
-                    print("[SYMBOL] Gemini AI initialized")
+                    logger.info("Gemini AI initialized")
                 except Exception as e:
-                    print(f"[SYMBOL]️ Gemini initialization failed: {e}")
-        
+                    logger.error(f"Gemini initialization failed: {e}")
         # 2. Try Groq (Fast fallback)
         if GROQ_AVAILABLE:
             groq_key = os.getenv("GROQ_API_KEY")
@@ -70,10 +72,9 @@ class MultiAIService:
                 try:
                     self.groq_client = Groq(api_key=groq_key)
                     self.providers.append("groq")
-                    print("[SYMBOL] Groq AI initialized")
+                    logger.info("Groq AI initialized")
                 except Exception as e:
-                    print(f"[SYMBOL]️ Groq initialization failed: {e}")
-        
+                    logger.error(f"Groq initialization failed: {e}")
         # 3. Try Cohere (Backup)
         if COHERE_AVAILABLE:
             cohere_key = os.getenv("COHERE_API_KEY")
@@ -81,30 +82,26 @@ class MultiAIService:
                 try:
                     self.cohere_client = cohere.Client(cohere_key)
                     self.providers.append("cohere")
-                    print("[SYMBOL] Cohere AI initialized")
+                    logger.info("Cohere AI initialized")
                 except Exception as e:
-                    print(f"[SYMBOL]️ Cohere initialization failed: {e}")
-        
+                    logger.error(f"Cohere initialization failed: {e}")
         # 4. Hugging Face (Final fallback)
         hf_key = os.getenv("HUGGINGFACE_API_KEY")
         if hf_key:
             self.hf_headers = {"Authorization": f"Bearer {hf_key}"}
             self.providers.append("huggingface")
-            print("[SYMBOL] Hugging Face API initialized")
-
+            logger.info("Hugging Face API initialized")
         # 5. OpenRouter (Optional)
         openrouter_key = os.getenv("OPENROUTER_API_KEY")
         if openrouter_key:
             self.openrouter_key = openrouter_key
             self.openrouter_model = os.getenv("OPENROUTER_MODEL", "openai/gpt-4o-mini")
             self.providers.append("openrouter")
-            print("[SYMBOL] OpenRouter API initialized")
-        
+            logger.info("OpenRouter API initialized")
         if not self.providers:
-            print("[SYMBOL]️ No AI providers available! Please add API keys to .env")
+            logger.info("No AI providers available! Please add API keys to .env")
         else:
-            print(f"[EMOJI] Available AI providers: {', '.join(self.providers)}")
-    
+            logger.info(f"Available AI providers: {', '.join(self.providers)}")
     async def generate_text(
         self, 
         prompt: str, 
@@ -153,7 +150,7 @@ class MultiAIService:
                 if result["success"]:
                     return result
             except Exception as e:
-                print(f"[SYMBOL]️ {provider} failed: {e}")
+                logger.error(f"{provider} failed: {e}")
                 continue
         
         # All providers failed

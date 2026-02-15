@@ -127,7 +127,7 @@
         <!-- Hero Banner -->
         <div class="hero-banner">
             <img src="https://images.unsplash.com/photo-1521791136064-7986c2920216?w=800&auto=format&fit=crop" alt="AI Job Matching">
-            <h1>🎯 AI-Powered Job Matching</h1>
+            <h1>AI-Powered Job Matching</h1>
             <p class="text-secondary" style="max-width: 600px; margin: 0 auto;">
                 Our intelligent algorithm analyzes your profile, skills, and preferences to find the perfect job matches for you
             </p>
@@ -135,7 +135,7 @@
 
         <!-- Filters -->
         <div class="filter-section">
-            <h3 style="margin-bottom: 20px;">🔍 Filter Jobs</h3>
+            <h3 style="margin-bottom: 20px;">Filter Jobs</h3>
             
             <!-- Row 1: Basic Search -->
             <div class="grid grid-3" style="gap: 20px;">
@@ -214,11 +214,11 @@
                 <div class="filter-group" style="display: flex; flex-direction: column; justify-content: center;">
                     <label class="form-label" style="display: flex; align-items: center; cursor: pointer; margin-bottom: 10px;">
                         <input type="checkbox" id="remoteOnly" style="margin-right: 8px; cursor: pointer;">
-                        🏠 Remote Only
+                        Remote Only
                     </label>
                     <label class="form-label" style="display: flex; align-items: center; cursor: pointer;">
                         <input type="checkbox" id="useResume" style="margin-right: 8px; cursor: pointer;">
-                        📄 Use My Resume
+                        Use My Resume
                     </label>
                 </div>
             </div>
@@ -227,16 +227,16 @@
             <div style="margin-top: 15px; padding: 15px; background: var(--bg-darker); border-radius: 8px; border: 1px dashed var(--border-color);">
                 <label class="form-label" style="display: flex; align-items: center; cursor: pointer; margin: 0;">
                     <input type="checkbox" id="aiBestMatch" style="margin-right: 8px; cursor: pointer;">
-                    🤖 AI Best Match - Show jobs ranked by skill overlap with your resume
+                    AI Best Match - Show jobs ranked by skill overlap with your resume
                 </label>
             </div>
 
             <div class="flex-center" style="margin-top: 20px; gap: 10px;">
                 <button class="btn btn-secondary" onclick="clearFilters()" type="button">
-                    🔄 Clear Filters
+                    Clear Filters
                 </button>
                 <button class="btn btn-primary" id="searchButton" type="button" style="cursor: pointer; position: relative; z-index: 10;">
-                    🔍 Search Matching Jobs
+                    Search Matching Jobs
                 </button>
             </div>
         </div>
@@ -259,7 +259,7 @@
         <!-- AI Best Matches Section -->
         <div id="aiBestMatchesSection" style="display: none; margin-bottom: 30px;">
             <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1)); border-radius: 12px; padding: 20px; border: 1px solid var(--primary);">
-                <h3 style="margin-bottom: 15px;">🤖 AI-Ranked Best Matches</h3>
+                <h3 style="margin-bottom: 15px;">AI-Ranked Best Matches</h3>
                 <p style="color: var(--text-secondary); margin-bottom: 20px;">
                     These jobs are specifically ranked based on your skills and experience
                 </p>
@@ -298,6 +298,14 @@
         // Note: API_BASE is already defined in js/app.js
         let currentJobs = [];
         let currentResult = null;
+
+        function safeOpenUrl(url) {
+            if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+                window.open(url, '_blank', 'noopener,noreferrer');
+            } else {
+                Toast.show('Invalid or missing URL', 'error');
+            }
+        }
 
         function clearFilters() {
             document.getElementById('jobTitle').value = '';
@@ -352,9 +360,9 @@
             
             section.style.display = 'block';
             container.innerHTML = matches.slice(0, 5).map((job, index) => {
-                const salaryText = job.salary ? `<div class="job-salary">💰 ${job.salary}</div>` : '';
-                const skillsTags = (job.skills || []).slice(0, 5).map(skill => `<span class="job-tag">${skill}</span>`).join('');
-                const descriptionText = job.description ? job.description.substring(0, 150) + '...' : '';
+                const salaryText = job.salary ? `<div class="job-salary">${Toast.escape(job.salary)}</div>` : '';
+                const skillsTags = (job.skills || []).slice(0, 5).map(skill => `<span class="job-tag">${Toast.escape(skill)}</span>`).join('');
+                const descriptionText = job.description ? Toast.escape(job.description.substring(0, 150)) + '...' : '';
                 
                 return `
                 <div class="job-card" style="background: var(--bg-darker); border-color: var(--primary);">
@@ -365,9 +373,9 @@
                                     #${index + 1} Best Match
                                 </span>
                             </div>
-                            <div class="job-title">${job.title || 'Untitled Position'}</div>
-                            <div class="job-company">🏢 ${job.company || 'Company'}</div>
-                            <div class="job-location">📍 ${job.location || 'Location'}</div>
+                            <div class="job-title">${Toast.escape(job.title || 'Untitled Position')}</div>
+                            <div class="job-company">${Toast.escape(job.company || 'Company')}</div>
+                            <div class="job-location">${Toast.escape(job.location || 'Location')}</div>
                         </div>
                     </div>
                     ${salaryText}
@@ -375,10 +383,10 @@
                     ${descriptionText ? `<div class="job-description">${descriptionText}</div>` : ''}
                     <div class="flex-between" style="align-items: center; margin-top: 15px;">
                         <span class="text-muted" style="font-size: 0.85rem;">
-                            <span class="job-tag" style="background: var(--primary); color: white;">${job.source || 'Source'}</span>
+                            <span class="job-tag" style="background: var(--primary); color: white;">${Toast.escape(job.source || 'Source')}</span>
                         </span>
-                        <button class="btn btn-primary btn-sm" onclick="window.open('${job.url}', '_blank')">
-                            🚀 Apply Now
+                        <button class="btn btn-primary btn-sm" data-url="${Toast.escape(job.url || '')}" onclick="safeOpenUrl(this.dataset.url)">
+                            Apply Now
                         </button>
                     </div>
                 </div>
@@ -395,7 +403,7 @@
                 resultsHeader.style.display = 'none';
                 container.innerHTML = `
                     <div style="text-align: center; padding: 60px 20px; color: var(--text-muted);">
-                        <div style="font-size: 3rem; margin-bottom: 20px;">🔍</div>
+                        <div style="font-size: 3rem; margin-bottom: 20px;"></div>
                         <h2 style="color: var(--text-primary); margin-bottom: 10px;">No Jobs Found</h2>
                         <p style="font-size: 1.1rem; margin-bottom: 20px;">Try adjusting your search criteria</p>
                         <p style="color: var(--text-secondary); max-width: 500px; margin: 0 auto;">
@@ -418,18 +426,18 @@
             }
             
             container.innerHTML = jobs.map(job => {
-                const salaryText = job.salary ? `<div class="job-salary">💰 ${job.salary}</div>` : '';
-                const skillsTags = (job.skills || []).slice(0, 5).map(skill => `<span class="job-tag">${skill}</span>`).join('');
-                const descriptionText = job.description ? job.description.substring(0, 200) + '...' : 'No description available';
-                const apiSource = job.source ? `<span class="job-tag" style="background: var(--primary); color: white;">${job.source}</span>` : '';
+                const salaryText = job.salary ? `<div class="job-salary">${Toast.escape(job.salary)}</div>` : '';
+                const skillsTags = (job.skills || []).slice(0, 5).map(skill => `<span class="job-tag">${Toast.escape(skill)}</span>`).join('');
+                const descriptionText = job.description ? Toast.escape(job.description.substring(0, 200)) + '...' : 'No description available';
+                const apiSource = job.source ? `<span class="job-tag" style="background: var(--primary); color: white;">${Toast.escape(job.source)}</span>` : '';
                 
                 return `
                 <div class="job-card">
                     <div class="job-header">
                         <div style="flex: 1;">
-                            <div class="job-title">${job.title || 'Untitled Position'}</div>
-                            <div class="job-company">🏢 ${job.company || 'Company Not Listed'}</div>
-                            <div class="job-location">📍 ${job.location || 'Location Not Specified'}</div>
+                            <div class="job-title">${Toast.escape(job.title || 'Untitled Position')}</div>
+                            <div class="job-company">${Toast.escape(job.company || 'Company Not Listed')}</div>
+                            <div class="job-location">${Toast.escape(job.location || 'Location Not Specified')}</div>
                         </div>
                     </div>
                     
@@ -445,11 +453,11 @@
                     <div class="flex-between" style="align-items: center;">
                         <span class="text-muted" style="font-size: 0.85rem;">${job.posted_date || 'Recently posted'}</span>
                         <div class="job-actions">
-                            <button class="btn btn-secondary btn-sm" onclick="saveJob('${job.id}')">
-                                💾 Save
+                            <button class="btn btn-secondary btn-sm" data-id="${Toast.escape(job.id || '')}" onclick="saveJob(this.dataset.id)">
+                                Save
                             </button>
-                            <button class="btn btn-primary btn-sm" onclick="window.open('${job.url}', '_blank')">
-                                🚀 Apply Now
+                            <button class="btn btn-primary btn-sm" data-url="${Toast.escape(job.url || '')}" onclick="safeOpenUrl(this.dataset.url)">
+                                Apply Now
                             </button>
                         </div>
                     </div>

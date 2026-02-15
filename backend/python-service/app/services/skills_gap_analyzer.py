@@ -8,6 +8,9 @@ from typing import Dict, List, Optional, Any
 from collections import Counter
 import re
 from datetime import datetime
+import logging
+
+logger = logging.getLogger(__name__)
 
 try:
     import google.generativeai as genai
@@ -31,11 +34,11 @@ class SkillsGapAnalyzer:
             if api_key:
                 try:
                     genai.configure(api_key=api_key)
-                    self.model = genai.GenerativeModel('gemini-2.0-flash-exp')
+                    self.model = genai.GenerativeModel('gemini-2.0-flash')
                     self.ai_enabled = True
-                    print("[OK] Skills Gap Analyzer initialized with Gemini AI")
+                    logger.info("[OK] Skills Gap Analyzer initialized with Gemini AI")
                 except Exception as e:
-                    print(f"[WARNING] Gemini initialization failed: {e}")
+                    logger.error(f"[WARNING] Gemini initialization failed: {e}")
         
         # Common tech skills database
         self.skills_database = self._load_skills_database()
@@ -136,11 +139,11 @@ class SkillsGapAnalyzer:
         
         # If target role provided and few skills found, use AI to generate expected skills
         if target_role and len(all_required_skills) < 10 and use_ai and self.ai_enabled:
-            print(f"[EMOJI] Using AI to generate expected skills for: {target_role}")
+            logger.info(f"Using AI to generate expected skills for: {target_role}")
             ai_skills = await self._generate_skills_for_role(target_role)
             if ai_skills:
                 all_required_skills.extend(ai_skills)
-                print(f"[SYMBOL] AI generated {len(ai_skills)} expected skills for {target_role}")
+                logger.info(f"AI generated {len(ai_skills)} expected skills for {target_role}")
         
         # Count frequency of each skill across all jobs
         skill_frequency = Counter(all_required_skills)
@@ -235,7 +238,7 @@ class SkillsGapAnalyzer:
             {
                 "skill": skill,
                 "demand": count,
-                "trend": "[EMOJI] High Demand" if count > 5 else "[EMOJI] Growing"
+                "trend": "High Demand" if count > 5 else "Growing"
             }
             for skill, count in top_skills
         ]
@@ -257,13 +260,13 @@ class SkillsGapAnalyzer:
             
             # Simple priority calculation
             if percentage >= 50:
-                priority = "[EMOJI] Critical"
+                priority = "Critical"
                 priority_score = 3
             elif percentage >= 30:
-                priority = "[EMOJI] High"
+                priority = "High"
                 priority_score = 2
             else:
-                priority = "[EMOJI] Medium"
+                priority = "Medium"
                 priority_score = 1
             
             priority_list.append({
@@ -299,7 +302,7 @@ class SkillsGapAnalyzer:
                     target_ctc=target_ctc
                 )
             except Exception as e:
-                print(f"[SYMBOL]️ AI recommendation failed, using fallback: {e}")
+                logger.error(f"AI recommendation failed, using fallback: {e}")
         
         # Fallback: Template-based recommendations
         return self._generate_template_recommendations(missing_skills)
@@ -312,21 +315,22 @@ class SkillsGapAnalyzer:
         
         try:
             prompt = f"""
-List the 15-20 most important technical skills required for a "{role}" position.
+You are a senior technical recruiter and skills-market analyst (2026). List the 15-20 most important technical skills required for a "{role}" position in the current job market.
 
-Include:
-- Programming languages
-- Frameworks and tools
-- Databases
-- Cloud platforms
-- Testing tools
-- Methodologies
-- Domain-specific skills
+Include skills across these categories (only where relevant to the role):
+- Programming languages and scripting
+- Frameworks, libraries, and SDKs
+- Databases and data stores
+- Cloud platforms and services (AWS, Azure, GCP)
+- DevOps, CI/CD, and infrastructure tools
+- Testing and QA tools (if relevant)
+- Methodologies (Agile, Scrum, TDD, etc.)
+- Domain-specific skills and certifications
+
+Prioritize skills by market demand — list the most in-demand skills first.
 
 Return ONLY a JSON array of skill names (strings), nothing else.
 Example: ["Python", "SQL", "REST API", "Git", "Agile"]
-
-Role: {role}
 """
             
             response = await self.model.generate_content_async(
@@ -354,7 +358,7 @@ Role: {role}
             return []
             
         except Exception as e:
-            print(f"[SYMBOL]️ Failed to generate skills for role {role}: {e}")
+            logger.error(f"Failed to generate skills for role {role}: {e}")
             return []
     
     async def _generate_ai_recommendations(
@@ -371,18 +375,18 @@ Role: {role}
         ctc_context = f"\nTarget CTC: {target_ctc}" if target_ctc else ""
         
         prompt = f"""
-You are a career coach helping someone improve their skills for job applications.
+You are a senior career strategist and upskilling advisor (2026). Help a candidate close their skill gaps for job applications.
 {role_context}{ctc_context}
 
-They are missing these skills: {skills_text}
+They are missing these key skills: {skills_text}
 
 For EACH skill, provide:
 1. **Skill Name**
-2. **Why Important**: 1-2 sentences on why this skill matters
-3. **Learning Path**: Specific steps to learn (be practical and actionable)
-4. **Time Estimate**: How long to reach job-ready level
-5. **Best Resources**: 2-3 specific free resources (courses, tutorials, docs)
-6. **Practice Project**: A hands-on project idea to build this skill
+2. **Why Important**: 1-2 sentences on why this skill matters for their target role/salary in 2026
+3. **Learning Path**: Specific, step-by-step progression (beginner → job-ready)
+4. **Time Estimate**: Realistic time to reach job-ready level (assuming part-time learning)
+5. **Best Resources**: 2-3 specific, currently available free resources (courses, tutorials, official docs) — verify these are real platforms
+6. **Practice Project**: A concrete, portfolio-worthy project idea that demonstrates this skill
 
 Format as JSON array:
 [
@@ -391,12 +395,12 @@ Format as JSON array:
     "why_important": "Most in-demand language...",
     "learning_path": "1. Learn basics... 2. Build projects...",
     "time_estimate": "2-3 months",
-    "resources": ["Codecademy Python Course", "Python.org Tutorial", "Real Python"],
-    "practice_project": "Build a web scraper..."
+    "resources": ["freeCodeCamp Python Course", "Python.org Official Tutorial", "Real Python"],
+    "practice_project": "Build a web scraper that..."
   }}
 ]
 
-Provide recommendations for the top 5 skills only.
+Provide recommendations for the top 5 skills only. Be practical and actionable — avoid generic advice.
 """
         
         response = await self.model.generate_content_async(
@@ -421,7 +425,7 @@ Provide recommendations for the top 5 skills only.
             recommendations = json.loads(text)
             return recommendations
         except json.JSONDecodeError:
-            print("[SYMBOL]️ Failed to parse AI response as JSON")
+            logger.error("Failed to parse AI response as JSON")
             return self._generate_template_recommendations(missing_skills)
     
     def _generate_template_recommendations(
@@ -693,11 +697,11 @@ Provide recommendations for the top 5 skills only.
             "missing_skills_count": len(missing_skills),
             "insights": [
                 {
-                    "title": "[EMOJI] Skill Completion Impact",
+                    "title": "Skill Completion Impact",
                     "message": f"Learning the top {min(len(missing_skills), 5)} missing skills can increase your chances of reaching {target_ctc} by 40-60%"
                 },
                 {
-                    "title": "[EMOJI] Market Readiness",
+                    "title": "Market Readiness",
                     "message": f"For {target_role} at {target_ctc}, focus on: {', '.join(missing_skill_names[:3])}"
                 },
                 {
@@ -705,7 +709,7 @@ Provide recommendations for the top 5 skills only.
                     "message": f"Estimated learning time: {self._estimate_total_learning_time(missing_skills[:5])} to reach target readiness"
                 },
                 {
-                    "title": "[EMOJI] Strategy",
+                    "title": "Strategy",
                     "message": f"Prioritize {'high-demand' if len(missing_skills) > 5 else 'essential'} skills first for fastest impact"
                 }
             ],

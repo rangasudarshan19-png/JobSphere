@@ -17,7 +17,7 @@ class TheMuseJobSearchService:
     
     def __init__(self):
         self.enabled = True  # No API key required!
-        logger.info("[SYMBOL] The Muse API enabled (Unlimited FREE searches)")
+        logger.info("The Muse API enabled (Unlimited FREE searches)")
     
     async def search_jobs(
         self,
@@ -69,30 +69,30 @@ class TheMuseJobSearchService:
             
             url = f"{THEMUSE_BASE_URL}/jobs"
             
-            logger.info(f"[EMOJI] Searching The Muse: '{query or 'all'}' in '{location or 'any location'}'")
+            logger.info(f"Searching The Muse: '{query or 'all'}' in '{location or 'any location'}'")
             
             async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.get(url, params=params)
                 
                 if response.status_code != 200:
-                    logger.error(f"[SYMBOL] The Muse API error: {response.status_code}")
+                    logger.error(f"The Muse API error: {response.status_code}")
                     return []
                 
                 data = response.json()
                 jobs = data.get("results", [])
                 
                 if not jobs:
-                    logger.info(f"[SYMBOL]️ No jobs found on The Muse")
+                    logger.info(f"No jobs found on The Muse")
                     return []
                 
-                logger.info(f"[SYMBOL] Found {len(jobs)} jobs from The Muse")
+                logger.info(f"Found {len(jobs)} jobs from The Muse")
                 
                 # Transform to our format
                 transformed = [self._transform_job(job) for job in jobs]
                 return transformed
         
         except Exception as e:
-            logger.error(f"[SYMBOL] The Muse search failed: {e}")
+            logger.error(f"The Muse search failed: {e}")
             return []
     
     def _transform_job(self, job: Dict) -> Dict:

@@ -114,17 +114,17 @@ class NotificationService:
             if email_sent:
                 notification.email_sent = True
                 self.db.commit()
-                logger.info(f"[SYMBOL] Email sent for notification {notification.id}")
+                logger.info(f"Email sent for notification {notification.id}")
             
             return email_sent
             
         except Exception as e:
-            logger.error(f"[SYMBOL] Failed to send notification email: {str(e)}")
+            logger.error(f"Failed to send notification email: {str(e)}")
             return False
     
     def _send_status_change_email(self, notification: Notification, user: User) -> bool:
         """Status change emails are not yet implemented."""
-        logger.info("[SYMBOL] Skipping status change email: feature not implemented")
+        logger.info("Skipping status change email: feature not implemented")
         return False
     
     def _send_interview_reminder_email(self, notification: Notification, user: User) -> bool:
@@ -321,7 +321,7 @@ class NotificationService:
                     send_email=True
                 )
                 notifications.append(notification)
-                logger.info(f"[SYMBOL] Sent interview reminder for application {app.id}")
+                logger.info(f"Sent interview reminder for application {app.id}")
         
         return notifications
     
@@ -365,7 +365,7 @@ class NotificationService:
                     send_email=True
                 )
                 notifications.append(notification)
-                logger.info(f"[SYMBOL] Sent follow-up reminder for application {app.id}")
+                logger.info(f"Sent follow-up reminder for application {app.id}")
         
         return notifications
     
@@ -394,7 +394,7 @@ class NotificationService:
                     send_email=True
                 )
                 notifications.append(notification)
-                logger.info(f"[SYMBOL] Sent weekly summary to user {user.id}")
+                logger.info(f"Sent weekly summary to user {user.id}")
         
         return notifications
     
@@ -485,7 +485,7 @@ class NotificationService:
         today = date.today()
         tomorrow = today + timedelta(days=1)
         
-        logger.info(f"[EMOJI] Checking next phase reminders for {today}")
+        logger.info(f"Checking next phase reminders for {today}")
         
         # Check for next phases happening tomorrow (24h reminder)
         tomorrow_phases = self.db.query(Application).filter(
@@ -543,9 +543,9 @@ class NotificationService:
                     send_email=False  # Already sent above
                 )
                 notifications.append(notification)
-                logger.info(f"[SYMBOL] Sent 24h reminder for application {app.id}")
+                logger.info(f"Sent 24h reminder for application {app.id}")
             except Exception as e:
-                logger.error(f"[SYMBOL] Failed to send 24h reminder for application {app.id}: {e}")
+                logger.error(f"Failed to send 24h reminder for application {app.id}: {e}")
         
         # Check for next phases happening today (day-of reminder)
         today_phases = self.db.query(Application).filter(
@@ -601,11 +601,11 @@ class NotificationService:
                     send_email=False  # Already sent above
                 )
                 notifications.append(notification)
-                logger.info(f"[SYMBOL] Sent day-of reminder for application {app.id}")
+                logger.info(f"Sent day-of reminder for application {app.id}")
             except Exception as e:
-                logger.error(f"[SYMBOL] Failed to send day-of reminder for application {app.id}: {e}")
+                logger.error(f"Failed to send day-of reminder for application {app.id}: {e}")
         
-        logger.info(f"[EMOJI] Sent {len(notifications)} next phase reminders")
+        logger.info(f"Sent {len(notifications)} next phase reminders")
         return notifications
 
 

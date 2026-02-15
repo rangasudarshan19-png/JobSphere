@@ -11,6 +11,9 @@ from typing import List, Optional
 from pydantic import BaseModel
 import json
 from datetime import datetime, timedelta
+import logging
+
+logger = logging.getLogger(__name__)
 
 from app.utils.database import get_db
 from app.routers.auth import get_current_user
@@ -68,7 +71,7 @@ async def save_enhanced_resume(
     """
     try:
         # Extract profile from resume
-        print(f"[EMOJI] Extracting profile from resume for user {current_user.id}...")
+        logger.info(f"Extracting profile from resume for user {current_user.id}...")
         profile = await resume_analyzer.extract_profile(request.resume_text)
         
         # Create enhanced resume record
@@ -95,8 +98,7 @@ async def save_enhanced_resume(
         db.commit()
         db.refresh(enhanced_resume)
         
-        print(f"[SYMBOL] Resume saved with {len(profile.get('skills', []))} skills extracted")
-        
+        logger.info(f"Resume saved with {len(profile.get('skills', []))} skills extracted")
         return {
             "success": True,
             "resume_id": enhanced_resume.id,
@@ -105,7 +107,7 @@ async def save_enhanced_resume(
         }
         
     except Exception as e:
-        print(f"[SYMBOL] Failed to save resume: {e}")
+        logger.error(f"Failed to save resume: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to save resume: {str(e)}"
@@ -163,7 +165,7 @@ async def update_job_status(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[SYMBOL] Failed to update job status: {e}")
+        logger.error(f"Failed to update job status: {e}")
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -209,7 +211,7 @@ async def get_tracking_board(
             ]
         }
     except Exception as e:
-        print(f"[SYMBOL] Failed to load tracking board: {e}")
+        logger.error(f"Failed to load tracking board: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to load tracking board: {str(e)}"
@@ -253,18 +255,16 @@ async def search_matching_jobs(
         if not search_query:
             if profile['job_titles'] and len(profile['job_titles']) > 0:
                 search_query = profile['job_titles'][0]  # Use first job title
-                print(f"   Using job title from profile: {search_query}")
+                logger.info(f"   Using job title from profile: {search_query}")
             else:
                 search_query = "Software Engineer"  # Generic fallback
-                print(f"   No query provided, using generic: {search_query}")
-        
+                logger.info(f"   No query provided, using generic: {search_query}")
         # Determine location (empty = any location, will search broader)
         location = request.location if request.location else (profile.get('location_preference') or "")
         
-        print(f"[EMOJI] Searching jobs: {search_query} in {location}")
-        print(f"   Min match score: {request.min_match_score or 80}%")
-        print(f"   Using Multi-Source Search (JSearch + Adzuna + The Muse + Remotive)...")
-        
+        logger.info(f"Searching jobs: {search_query} in {location}")
+        logger.info(f"   Min match score: {request.min_match_score or 80}%")
+        logger.info(f"   Using Multi-Source Search (JSearch + Adzuna + The Muse + Remotive)...")
         # Search jobs using multi-source service with smart fallback
         try:
             search_result = await multi_search_service.search_jobs(
@@ -275,16 +275,16 @@ async def search_matching_jobs(
             )
             jobs = search_result.get("jobs", [])
             sources_used = search_result.get("sources_used", [])
-            print(f"   [SYMBOL] Multi-source search returned {len(jobs)} jobs from: {', '.join(sources_used)}")
+            logger.info(f"   Multi-source search returned {len(jobs)} jobs from: {', '.join(sources_used)}")
         except ValueError as e:
             # API key not configured
-            print(f"   [SYMBOL] API key error: {e}")
+            logger.error(f"   API key error: {e}")
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail=str(e)
             )
         except Exception as e:
-            print(f"   [SYMBOL] JSearch API error: {e}")
+            logger.error(f"   JSearch API error: {e}")
             import traceback
             traceback.print_exc()
             raise HTTPException(
@@ -293,21 +293,19 @@ async def search_matching_jobs(
             )
         
         if not jobs:
-            print(f"   [SYMBOL]️ No jobs returned from API")
+            logger.info(f"   No jobs returned from API")
             return {
                 "success": True,
                 "matched_jobs": [],
                 "message": "No jobs found for your search. The job board may be temporarily unavailable."
             }
         
-        print(f"[EMOJI] Matching {len(jobs)} jobs with profile...")
-        print(f"   Profile has {len(profile.get('skills', []))} skills")
-        
+        logger.info(f"Matching {len(jobs)} jobs with profile...")
+        logger.info(f"   Profile has {len(profile.get('skills', []))} skills")
         # Match jobs (with batching for rate limit protection)
         min_score = request.min_match_score or 80
         matched_jobs = await job_matcher.batch_match(profile, jobs, min_score)
-        print(f"   [SYMBOL] {len(matched_jobs)} jobs matched with {min_score}%+ score")
-        
+        logger.info(f"   {len(matched_jobs)} jobs matched with {min_score}%+ score")
         # Save matched jobs to database
         saved_count = 0
         for job in matched_jobs[:20]:  # Save top 20 matches
@@ -334,13 +332,12 @@ async def search_matching_jobs(
                 db.add(matched_job)
                 saved_count += 1
             except Exception as e:
-                print(f"[SYMBOL]️ Failed to save job {job.get('title')}: {e}")
+                logger.error(f"Failed to save job {job.get('title')}: {e}")
                 continue
         
         db.commit()
         
-        print(f"[SYMBOL] Found {len(matched_jobs)} matching jobs (saved {saved_count} to database)")
-        
+        logger.info(f"Found {len(matched_jobs)} matching jobs (saved {saved_count} to database)")
         return {
             "success": True,
             "matched_jobs": matched_jobs,
@@ -353,7 +350,7 @@ async def search_matching_jobs(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[SYMBOL] Job search failed: {e}")
+        logger.error(f"Job search failed: {e}")
         import traceback
         traceback.print_exc()
         raise HTTPException(
@@ -406,7 +403,7 @@ async def get_matched_jobs(
             "total": len(jobs)
         }
     except Exception as e:
-        print(f"[SYMBOL] Failed to get matched jobs: {e}")
+        logger.error(f"Failed to get matched jobs: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get matched jobs: {str(e)}"
@@ -452,7 +449,7 @@ async def get_my_resume(
             "created_at": resume.created_at.isoformat() if resume.created_at else None
         }
     except Exception as e:
-        print(f"[SYMBOL] Failed to get resume: {e}")
+        logger.error(f"Failed to get resume: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get resume: {str(e)}"

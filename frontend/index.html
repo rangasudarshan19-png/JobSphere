@@ -39,6 +39,23 @@
         .review-glow{
             box-shadow:0 0 80px rgba(99,102,241,0.06),0 12px 40px rgba(0,0,0,0.3);
         }
+        /* Review cards grid */
+        .reviews-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1.5rem;margin-top:2rem}
+        .review-card{
+            background:rgba(15,20,50,0.6);border:1px solid rgba(99,102,241,0.12);
+            border-radius:16px;padding:1.75rem;transition:transform 0.2s,box-shadow 0.2s;
+        }
+        .review-card:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(99,102,241,0.1)}
+        .review-stars{color:#f59e0b;font-size:1.125rem;letter-spacing:2px;margin-bottom:0.5rem}
+        .review-title{font-size:1.0625rem;font-weight:600;color:#fff;margin-bottom:0.5rem}
+        .review-text{color:rgba(255,255,255,0.65);font-size:0.9375rem;line-height:1.6;margin-bottom:1rem}
+        .review-author{font-size:0.8125rem;color:rgba(255,255,255,0.4);font-weight:500}
+        .review-date{font-size:0.75rem;color:rgba(255,255,255,0.3)}
+        .reviews-summary{display:flex;align-items:center;justify-content:center;gap:1.5rem;flex-wrap:wrap;margin-bottom:0.5rem}
+        .reviews-avg{font-size:2.5rem;font-weight:800;color:#f59e0b;line-height:1}
+        .reviews-avg-stars{color:#f59e0b;font-size:1.375rem;letter-spacing:2px}
+        .reviews-count{color:rgba(255,255,255,0.5);font-size:0.9375rem}
+
         /* Trust badges */
         .trust-bar{
             display:flex;align-items:center;justify-content:center;gap:2.5rem;flex-wrap:wrap;
@@ -77,7 +94,7 @@
             <div class="hero-grid"></div>
             <div class="hero-content container fade-in">
                 <div class="badge badge-primary" style="margin-bottom:1.25rem;font-size:0.8125rem;padding:0.35rem 1rem;display:inline-flex">
-                    🚀 100% Free · AI-Powered · Open Source
+                    100% Free · AI-Powered · Open Source
                 </div>
                 <h1 class="hero-title">Your Complete Job Search<br>Command Center</h1>
                 <p class="hero-subtitle">
@@ -90,10 +107,10 @@
                     <a href="#features" class="btn btn-secondary btn-lg">Explore Features</a>
                 </div>
                 <div class="trust-bar">
-                    <span>🔒 Secure</span>
-                    <span>⚡ Real-Time</span>
-                    <span>🌐 Multi-Platform</span>
-                    <span>🤖 AI-Powered</span>
+                    <span>Secure</span>
+                    <span>Real-Time</span>
+                    <span>Multi-Platform</span>
+                    <span>AI-Powered</span>
                 </div>
             </div>
         </section>
@@ -106,32 +123,32 @@
                 <p class="section-subtitle">Six powerful tools working together in one unified platform.</p>
                 <div class="grid grid-3">
                     <div class="card card-interactive feature-card fade-in">
-                        <div class="feature-icon">📊</div>
+                        <div class="feature-icon"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
                         <h3 class="feature-title">Application Tracker</h3>
                         <p class="feature-description">Kanban board with drag-and-drop. Track status, deadlines, and follow-ups at a glance.</p>
                     </div>
                     <div class="card card-interactive feature-card fade-in anim-delay-1">
-                        <div class="feature-icon">🤖</div>
+                        <div class="feature-icon"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg></div>
                         <h3 class="feature-title">AI Job Matching</h3>
                         <p class="feature-description">Personalized recommendations matching your skills, experience, and career goals.</p>
                     </div>
                     <div class="card card-interactive feature-card fade-in anim-delay-2">
-                        <div class="feature-icon">📄</div>
+                        <div class="feature-icon"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
                         <h3 class="feature-title">Resume Builder</h3>
                         <p class="feature-description">ATS-optimized resumes with AI suggestions, real-time scoring, and one-click export.</p>
                     </div>
                     <div class="card card-interactive feature-card fade-in anim-delay-1">
-                        <div class="feature-icon">🎤</div>
+                        <div class="feature-icon"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></div>
                         <h3 class="feature-title">Interview Prep</h3>
                         <p class="feature-description">AI-generated questions tailored to your role. Practice with real-time feedback.</p>
                     </div>
                     <div class="card card-interactive feature-card fade-in anim-delay-2">
-                        <div class="feature-icon">✉️</div>
+                        <div class="feature-icon"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
                         <h3 class="feature-title">Cover Letter AI</h3>
                         <p class="feature-description">Personalized cover letters generated in seconds, highlighting your unique strengths.</p>
                     </div>
                     <div class="card card-interactive feature-card fade-in anim-delay-3">
-                        <div class="feature-icon">🔍</div>
+                        <div class="feature-icon"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
                         <h3 class="feature-title">Multi-Board Search</h3>
                         <p class="feature-description">Search The Muse, Remotive, JSearch, and Adzuna — all from one interface.</p>
                     </div>
@@ -175,17 +192,32 @@
             <div class="container">
                 <h2 class="section-title">What Our Users Say</h2>
                 <p class="section-subtitle">Join our growing community of job seekers using AI to land their dream roles.</p>
-                <div class="card review-glow text-center" style="max-width:560px;margin:0 auto;padding:3rem 2.5rem">
-                    <div style="font-size:3.5rem;margin-bottom:1rem;opacity:0.7">🌟</div>
+
+                <!-- Summary bar (hidden until reviews exist) -->
+                <div id="reviewsSummary" class="reviews-summary" style="display:none">
+                    <div style="text-align:center">
+                        <div class="reviews-avg" id="avgRating">0</div>
+                        <div class="reviews-avg-stars" id="avgStars"></div>
+                        <div class="reviews-count"><span id="totalReviews">0</span> reviews</div>
+                    </div>
+                </div>
+
+                <!-- Reviews grid (filled by JS) -->
+                <div id="reviewsGrid" class="reviews-grid"></div>
+
+                <!-- Empty state -->
+                <div id="reviewsEmpty" class="card review-glow text-center" style="max-width:560px;margin:0 auto;padding:3rem 2.5rem">
+                    <div style="margin-bottom:1rem;opacity:0.7"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
                     <h3 style="margin-bottom:0.75rem">Be Our First Reviewer!</h3>
-                    <p class="text-secondary" style="margin-bottom:1.5rem;max-width:380px;margin-left:auto;margin-right:auto">Try JobSphere to land your dream job, then share your experience to inspire others.</p>
+                    <p class="text-secondary" style="margin-bottom:1.5rem;max-width:380px;margin-left:auto;margin-right:auto">Try JobSphere and share your experience to help others on their job search journey.</p>
                     <div class="flex-center gap-md flex-wrap">
                         <a href="signup.html" class="btn btn-primary">Get Started Now</a>
-                        <a href="#features" class="btn btn-secondary">Learn More</a>
                     </div>
                 </div>
             </div>
         </section>
+
+
 
         <!-- CTA -->
         <section class="section cta-section" style="text-align:center;padding:6rem 0">
@@ -226,11 +258,11 @@
 
     <script src="js/app.js"></script>
     <script>
-        /* ── Animated Stars ── */
+        /* ── Animated Stars (pauses when tab hidden) ── */
         (function() {
             const canvas = document.getElementById('stars-canvas');
             const ctx = canvas.getContext('2d');
-            let w, h, stars = [];
+            let w, h, stars = [], animId = null;
 
             function resize() {
                 w = canvas.width = window.innerWidth;
@@ -260,8 +292,14 @@
                     ctx.fillStyle = `rgba(148, 163, 184, ${s.a * flicker})`;
                     ctx.fill();
                 });
-                requestAnimationFrame(draw);
+                animId = requestAnimationFrame(draw);
             }
+
+            // Pause when tab hidden for performance
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) { cancelAnimationFrame(animId); animId = null; }
+                else if (!animId) draw();
+            });
             draw();
         })();
 
@@ -271,28 +309,81 @@
                 e.preventDefault();
                 const target = document.querySelector(a.getAttribute('href'));
                 if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                // Close mobile menu if open
+                document.getElementById('navMenu')?.classList.remove('show');
             });
         });
+    </script>
 
-        /* ── Scroll animations ── */
-        const observer = new IntersectionObserver(entries => {
-            entries.forEach(e => {
-                if (e.isIntersecting) {
-                    e.target.style.animationPlayState = 'running';
-                    observer.unobserve(e.target);
+    <!-- Reviews Display (read-only) -->
+    <script>
+        const REVIEWS_API = (() => {
+            const h = window.location.hostname;
+            const base = (!h || h === 'localhost' || h === '127.0.0.1')
+                ? 'http://127.0.0.1:8000' : window.location.origin;
+            return base + '/api/reviews';
+        })();
+
+        function renderStars(rating) {
+            let s = '';
+            for (let i = 1; i <= 5; i++) s += i <= rating ? '\u2605' : '\u2606';
+            return s;
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            const d = document.createElement('div');
+            d.textContent = str;
+            return d.innerHTML;
+        }
+
+        function formatDate(iso) {
+            if (!iso) return '';
+            const d = new Date(iso);
+            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        async function loadReviews() {
+            try {
+                const resp = await fetch(REVIEWS_API);
+                if (!resp.ok) throw new Error('Failed to load reviews');
+                const data = await resp.json();
+
+                const grid = document.getElementById('reviewsGrid');
+                const empty = document.getElementById('reviewsEmpty');
+                const summary = document.getElementById('reviewsSummary');
+
+                if (data.reviews && data.reviews.length > 0) {
+                    empty.style.display = 'none';
+                    summary.style.display = 'flex';
+                    document.getElementById('avgRating').textContent = data.average_rating;
+                    document.getElementById('avgStars').textContent = renderStars(Math.round(data.average_rating));
+                    document.getElementById('totalReviews').textContent = data.total_reviews;
+
+                    grid.innerHTML = data.reviews.map(r => `
+                        <div class="review-card" data-id="${r.id}">
+                            <div class="review-stars">${renderStars(r.rating)}</div>
+                            <div class="review-title">${escapeHtml(r.title)}</div>
+                            <div class="review-text">${escapeHtml(r.content)}</div>
+                            <div style="display:flex;justify-content:space-between;align-items:center">
+                                <div>
+                                    <span class="review-author">${escapeHtml(r.reviewer_name)}</span>
+                                    <span class="review-date"> &middot; ${formatDate(r.created_at)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    grid.innerHTML = '';
+                    empty.style.display = 'block';
+                    summary.style.display = 'none';
                 }
-            });
-        }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+            } catch (err) {
+                console.error('Error loading reviews:', err);
+            }
+        }
 
-        document.querySelectorAll('.fade-in').forEach(el => {
-            el.style.animationPlayState = 'paused';
-            observer.observe(el);
-        });
-
-        /* ── Navbar scroll effect ── */
-        window.addEventListener('scroll', () => {
-            document.querySelector('.navbar').classList.toggle('scrolled', window.scrollY > 50);
-        });
+        document.addEventListener('DOMContentLoaded', loadReviews);
     </script>
 </body>
 </html>

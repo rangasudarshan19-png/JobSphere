@@ -5,7 +5,7 @@
 [![Python](https://img.shields.io/badge/Python-3.13-blue.svg)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-Latest-green.svg)](https://fastapi.tiangolo.com)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-90.5%25-success.svg)](testing/)
+[![Tests](https://img.shields.io/badge/Tests-51_passed-success.svg)](testing/)
 
 ---
 
@@ -36,7 +36,7 @@ JobSphere is a comprehensive job application management system that combines:
 
 **Developed for:** BITS Pilani University Capstone Project  
 **Academic Year:** 2025-2026  
-**Test Coverage:** 90.5% (86/95 tests passing)
+**Test Coverage:** 51/51 backend tests passing (32.8% code coverage)
 
 ---
 
@@ -101,6 +101,15 @@ Aggregates jobs from 5 sources:
 - Skills inventory management
 - Experience and education tracking
 - Contact information updates
+- **My Review** - Write, edit, or delete your platform review from your profile
+
+### ⭐ Reviews System
+- **Public Reviews Display** - Landing page shows all approved user reviews with average rating
+- **Authenticated Review Management** - Users can write, edit, and delete reviews from their profile page
+- **One Review Per User** - Enforced at API and database level
+- **Star Rating** - Interactive 1-5 star rating with hover effects
+- **Delete Confirmation** - Modal confirmation before deleting a review
+- **XSS Prevention** - All user content sanitized before display
 
 ### 🎨 UI/UX Features
 - **Dark Mode** - Full dark theme support
@@ -135,19 +144,19 @@ Uvicorn (ASGI Server)
 ### Frontend
 ```
 HTML5, CSS3, JavaScript (ES6+)
-Bootstrap 5 (UI Framework)
+Vanilla JS (No framework dependencies)
 Chart.js (Analytics Visualization)
-Font Awesome (Icons)
+Custom Design System (Dark theme, glassmorphic cards)
 ```
 
 ### AI/ML Integration
 ```
-Google Gemini AI (Primary)
-OpenRouter (Interview Prep - Deepseek, Llama-3.1-70B)
-Groq (Fallback)
-OpenAI (Optional)
-Cohere (Backup)
-HuggingFace (Final Fallback)
+Google Gemini 2.0 Flash (Primary - Resume, Matching, Analysis)
+OpenRouter (Deepseek Chat - Interview Prep, Fallback for all AI features)
+Groq (Mixtral-8x7B - Fallback)
+OpenAI (GPT-4o-mini - Optional)
+Cohere (Command-R - Backup)
+HuggingFace (Llama-3-8B - Final Fallback)
 xAI Grok (Experimental)
 ```
 
@@ -264,30 +273,45 @@ Project/
 │       ├── requirements.txt        # Python dependencies
 │       ├── .env                    # Environment variables
 │       ├── app/
-│       │   ├── routers/           # API endpoints
-│       │   │   ├── auth.py        # Authentication
+│       │   ├── routers/           # API endpoints (10 routers)
+│       │   │   ├── auth.py        # Authentication & user management
 │       │   │   ├── applications.py # Job applications CRUD
-│       │   │   ├── jobs.py        # Job search
-│       │   │   ├── ai.py          # AI features
-│       │   │   ├── analytics.py   # Statistics
-│       │   │   └── admin.py       # Admin panel
-│       │   ├── services/          # Business logic
+│       │   │   ├── jobs.py        # Job search aggregation
+│       │   │   ├── ai_features.py # AI features (resume, interview, cover letter)
+│       │   │   ├── resume.py      # Resume upload & parsing
+│       │   │   ├── analytics.py   # Statistics & charts
+│       │   │   ├── admin.py       # Admin panel
+│       │   │   ├── reviews.py     # User reviews CRUD
+│       │   │   ├── job_matching.py # Job-resume matching
+│       │   │   └── scraper.py     # Job scraping
+│       │   ├── services/          # Business logic (18 services)
 │       │   │   ├── multi_search_service.py  # Job aggregation
 │       │   │   ├── multi_ai_service.py      # AI orchestration
 │       │   │   ├── resume_generator.py      # Resume AI
+│       │   │   ├── resume_analyzer.py       # Resume analysis
 │       │   │   ├── interview_generator.py   # Interview AI
-│       │   │   └── email_service.py         # Notifications
-│       │   ├── models/            # SQLAlchemy models
+│       │   │   ├── skills_gap_analyzer.py   # Skills gap analysis
+│       │   │   ├── job_matcher.py            # Job matching engine
+│       │   │   ├── email_service.py         # Email notifications
+│       │   │   ├── notification_service.py  # In-app notifications
+│       │   │   └── otp_service.py           # OTP verification
+│       │   ├── models/            # SQLAlchemy models (6 models)
+│       │   │   ├── user.py        # User model
+│       │   │   ├── application.py # Job application model
+│       │   │   ├── review.py      # User review model
+│       │   │   ├── notification.py # Notification model
+│       │   │   ├── admin.py       # Admin/audit models
+│       │   │   └── enhanced_resume.py # Resume data model
 │       │   ├── schemas/           # Pydantic schemas
 │       │   ├── utils/             # Helper functions
-│       │   └── middleware/        # CORS, logging
-│       └── tests/                 # Backend unit tests
+│       │   └── middleware/        # Security headers, request tracking
+│       └── tests/                 # Backend unit tests (51 tests)
 │
 ├── frontend/
-│   ├── index.html                 # Landing page
+│   ├── index.html                 # Landing page (public reviews display)
 │   ├── signup.html                # Registration
 │   ├── login.html                 # Authentication
-│   ├── dashboard.html             # Main dashboard
+│   ├── dashboard.html             # Main dashboard (quick actions)
 │   ├── kanban-tracker.html        # Kanban view
 │   ├── job-tracker.html           # List view
 │   ├── job-search.html            # Multi-source search
@@ -296,14 +320,16 @@ Project/
 │   ├── interview-prep.html        # Interview practice
 │   ├── job-matching.html          # Match calculator
 │   ├── analytics.html             # Analytics dashboard
-│   ├── profile.html               # User settings
+│   ├── profile.html               # User settings + review management
 │   ├── admin.html                 # Admin panel
+│   ├── get_token.html             # Token helper
 │   ├── js/
-│   │   └── app.js                 # Core JavaScript
+│   │   ├── app.js                 # Core JavaScript (v2.0)
+│   │   └── debouncer.js           # Input debouncing utility
 │   ├── css/
-│   │   ├── main.css               # Global styles
-│   │   └── components.css         # Component styles
-│   └── assets/                    # Images, icons
+│   │   ├── main.css               # Global styles (design system)
+│   │   └── components.css         # Component styles (modals, toasts)
+│   └── images/                    # Logo, icons
 │
 ├── database/
 │   ├── schema.sql                 # Database schema
@@ -493,6 +519,81 @@ Response: 200 OK
 }
 ```
 
+### Reviews Endpoints
+
+#### Get All Reviews (Public)
+```http
+GET /api/reviews
+
+Response: 200 OK
+{
+  "reviews": [
+    {
+      "id": 1,
+      "rating": 5,
+      "title": "Amazing Platform",
+      "content": "JobSphere transformed my job search...",
+      "reviewer_name": "John Doe",
+      "created_at": "2026-02-15T20:08:22.953977"
+    }
+  ],
+  "average_rating": 5.0,
+  "total_reviews": 1
+}
+```
+
+#### Submit Review (One Per User)
+```http
+POST /api/reviews
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "rating": 5,
+  "title": "Great Job Tracker",
+  "content": "JobSphere has excellent AI features...",
+  "reviewer_name": "John Doe"  // optional, defaults to profile name
+}
+
+Response: 201 Created
+```
+
+#### Get My Review
+```http
+GET /api/reviews/mine
+Authorization: Bearer {token}
+
+Response: 200 OK
+{
+  "review": { ... }  // null if no review exists
+}
+```
+
+#### Update My Review
+```http
+PUT /api/reviews/{review_id}
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "rating": 4,
+  "title": "Updated title"
+}
+
+Response: 200 OK
+```
+
+#### Delete My Review
+```http
+DELETE /api/reviews/{review_id}
+Authorization: Bearer {token}
+
+Response: 200 OK
+{
+  "message": "Review deleted successfully"
+}
+```
+
 ---
 
 ## 🧪 Testing
@@ -511,11 +612,11 @@ pytest --cov=backend/python-service/app --cov-report=html
 ### Test Categories
 
 **Backend Tests (51 tests)**
-- Authentication: Login, registration, token validation
-- Applications: CRUD operations, filtering, search
-- Job Search: API integration, fallback logic
-- AI Services: Resume generation, interview prep
-- Email: Notification sending, templates
+- Authentication: Login, registration, token validation, profile updates
+- Applications: CRUD operations, filtering, search, status tracking
+- Analytics: Statistics aggregation, trend data
+- Email Service: Notification sending, template rendering
+- Integration Workflows: Multi-service end-to-end flows
 
 **Frontend Tests (35 tests)**
 - UI Components: Forms, modals, navigation
@@ -528,7 +629,7 @@ pytest --cov=backend/python-service/app --cov-report=html
 - Multi-service interactions
 - Database transactions
 
-**Current Status:** ✅ 86/95 tests passing (90.5% coverage)
+**Current Status:** ✅ 51/51 backend tests passing (32.8% code coverage, 30% threshold met)
 
 ### Test Credentials
 
@@ -716,6 +817,7 @@ All rights reserved © 2026 Sudarshan Ranga
 - **The Muse, Remotive, Adzuna, Arbeitnow** for free job APIs
 - **FastAPI Community** for excellent documentation
 - **Bootstrap Team** for responsive framework
+- **Deepseek** for interview AI via OpenRouter
 
 ---
 
@@ -763,21 +865,23 @@ python -c "from app.services.multi_ai_service import MultiAIService; s = MultiAI
 
 ## 🎓 Project Statistics
 
-- **Lines of Code:** 15,000+
+- **Lines of Code:** 18,000+
 - **Development Time:** 6 months
-- **Test Coverage:** 90.5%
-- **API Endpoints:** 45+
-- **Database Tables:** 15
+- **Test Coverage:** 51/51 backend tests passing (32.8% code coverage)
+- **API Routers:** 10
+- **API Endpoints:** 50+
+- **Database Tables:** 7 (users, applications, reviews, notifications, admin logs, resume data, enhanced resume)
 - **External APIs:** 11
-- **AI Providers:** 7
-- **Features:** 14 major features
-- **Pages:** 14 HTML pages
+- **AI Providers:** 7 (Gemini, OpenRouter, Groq, OpenAI, Cohere, HuggingFace, xAI)
+- **Backend Services:** 18
+- **Features:** 15 major features (including Reviews)
+- **Pages:** 15 HTML pages
 - **Responsive Breakpoints:** 4 (mobile, tablet, desktop, wide)
 
 ---
 
-**Last Updated:** February 8, 2026  
-**Version:** 1.0.0  
+**Last Updated:** February 16, 2026  
+**Version:** 2.1.0  
 **Status:** ✅ Production Ready
 
 ---

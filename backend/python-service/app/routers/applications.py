@@ -28,8 +28,8 @@ def create_application(
     current_user: User = Depends(get_current_user)
 ):
     """Create a new job application"""
-    logger.info(f"[EMOJI] Creating application for user: {current_user.email}")
-    logger.info(f"[EMOJI] Application data received:")
+    logger.info(f"Creating application for user: {current_user.email}")
+    logger.info(f"Application data received:")
     logger.info(f"   - Job: {application.job_title}")
     logger.info(f"   - Company: {application.company_name}")
     logger.info(f"   - Next Phase Date: {application.next_phase_date}")
@@ -78,7 +78,7 @@ def create_application(
     # Send application created email (non-blocking) if notifications enabled
     try:
         if db_application.send_notifications:
-            logger.info(f"[EMOJI] Sending application created email to {current_user.email}")
+            logger.info(f"Sending application created email to {current_user.email}")
             
             # Get company name
             company_name = "Unknown Company"
@@ -122,9 +122,9 @@ def create_application(
                 from datetime import date
                 # next_phase_date is already a date object, not datetime
                 today = date.today()
-                logger.info(f"[EMOJI] Checking next phase date: {db_application.next_phase_date} vs today: {today}")
+                logger.info(f"Checking next phase date: {db_application.next_phase_date} vs today: {today}")
                 if db_application.next_phase_date == today:
-                    logger.info(f"[EMOJI] Next phase is TODAY! Sending special AI-powered good luck email")
+                    logger.info(f"Next phase is TODAY! Sending special AI-powered good luck email")
                     email_service.send_next_phase_today_email(
                         to_email=current_user.email,
                         user_name=current_user.full_name or "User",
@@ -138,9 +138,9 @@ def create_application(
                         application_id=db_application.id
                     )
                 else:
-                    logger.info(f"[EMOJI] Next phase is NOT today ({db_application.next_phase_date} != {today})")
+                    logger.info(f"Next phase is NOT today ({db_application.next_phase_date} != {today})")
         else:
-            logger.info(f"[EMOJI] Notifications disabled for this application - skipping email")
+            logger.info(f"Notifications disabled for this application - skipping email")
     except Exception as e:
         # Don't fail application creation if email fails
         logger.error(f"Failed to send application created email: {str(e)}")
@@ -220,7 +220,7 @@ def update_application(
     # Send notification if status changed and notifications enabled
     if 'status' in update_data and old_status != db_application.status and db_application.send_notifications:
         try:
-            logger.info(f"[EMOJI] Sending status change email: {old_status} -> {db_application.status}")
+            logger.info(f"Sending status change email: {old_status} -> {db_application.status}")
             
             # Get company name
             company_name = "Unknown Company"
@@ -288,7 +288,7 @@ def partial_update_application(
     # Send notification if status changed and notifications enabled
     if 'status' in update_data and old_status != db_application.status and db_application.send_notifications:
         try:
-            logger.info(f"[EMOJI] Sending status change email: {old_status} -> {db_application.status}")
+            logger.info(f"Sending status change email: {old_status} -> {db_application.status}")
             
             # Get company name
             company_name = "Unknown Company"

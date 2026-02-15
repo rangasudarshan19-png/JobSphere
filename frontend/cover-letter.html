@@ -91,7 +91,7 @@
         <!-- Hero Banner -->
         <div class="hero-banner">
             <img src="https://images.unsplash.com/photo-1455390582262-044cdead277a?w=800&auto=format&fit=crop" alt="Cover Letter">
-            <h1>✉️ AI Cover Letter Generator</h1>
+            <h1>AI Cover Letter Generator</h1>
             <p class="text-secondary" style="max-width: 600px; margin: 0 auto;">
                 Create personalized, compelling cover letters in seconds with our AI-powered generator
             </p>
@@ -101,7 +101,7 @@
         <div class="generator-container">
             <!-- Input Panel -->
             <div class="input-panel">
-                <h3 style="margin-bottom: 25px;">📝 Job Details</h3>
+                <h3 style="margin-bottom: 25px;">Job Details</h3>
 
                 <div class="form-group">
                     <label class="form-label">Company Name</label>
@@ -136,26 +136,26 @@
                 </div>
 
                 <button class="btn btn-primary" style="width: 100%;" onclick="generateCoverLetter()">
-                    ✨ Generate Cover Letter
+                    Generate Cover Letter
                 </button>
             </div>
 
             <!-- Output Panel -->
             <div>
                 <div class="flex-between" style="margin-bottom: 15px;">
-                    <h3>📄 Generated Cover Letter</h3>
+                    <h3>Generated Cover Letter</h3>
                     <div class="flex gap-sm">
                         <button class="btn btn-secondary btn-sm" onclick="copyCoverLetter()" id="copyBtn" style="display: none;">
-                            📋 Copy
+                            Copy
                         </button>
                         <button class="btn btn-primary btn-sm" onclick="saveCoverLetter()" id="saveBtn" style="display: none;">
-                            💾 Save
+                            Save
                         </button>
                     </div>
                 </div>
                 <div class="output-panel" id="coverLetterOutput">
                     <div class="text-center" style="padding: 100px 20px; color: #9ca3af;">
-                        <div style="font-size: 3rem; margin-bottom: 20px;">📝</div>
+                        <div style="font-size: 3rem; margin-bottom: 20px;"></div>
                         <p>Fill in the job details and click "Generate Cover Letter" to create your personalized letter.</p>
                     </div>
                 </div>
@@ -164,10 +164,10 @@
 
         <!-- Tips -->
         <div class="card" style="margin-top: 40px; background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));">
-            <h3 style="margin-bottom: 20px;">💡 Cover Letter Best Practices</h3>
+            <h3 style="margin-bottom: 20px;">Cover Letter Best Practices</h3>
             <div class="grid grid-2" style="gap: 20px;">
                 <div>
-                    <h4 style="margin-bottom: 10px;">✅ Do</h4>
+                    <h4 style="margin-bottom: 10px;">Do</h4>
                     <ul style="margin-left: 20px; color: var(--text-secondary);">
                         <li>Address the hiring manager by name if possible</li>
                         <li>Highlight specific achievements and metrics</li>
@@ -176,7 +176,7 @@
                     </ul>
                 </div>
                 <div>
-                    <h4 style="margin-bottom: 10px;">❌ Don't</h4>
+                    <h4 style="margin-bottom: 10px;">Don't</h4>
                     <ul style="margin-left: 20px; color: var(--text-secondary);">
                         <li>Use generic templates without customization</li>
                         <li>Repeat your entire resume</li>
@@ -234,7 +234,7 @@
                 const container = document.getElementById('coverLetterOutput');
                 container.innerHTML = `
                     <div class="cover-letter-text">
-                        ${data.cover_letter.replace(/\n/g, '<br>')}
+                        ${Toast.escape(data.cover_letter).replace(/\n/g, '<br>')}
                     </div>
                 `;
 
@@ -257,20 +257,21 @@
             Utils.copyToClipboard(text);
         }
 
-        function saveCoverLetter() {
-            Loading.show('Saving cover letter...');
-            setTimeout(() => {
-                Loading.hide();
-                Toast.show('Cover letter saved successfully!', 'success');
-            }, 1000);
+        async function saveCoverLetter() {
+            const text = document.getElementById('coverLetterOutput')?.innerText;
+            if (!text) { Toast.show('No cover letter to save', 'warning'); return; }
+            try {
+                await Utils.copyToClipboard(text);
+                Toast.show('Cover letter copied to clipboard!', 'success');
+            } catch { Toast.show('Could not save — try copying manually', 'warning'); }
         }
 
         function viewLetter(id) {
-            Toast.show('Loading cover letter...', 'info');
+            Toast.show('Feature coming soon', 'info');
         }
 
         function editLetter(id) {
-            Toast.show('Loading editor...', 'info');
+            Toast.show('Feature coming soon', 'info');
         }
     </script>
 </body>

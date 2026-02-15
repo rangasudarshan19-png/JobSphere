@@ -341,7 +341,7 @@ class EmailService:
             <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
                 <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
                     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-                        <h1 style="color: white; margin: 0;">Welcome to JobSphere! [EMOJI]</h1>
+                        <h1 style="color: white; margin: 0;">Welcome to JobSphere! </h1>
                     </div>
                     <div style="background: #f7fafc; padding: 30px; border-radius: 0 0 10px 10px;">
                         <p style="font-size: 16px;">Hi {user_name},</p>
@@ -438,9 +438,9 @@ If you didn't request this code, please ignore this email.
             result = self.send_email(to_email, subject, html_content, text_content)
             
             if result:
-                logger.info(f"[SYMBOL] OTP email sent successfully to {to_email}")
+                logger.info(f"OTP email sent successfully to {to_email}")
             else:
-                logger.error(f"[SYMBOL] Failed to send OTP email to {to_email}")
+                logger.error(f"Failed to send OTP email to {to_email}")
                 
             return result
             
@@ -488,7 +488,7 @@ If you didn't request this code, please ignore this email.
             <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f7fafc;">
                 <div style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
                     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
-                        <h1 style="color: white; margin: 0; font-size: 28px;">[EMOJI] New Announcement</h1>
+                        <h1 style="color: white; margin: 0; font-size: 28px;">New Announcement</h1>
                     </div>
                     <div style="padding: 30px;">
                         <p style="color: #2d3748; font-size: 16px; margin-bottom: 20px;">Hi {user_name},</p>
@@ -509,7 +509,7 @@ If you didn't request this code, please ignore this email.
             </html>
             """
             
-            subject = f"[EMOJI] {announcement_title}"
+            subject = f"{announcement_title}"
             result = self.send_email(to_email, subject, html_content)
             
             if result:
@@ -585,7 +585,7 @@ If you didn't request this code, please ignore this email.
             <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f7fafc;">
                 <div style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
                     <div style="background: linear-gradient(135deg, #f56565 0%, #c53030 100%); padding: 30px; text-align: center;">
-                        <h1 style="color: white; margin: 0; font-size: 28px;">[SYMBOL]️ Account Suspended</h1>
+                        <h1 style="color: white; margin: 0; font-size: 28px;">Account Suspended</h1>
                     </div>
                     <div style="padding: 30px;">
                         <p style="color: #2d3748; font-size: 16px; margin-bottom: 20px;">Hi {user_name},</p>
@@ -614,7 +614,7 @@ If you didn't request this code, please ignore this email.
             # Format the email with support email
             html_content = html_content.format(support_email=SUPPORT_EMAIL)
             
-            subject = "[SYMBOL]️ Your Account Has Been Suspended"
+            subject = "Your Account Has Been Suspended"
             result = self.send_email(to_email, subject, html_content)
             
             if result:
@@ -649,7 +649,7 @@ If you didn't request this code, please ignore this email.
             <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f7fafc;">
                 <div style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
                     <div style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); padding: 30px; text-align: center;">
-                        <h1 style="color: white; margin: 0; font-size: 28px;">[SYMBOL] Account Activated</h1>
+                        <h1 style="color: white; margin: 0; font-size: 28px;">Account Activated</h1>
                     </div>
                     <div style="padding: 30px;">
                         <p style="color: #2d3748; font-size: 16px; margin-bottom: 20px;">Hi {user_name},</p>
@@ -676,7 +676,7 @@ If you didn't request this code, please ignore this email.
             </html>
             """
             
-            subject = "[SYMBOL] Your Account Has Been Activated"
+            subject = "Your Account Has Been Activated"
             result = self.send_email(to_email, subject, html_content)
             
             if result:
@@ -711,7 +711,7 @@ If you didn't request this code, please ignore this email.
             <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f7fafc;">
                 <div style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
                     <div style="background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%); padding: 30px; text-align: center;">
-                        <h1 style="color: white; margin: 0; font-size: 28px;">[EMOJI] Account Deleted</h1>
+                        <h1 style="color: white; margin: 0; font-size: 28px;">Account Deleted</h1>
                     </div>
                     <div style="padding: 30px;">
                         <p style="color: #2d3748; font-size: 16px; margin-bottom: 20px;">Hi {user_name},</p>

@@ -123,3 +123,18 @@ CREATE INDEX idx_notifications_user ON notifications(user_id);
 CREATE INDEX idx_notifications_application ON notifications(application_id);
 CREATE INDEX idx_enhanced_resumes_user ON enhanced_resumes(user_id);
 CREATE INDEX idx_matched_jobs_user ON matched_jobs(user_id);
+
+-- Reviews Table
+CREATE TABLE reviews (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    title VARCHAR(200) NOT NULL,
+    content TEXT NOT NULL,
+    reviewer_name VARCHAR(100) NOT NULL,
+    is_approved INTEGER DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX idx_reviews_user ON reviews(user_id);
+CREATE INDEX idx_reviews_approved ON reviews(is_approved);

@@ -7,6 +7,9 @@ from typing import Dict, List, Optional
 import PyPDF2
 from docx import Document
 from io import BytesIO
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class ResumeParser:
@@ -113,7 +116,7 @@ class ResumeParser:
             else:
                 return ""
         except Exception as e:
-            print(f"Error extracting text: {e}")
+            logger.error(f"Error extracting text: {e}")
             return ""
     
     def _extract_from_pdf(self, file_content: bytes) -> str:
@@ -128,7 +131,7 @@ class ResumeParser:
             
             return text
         except Exception as e:
-            print(f"Error reading PDF: {e}")
+            logger.error(f"Error reading PDF: {e}")
             return ""
     
     def _extract_from_docx(self, file_content: bytes) -> str:
@@ -143,7 +146,7 @@ class ResumeParser:
             
             return text
         except Exception as e:
-            print(f"Error reading DOCX: {e}")
+            logger.error(f"Error reading DOCX: {e}")
             return ""
     
     def _extract_personal_info(self, text: str) -> Dict:

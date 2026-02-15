@@ -10,7 +10,7 @@ Categories:
 """
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import desc
+from sqlalchemy import desc, func
 from datetime import datetime, timedelta
 from typing import Optional, List
 import json
@@ -61,7 +61,7 @@ def log_admin_action(db: Session, admin_id: int, action: str, target_type: str =
         db.add(audit_log)
         db.commit()
     except Exception as e:
-        print(f"Error logging admin action: {e}")
+        logger.error(f"Error logging admin action: {e}")
 
 
 # ============ CATEGORY 1: ADVANCED USER MANAGEMENT (5 endpoints) ============
@@ -332,8 +332,8 @@ def view_application(
         "id": app.id,
         "user_id": app.user_id,
         "user_email": user.email if user else None,
-        "company": app.company_name,
-        "position": app.position,
+        "company": app.company.name if app.company else None,
+        "position": app.job_title,
         "status": app.status,
         "applied_date": app.applied_date,
         "created_at": app.created_at
@@ -434,7 +434,10 @@ def user_analytics(
     period: str = Query("30d")  # '7d', '30d', '90d'
 ):
     """User growth and retention metrics"""
-    days = int(period.replace('d', ''))
+    try:
+        days = int(period.replace('d', ''))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid period format. Use '7d', '30d', '90d'.")
     start_date = datetime.utcnow() - timedelta(days=days)
     
     total_users = db.query(User).count()
@@ -463,7 +466,10 @@ def application_analytics(
     period: str = Query("30d")
 ):
     """Application trend analytics"""
-    days = int(period.replace('d', ''))
+    try:
+        days = int(period.replace('d', ''))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid period format. Use '7d', '30d', '90d'.")
     start_date = datetime.utcnow() - timedelta(days=days)
     
     total_apps = db.query(Application).count()
@@ -474,7 +480,7 @@ def application_analytics(
     # Status breakdown
     statuses = db.query(
         Application.status,
-        db.func.count(Application.id)
+        func.count(Application.id)
     ).group_by(Application.status).all()
     status_breakdown = {status: count for status, count in statuses}
     
@@ -496,17 +502,21 @@ def company_analytics(
     """Top companies with most applications"""
     companies = db.query(
         Company.name,
-        db.func.count(Application.id).label('app_count')
+        func.count(Application.id).label('app_count')
     ).join(Application, Company.id == Application.company_id, isouter=True)\
      .group_by(Company.id)\
-     .order_by(desc(db.func.count(Application.id)))\
+     .order_by(desc(func.count(Application.id)))\
      .limit(limit).all()
     
     result = []
     for company_name, app_count in companies:
-        latest_app = db.query(Application).filter(
-            Application.company_name == company_name
-        ).order_by(desc(Application.created_at)).first()
+        # Find the company by name and get its latest application
+        company_obj = db.query(Company).filter(Company.name == company_name).first()
+        latest_app = None
+        if company_obj:
+            latest_app = db.query(Application).filter(
+                Application.company_id == company_obj.id
+            ).order_by(desc(Application.created_at)).first()
         
         result.append({
             "company_name": company_name,
@@ -1027,26 +1037,26 @@ def get_system_stats(
         try:
             statuses = db.query(
                 Application.status,
-                db.func.count(Application.id)
+                func.count(Application.id)
             ).group_by(Application.status).all()
             status_breakdown = {status: count for status, count in statuses}
         except Exception as e:
-            print(f"Error getting status breakdown: {e}")
+            logger.error(f"Error getting status breakdown: {e}")
         
         most_active_user = None
         try:
             most_active = db.query(
                 User.email,
-                db.func.count(Application.id).label('app_count')
+                func.count(Application.id).label('app_count')
             ).join(Application, User.id == Application.user_id, isouter=True)\
              .group_by(User.id)\
-             .order_by(db.func.count(Application.id).desc())\
+             .order_by(func.count(Application.id).desc())\
              .first()
             
             if most_active:
                 most_active_user = most_active[0]
         except Exception as e:
-            print(f"Error getting most active user: {e}")
+            logger.error(f"Error getting most active user: {e}")
         
         return {
             "total_users": total_users,
@@ -1060,7 +1070,7 @@ def get_system_stats(
             "recent_applications": 0
         }
     except Exception as e:
-        print(f"Error in get_system_stats: {e}")
+        logger.error(f"Error in get_system_stats: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error loading statistics: {str(e)}"

@@ -175,7 +175,7 @@
         <div class="wizard-container">
             <!-- Header -->
             <div class="text-center" style="margin-bottom: 50px;">
-                <h1 style="font-size: 2.5rem; margin-bottom: 15px;">🤖 AI Resume Builder</h1>
+                <h1 style="font-size: 2.5rem; margin-bottom: 15px;">AI Resume Builder</h1>
                 <p class="text-secondary" style="font-size: 1.1rem;">
                     Generate company-optimized resumes with AI in 3 easy steps
                 </p>
@@ -200,7 +200,7 @@
             <!-- Step 1: Company Research -->
             <div class="wizard-content active" id="step1">
                 <div class="card">
-                    <h2 style="margin-bottom: 10px;">🔍 Research Target Company</h2>
+                    <h2 style="margin-bottom: 10px;">Research Target Company</h2>
                     <p class="text-secondary" style="margin-bottom: 30px;">
                         Enter the company name to get AI-powered insights and resume optimization tips
                     </p>
@@ -218,13 +218,13 @@
                     </div>
 
                     <button class="btn btn-primary btn-lg" onclick="researchCompany()" style="width: 100%;">
-                        🚀 Research Company
+                        Research Company
                     </button>
 
                     <!-- Research Results -->
                     <div id="researchResults" style="display: none;">
                         <div class="company-research-result">
-                            <h3 style="margin-bottom: 20px;">📊 Company Analysis</h3>
+                            <h3 style="margin-bottom: 20px;">Company Analysis</h3>
                             
                             <div style="margin-bottom: 20px;">
                                 <strong>Company Type:</strong> <span id="companyType"></span>
@@ -264,7 +264,7 @@
             <!-- Step 2: User Details -->
             <div class="wizard-content" id="step2">
                 <div class="card">
-                    <h2 style="margin-bottom: 10px;">👤 Your Information</h2>
+                    <h2 style="margin-bottom: 10px;">Your Information</h2>
                     <p class="text-secondary" style="margin-bottom: 30px;">
                         Provide your details - AI will optimize them for the target company
                     </p>
@@ -288,7 +288,7 @@
                         <input type="email" class="form-control" id="email" required oninput="checkEmailMatch()">
                         <div id="emailWarning" style="display: none; margin-top: 8px; padding: 12px; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 8px; color: #f59e0b;">
                             <div style="display: flex; align-items: start; gap: 8px;">
-                                <span style="font-size: 1.2rem;">⚠️</span>
+                                <span style="font-size: 1.2rem;"></span>
                                 <div>
                                     <strong>Different from your verified account email</strong>
                                     <div style="font-size: 0.9rem; margin-top: 4px;">
@@ -415,13 +415,13 @@
             <!-- Step 3: Generate & Preview -->
             <div class="wizard-content" id="step3">
                 <div class="card">
-                    <h2 style="margin-bottom: 10px;">✨ Generate Your Resume</h2>
+                    <h2 style="margin-bottom: 10px;">Generate Your Resume</h2>
                     <p class="text-secondary" style="margin-bottom: 30px;">
                         AI will create an ATS-optimized resume tailored to <strong id="targetCompany"></strong>
                     </p>
 
                     <button class="btn btn-primary btn-lg" onclick="generateResume()" style="width: 100%; margin-bottom: 20px;">
-                        🤖 Generate AI Resume
+                        Generate AI Resume
                     </button>
 
                     <div id="resumeResult" style="display: none;">
@@ -432,30 +432,30 @@
                         <!-- Download Options (NEW) -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 30px;">
                             <button class="btn btn-primary" onclick="downloadResume('pdf')">
-                                📥 Download PDF
+                                Download PDF
                             </button>
                             <button class="btn btn-primary" onclick="downloadResume('docx')">
-                                📥 Download DOCX
+                                Download DOCX
                             </button>
                         </div>
 
                         <!-- Save Resume -->
                         <button class="btn btn-success" onclick="saveResume()" style="width: 100%; margin-top: 15px; margin-bottom: 20px;">
-                            💾 Save Resume
+                            Save Resume
                         </button>
 
                         <!-- Post-Resume Actions (NEW) -->
                         <div id="postResumeActions" style="display:none; margin-top: 30px; padding: 20px; background: #f3f4f6; border-radius: 12px;">
-                            <h3 style="margin-bottom: 20px;">📋 What would you like to do next?</h3>
+                            <h3 style="margin-bottom: 20px;">What would you like to do next?</h3>
                             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
                                 <button class="btn btn-outline" onclick="goToCoverLetter()" style="padding: 15px;">
-                                    📝 Generate Cover Letter
+                                    Generate Cover Letter
                                 </button>
                                 <button class="btn btn-outline" onclick="goToInterviewPrep()" style="padding: 15px;">
-                                    💼 Interview Prep
+                                    Interview Prep
                                 </button>
                                 <button class="btn btn-outline" onclick="goToJobSearch()" style="padding: 15px;">
-                                    🔍 Find Jobs
+                                    Find Jobs
                                 </button>
                             </div>
                         </div>
@@ -694,19 +694,19 @@
 
             // Keywords
             const keywordsHTML = (data.culture_keywords || [])
-                .map(kw => `<span class="keyword-tag">${kw}</span>`)
+                .map(kw => `<span class="keyword-tag">${Toast.escape(kw)}</span>`)
                 .join('');
             document.getElementById('cultureKeywords').innerHTML = keywordsHTML;
 
             // Skills
             const skillsHTML = (data.key_skills_to_highlight || [])
-                .map(skill => `<span class="keyword-tag">${skill}</span>`)
+                .map(skill => `<span class="keyword-tag">${Toast.escape(skill)}</span>`)
                 .join('');
             document.getElementById('keySkills').innerHTML = skillsHTML;
 
             // Tips
             const tipsHTML = (data.resume_format_tips || [])
-                .map(tip => `<div class="tip-item">${tip}</div>`)
+                .map(tip => `<div class="tip-item">${Toast.escape(tip)}</div>`)
                 .join('');
             document.getElementById('resumeTips').innerHTML = tipsHTML;
 
@@ -903,10 +903,10 @@
             let html = `
                 <div style="display: flex; gap: 20px; margin-bottom: 20px;">
                     <div style="flex-grow: 1;">
-                        <div class="preview-name">${contact.full_name}</div>
+                        <div class="preview-name">${Toast.escape(contact.full_name)}</div>
                         <div class="preview-contact">
-                            ${contact.email}${contact.phone ? ' | ' + contact.phone : ''}${contact.location ? ' | ' + contact.location : ''}
-                            ${contact.linkedin ? '<br>' + contact.linkedin : ''}
+                            ${Toast.escape(contact.email)}${contact.phone ? ' | ' + Toast.escape(contact.phone) : ''}${contact.location ? ' | ' + Toast.escape(contact.location) : ''}
+                            ${contact.linkedin ? '<br>' + Toast.escape(contact.linkedin) : ''}
                         </div>
                     </div>
                     ${contact.profile_picture ? `<div style="text-align: center;">
@@ -922,7 +922,7 @@
                 html += `
                     <div class="preview-section">
                         <div class="preview-section-title">Professional Summary</div>
-                        <p style="color: #4b5563; line-height: 1.6;">${typeof summary === 'string' ? summary : JSON.stringify(summary)}</p>
+                        <p style="color: #4b5563; line-height: 1.6;">${Toast.escape(typeof summary === 'string' ? summary : JSON.stringify(summary))}</p>
                     </div>
                 `;
             }
@@ -936,11 +936,11 @@
                     
                     html += `
                         <div style="margin-bottom: 20px;">
-                            <div style="font-weight: 700; font-size: 1.1rem; color: #1f2937;">${exp.title || 'Position'}</div>
-                            <div style="color: #6b7280; margin-bottom: 8px;">${exp.company || ''} | ${exp.duration || ''}</div>
+                            <div style="font-weight: 700; font-size: 1.1rem; color: #1f2937;">${Toast.escape(exp.title || 'Position')}</div>
+                            <div style="color: #6b7280; margin-bottom: 8px;">${Toast.escape(exp.company || '')} | ${Toast.escape(exp.duration || '')}</div>
                             ${achievementsList.length > 0 ? `
                                 <ul style="color: #4b5563; line-height: 1.6; margin: 0; padding-left: 20px;">
-                                    ${achievementsList.map(ach => `<li>${ach}</li>`).join('')}
+                                    ${achievementsList.map(ach => `<li>${Toast.escape(ach)}</li>`).join('')}
                                 </ul>
                             ` : ''}
                         </div>
@@ -955,17 +955,17 @@
                 
                 if (Array.isArray(resume.skills)) {
                     // If skills is an array, display as simple list
-                    skillsHtml = resume.skills.join(', ');
+                    skillsHtml = resume.skills.map(s => Toast.escape(s)).join(', ');
                 } else if (typeof resume.skills === 'object') {
                     // If skills is an object with technical/soft
                     const technical = resume.skills.technical || [];
                     const soft = resume.skills.soft || [];
                     
                     if (technical.length > 0) {
-                        skillsHtml += `<div style="margin-bottom: 10px;"><strong>Technical:</strong> ${Array.isArray(technical) ? technical.join(', ') : technical}</div>`;
+                        skillsHtml += `<div style="margin-bottom: 10px;"><strong>Technical:</strong> ${Array.isArray(technical) ? technical.map(s => Toast.escape(s)).join(', ') : Toast.escape(technical)}</div>`;
                     }
                     if (soft.length > 0) {
-                        skillsHtml += `<div><strong>Soft Skills:</strong> ${Array.isArray(soft) ? soft.join(', ') : soft}</div>`;
+                        skillsHtml += `<div><strong>Soft Skills:</strong> ${Array.isArray(soft) ? soft.map(s => Toast.escape(s)).join(', ') : Toast.escape(soft)}</div>`;
                     }
                 }
                 
@@ -988,10 +988,10 @@
                     
                     html += `
                         <div style="margin-bottom: 15px;">
-                            <div style="font-weight: 700; font-size: 1.1rem; color: #1f2937;">${edu.degree || 'Degree'}</div>
-                            <div style="color: #6b7280;">${edu.institution || ''} | ${edu.year || ''}</div>
+                            <div style="font-weight: 700; font-size: 1.1rem; color: #1f2937;">${Toast.escape(edu.degree || 'Degree')}</div>
+                            <div style="color: #6b7280;">${Toast.escape(edu.institution || '')} | ${Toast.escape(edu.year || '')}</div>
                             ${coursesList.length > 0 ? 
-                                `<div style="color: #6b7280; font-size: 0.9rem;">Relevant Courses: ${coursesList.join(', ')}</div>` 
+                                `<div style="color: #6b7280; font-size: 0.9rem;">Relevant Courses: ${coursesList.map(s => Toast.escape(s)).join(', ')}</div>` 
                                 : ''}
                         </div>
                     `;
@@ -1008,9 +1008,9 @@
                     
                     html += `
                         <div style="margin-bottom: 15px;">
-                            <div style="font-weight: 700; color: #1f2937;">${proj.name || 'Project'}</div>
-                            <div style="color: #4b5563; line-height: 1.6;">${proj.description || ''}</div>
-                            ${techList.length > 0 ? `<div style="color: #6b7280; font-size: 0.9rem;">Technologies: ${techList.join(', ')}</div>` : ''}
+                            <div style="font-weight: 700; color: #1f2937;">${Toast.escape(proj.name || 'Project')}</div>
+                            <div style="color: #4b5563; line-height: 1.6;">${Toast.escape(proj.description || '')}</div>
+                            ${techList.length > 0 ? `<div style="color: #6b7280; font-size: 0.9rem;">Technologies: ${techList.map(s => Toast.escape(s)).join(', ')}</div>` : ''}
                         </div>
                     `;
                 });
@@ -1023,7 +1023,7 @@
                     <div class="preview-section">
                         <div class="preview-section-title">Certifications</div>
                         <ul style="color: #4b5563; line-height: 1.6; margin: 0; padding-left: 20px;">
-                            ${resume.certifications.map(cert => `<li>${cert}</li>`).join('')}
+                            ${resume.certifications.map(cert => `<li>${Toast.escape(cert)}</li>`).join('')}
                         </ul>
                     </div>
                 `;
@@ -1126,7 +1126,7 @@
                 
                 // Show email warning if present
                 if (result.warning) {
-                    showToast(`⚠️ ${result.warning.message}`, 'warning', 7000);
+                    showToast(`${result.warning.message}`, 'warning', 7000);
                     // Show additional details
                     setTimeout(() => {
                         showToast(result.warning.suggestion, 'info', 5000);

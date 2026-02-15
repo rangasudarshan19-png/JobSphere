@@ -8,6 +8,9 @@ from pydantic import BaseModel
 from typing import List, Dict, Optional
 from datetime import datetime
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 from app.models.user import User
 from app.models.application import Application
@@ -38,7 +41,7 @@ async def _estimate_ctc_from_skills(skills: List[str], resume_text: str = "") ->
             return _fallback_ctc_estimate(skills)
         
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-2.0-flash-exp')
+        model = genai.GenerativeModel('gemini-2.0-flash')
         
         # Extract experience from resume with improved detection
         experience_info = "mid-level"  # Default
@@ -77,17 +80,17 @@ async def _estimate_ctc_from_skills(skills: List[str], resume_text: str = "") ->
         skills_text = ", ".join(skills[:20])  # Use top 20 skills
         
         prompt = f"""
-You are an expert salary analyst for the tech industry. Analyze the following skills and provide a realistic CTC/salary estimation.
+You are an expert compensation analyst specializing in the global tech industry. Analyze the following skills and provide a realistic CTC/salary estimation.
 
 Skills: {skills_text}
 Experience Level: {experience_info}
 
 Provide a JSON response with this EXACT structure:
 {{
-    "min_ctc_inr": <number>,
-    "max_ctc_inr": <number>,
-    "min_ctc_usd": <number>,
-    "max_ctc_usd": <number>,
+    "min_ctc_inr": <number in LPA (lakhs per annum)>,
+    "max_ctc_inr": <number in LPA>,
+    "min_ctc_usd": <number in thousands USD per year>,
+    "max_ctc_usd": <number in thousands USD per year>,
     "experience_level": "<entry/mid/senior>",
     "market_position": "<below_avg/average/above_avg/competitive>",
     "key_strengths": ["skill1", "skill2", "skill3"],
@@ -97,17 +100,16 @@ Provide a JSON response with this EXACT structure:
 }}
 
 Consider:
-1. Current 2025 market rates in India and USA
-2. Skill demand and rarity
-3. Experience level indicators
-4. Skill combinations that add value
-5. Industry standards for testing/development roles
+1. Current 2026 market rates in India (INR in LPA) and USA (USD in thousands/year)
+2. Skill demand, rarity, and market saturation
+3. Experience level indicators from the resume
+4. High-value skill combinations (e.g., ML + Cloud, Full-stack + DevOps)
+5. Industry standards for the identified role type
 
-Be realistic and data-driven. Base on actual market data.
+Be realistic and data-driven. Do not inflate estimates.
 """
         
-        print(f"[EMOJI] Estimating CTC for {len(skills)} skills ({experience_info})...")
-        
+        logger.info(f"Estimating CTC for {len(skills)} skills ({experience_info})...")
         response = model.generate_content(
             prompt,
             generation_config={
@@ -117,21 +119,20 @@ Be realistic and data-driven. Base on actual market data.
         )
         
         result_text = response.text.strip()
-        print(f"[EMOJI] AI CTC Response (first 200 chars): {result_text[:200]}")
-        
+        logger.info(f"AI CTC Response (first 200 chars): {result_text[:200]}")
         # Parse JSON response
         import re
         json_match = re.search(r'\{.*\}', result_text, re.DOTALL)
         if json_match:
             ctc_data = json.loads(json_match.group())
-            print(f"[SYMBOL] CTC Estimated: ₹{ctc_data.get('min_ctc_inr')}-{ctc_data.get('max_ctc_inr')} LPA")
+            logger.info(f"CTC Estimated: ₹{ctc_data.get('min_ctc_inr')}-{ctc_data.get('max_ctc_inr')} LPA")
             return ctc_data
         else:
-            print("[SYMBOL]️ Could not parse AI CTC response")
+            logger.error("Could not parse AI CTC response")
             return _fallback_ctc_estimate(skills)
     
     except Exception as e:
-        print(f"[SYMBOL]️ CTC estimation failed: {e}")
+        logger.error(f"CTC estimation failed: {e}")
         return _fallback_ctc_estimate(skills)
 
 
@@ -150,7 +151,7 @@ async def _analyze_skills_for_target_ctc(current_skills: List[str], target_ctc: 
             return {"success": False, "message": "AI unavailable"}
         
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-2.0-flash-exp')
+        model = genai.GenerativeModel('gemini-2.0-flash')
         
         # Parse target CTC
         target_numeric = None
@@ -166,13 +167,13 @@ async def _analyze_skills_for_target_ctc(current_skills: List[str], target_ctc: 
         skills_text = ", ".join(current_skills[:25])
         
         prompt = f"""
-You are a career advisor analyzing skill gaps to reach a target salary.
+You are a senior career strategist and compensation advisor. Analyze a candidate's skill gap to reach their target salary.
 
 CURRENT SITUATION:
 - Current Skills: {skills_text}
 - Target CTC: {target_ctc}
 
-TASK: Analyze what additional skills are needed to reach the target CTC.
+TASK: Determine what additional skills, certifications, and experience are needed to realistically reach the target CTC.
 
 Provide a JSON response with this EXACT structure:
 {{
@@ -180,7 +181,7 @@ Provide a JSON response with this EXACT structure:
     "current_estimated_ctc": "<estimated range based on current skills>",
     "gap_percentage": <number 0-100>,
     "skills_needed": [
-        {{"skill": "skill name", "priority": "high/medium", "impact": "description", "why": "reason"}},
+        {{"skill": "skill name", "priority": "high/medium", "impact": "salary impact description", "why": "reason this skill commands higher pay"}},
         ...
     ],
     "certifications_recommended": ["cert1", "cert2"],
@@ -190,18 +191,17 @@ Provide a JSON response with this EXACT structure:
 }}
 
 Consider:
-1. Current 2025 market demand for skills
-2. Realistic salary impact of each skill
-3. Time required to learn skills
-4. Market standards for the target CTC level
-5. Skill combinations that maximize salary
+1. Current 2026 market demand and salary benchmarks
+2. Realistic salary impact of each recommended skill
+3. Time investment required for each skill
+4. High-value skill combinations that multiply earning potential
+5. Industry certifications that directly influence hiring decisions
 
-Provide SPECIFIC, ACTIONABLE skills (not generic advice).
-For target {target_ctc}, suggest skills that actually command that salary.
+Provide SPECIFIC, ACTIONABLE skills (not generic advice like 'learn more').
+For target {target_ctc}, suggest skills and certifications that demonstrably command that salary level.
 """
         
-        print(f"[EMOJI] Analyzing skills gap to reach {target_ctc}...")
-        
+        logger.info(f"Analyzing skills gap to reach {target_ctc}...")
         response = await model.generate_content_async(
             prompt,
             generation_config={
@@ -216,13 +216,13 @@ For target {target_ctc}, suggest skills that actually command that salary.
         json_match = re.search(r'\{.*\}', result_text, re.DOTALL)
         if json_match:
             gap_analysis = json.loads(json_match.group())
-            print(f"[SYMBOL] Gap analysis complete: {len(gap_analysis.get('skills_needed', []))} skills needed")
+            logger.info(f"Gap analysis complete: {len(gap_analysis.get('skills_needed', []))} skills needed")
             return gap_analysis
         else:
             return {"success": False, "message": "Could not parse response"}
     
     except Exception as e:
-        print(f"[SYMBOL]️ Target CTC analysis failed: {e}")
+        logger.error(f"Target CTC analysis failed: {e}")
         return {"success": False, "message": str(e)}
 
 
@@ -285,47 +285,43 @@ async def _extract_skills_with_ai(resume_text: str) -> List[str]:
         # Initialize Gemini
         api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
-            print("[SYMBOL]️ No Gemini API key, falling back to manual extraction")
+            logger.info("No Gemini API key, falling back to manual extraction")
             return []
         
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-2.0-flash-exp')
+        model = genai.GenerativeModel('gemini-2.0-flash')
         
-        # Print full resume to debug
-        print(f"[EMOJI] FULL RESUME TEXT ({len(resume_text)} chars):")
-        print("=" * 80)
-        print(resume_text)
-        print("=" * 80)
-        
+        # Truncate resume text to avoid token overflow
+        truncated_resume = resume_text[:8000] if len(resume_text) > 8000 else resume_text
         prompt = f"""
 You are an expert technical recruiter analyzing a resume. Read the ENTIRE resume carefully and extract ALL technical and professional skills.
 
-CRITICAL - READ EVERYTHING:
-You MUST read and extract skills from EVERY line of the resume below. Do not skip any section.
-
 EXTRACTION RULES:
-1. Extract EVERY skill, tool, technology, methodology mentioned
-2. Look in ALL sections: Summary, Experience, Skills, Education, Projects, Certifications
-3. Testing skills: UAT, API Testing, Manual Testing, Automation, Regression, Integration, etc.
-4. Tools: JIRA, Postman, ALM, Jenkins, Git, Control-M, SSMS, SQL Squirrel, etc.
-5. Databases: SQL, MySQL, Oracle, MongoDB, SQL Server, etc.
-6. Programming: Python, Java, JavaScript, C++, etc.
-7. Methodologies: Agile, Scrum, Waterfall, DevOps, CI/CD, etc.
-8. Cloud: AWS, Azure, GCP, etc.
-9. Break down compound phrases:
-   - "API Testing using Postman" → ["API Testing", "Postman"]
-   - "Defect Management in JIRA" → ["Defect Management", "JIRA"]
-   - "SQL queries in SQL Server" → ["SQL", "SQL Server"]
-10. Normalize names: "aws"→"AWS", "sql server"→"SQL Server", "nodejs"→"Node.js"
+1. Extract EVERY skill, tool, technology, and methodology mentioned anywhere in the resume
+2. Search ALL sections: Summary, Experience, Skills, Education, Projects, Certifications
+3. Extract skills across all domains:
+   - Programming: Python, Java, JavaScript, C++, Go, Rust, etc.
+   - Frameworks: React, Django, Spring Boot, .NET, Flask, Express, etc.
+   - Cloud & DevOps: AWS, Azure, GCP, Docker, Kubernetes, Terraform, Jenkins, etc.
+   - Databases: SQL, PostgreSQL, MongoDB, Redis, Oracle, MySQL, etc.
+   - Testing & QA: Selenium, Cypress, JUnit, Postman, API Testing, etc.
+   - Data & ML: Pandas, TensorFlow, PyTorch, Spark, Tableau, Power BI, etc.
+   - Tools: Git, JIRA, Confluence, VS Code, IntelliJ, Figma, etc.
+   - Methodologies: Agile, Scrum, CI/CD, TDD, DevOps, Microservices, etc.
+4. Break down compound phrases:
+   - "API Testing using Postman" -> ["API Testing", "Postman"]
+   - "Deployed on AWS EC2" -> ["AWS", "EC2"]
+   - "Built REST APIs with Django" -> ["REST API", "Django"]
+5. Normalize names: "aws" -> "AWS", "nodejs" -> "Node.js", "react js" -> "React"
 
 IMPORTANT: Return 25-40 skills. Be EXTREMELY thorough. Extract everything technical.
 
 ===== COMPLETE RESUME =====
-{resume_text}
+{truncated_resume}
 ===== END OF RESUME =====
 
-Now extract ALL skills found above. Return ONLY a JSON array of strings.
-Example: ["Python", "Java", "SQL", "SQL Server", "SSMS", "API Testing", "Postman", "UAT Testing", "Test Case Design", "Test Execution", "Defect Management", "JIRA", "ALM", "Control-M", "Job Monitoring", "Data Validation", "Agile", "Scrum"]
+Return ONLY a JSON array of strings.
+Example: ["Python", "Django", "PostgreSQL", "AWS", "Docker", "React", "TypeScript", "REST API", "Git", "Agile", "CI/CD", "Jenkins"]
 """
         
         response = await model.generate_content_async(
@@ -337,15 +333,14 @@ Example: ["Python", "Java", "SQL", "SQL Server", "SSMS", "API Testing", "Postman
         )
         
         text = response.text.strip()
-        print(f"[EMOJI] AI Response (first 200 chars): {text[:200]}")
-        
+        logger.info(f"AI Response (first 200 chars): {text[:200]}")
         # Extract JSON from response
         if '```json' in text:
             text = text.split('```json')[1].split('```')[0].strip()
         elif '```' in text:
             text = text.split('```')[1].split('```')[0].strip()
         
-        print(f"[EMOJI] Parsed text: {text[:200]}")
+        logger.info(f"Parsed text: {text[:200]}")
         skills = json.loads(text)
         
         if isinstance(skills, list):
@@ -371,13 +366,13 @@ Example: ["Python", "Java", "SQL", "SQL Server", "SSMS", "API Testing", "Postman
                         seen.add(skill_lower)
                         cleaned_skills.append(skill)
             
-            print(f"[EMOJI] Cleaned {len(skills)} → {len(cleaned_skills)} unique skills")
+            logger.info(f"Cleaned {len(skills)} → {len(cleaned_skills)} unique skills")
             return cleaned_skills[:40]  # Return up to 40 skills
         
         return []
         
     except Exception as e:
-        print(f"[SYMBOL]️ AI skill extraction failed: {e}")
+        logger.error(f"AI skill extraction failed: {e}")
         return []
 
 
@@ -558,15 +553,14 @@ def generate_cover_letter(
     - User's skills and experience
     - Selected tone (professional, enthusiastic, confident)
     """
-    print(f"\n{'='*60}")
-    print(f"[EMOJI] COVER LETTER GENERATION REQUEST")
-    print(f"{'='*60}")
-    print(f"User: {current_user.email}")
-    print(f"Company: {request.company_name}")
-    print(f"Position: {request.job_title}")
-    print(f"Tone: {request.tone}")
-    print(f"{'='*60}\n")
-    
+    logger.info(f"\n{'='*60}")
+    logger.info(f"COVER LETTER GENERATION REQUEST")
+    logger.info(f"{'='*60}")
+    logger.info(f"User: {current_user.email}")
+    logger.info(f"Company: {request.company_name}")
+    logger.info(f"Position: {request.job_title}")
+    logger.info(f"Tone: {request.tone}")
+    logger.info(f"{'='*60}\n")
     try:
         # Generate cover letter using Gemini AI
         cover_letter = question_generator.generate_cover_letter(
@@ -577,11 +571,10 @@ def generate_cover_letter(
             tone=request.tone
         )
         
-        print(f"\n[SYMBOL] Cover letter generated successfully!")
-        print(f"Length: {len(cover_letter)} characters")
-        print(f"Preview: {cover_letter[:150]}...")
-        print(f"{'='*60}\n")
-        
+        logger.info(f"\nCover letter generated successfully!")
+        logger.info(f"Length: {len(cover_letter)} characters")
+        logger.info(f"Preview: {cover_letter[:150]}...")
+        logger.info(f"{'='*60}\n")
         return {
             "company_name": request.company_name,
             "job_title": request.job_title,
@@ -590,8 +583,8 @@ def generate_cover_letter(
         }
     
     except Exception as e:
-        print(f"\n[SYMBOL] ERROR generating cover letter: {str(e)}")
-        print(f"{'='*60}\n")
+        logger.error(f"\nERROR generating cover letter: {str(e)}")
+        logger.info(f"{'='*60}\n")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate cover letter: {str(e)}"
@@ -612,22 +605,20 @@ def answer_interview_question(
     - Example scenarios
     - Best practices
     """
-    print(f"\n{'='*60}")
-    print(f"[EMOJI] ANSWER GENERATION REQUEST")
-    print(f"{'='*60}")
-    print(f"User: {current_user.email if current_user else 'Anonymous'}")
-    print(f"Question: {request.question[:100]}...")
-    print(f"{'='*60}\n")
-    
+    logger.info(f"\n{'='*60}")
+    logger.info(f"ANSWER GENERATION REQUEST")
+    logger.info(f"{'='*60}")
+    logger.info(f"User: {current_user.email if current_user else 'Anonymous'}")
+    logger.info(f"Question: {request.question[:100]}...")
+    logger.info(f"{'='*60}\n")
     try:
         # Generate answer using Gemini AI
         answer = question_generator.generate_answer(request.question)
         
-        print(f"\n[SYMBOL] Answer generated successfully!")
-        print(f"Length: {len(answer)} characters")
-        print(f"Preview: {answer[:150]}...")
-        print(f"{'='*60}\n")
-        
+        logger.info(f"\nAnswer generated successfully!")
+        logger.info(f"Length: {len(answer)} characters")
+        logger.info(f"Preview: {answer[:150]}...")
+        logger.info(f"{'='*60}\n")
         return {
             "question": request.question,
             "answer": answer,
@@ -635,8 +626,8 @@ def answer_interview_question(
         }
     
     except Exception as e:
-        print(f"\n[SYMBOL] ERROR generating answer: {str(e)}")
-        print(f"{'='*60}\n")
+        logger.error(f"\nERROR generating answer: {str(e)}")
+        logger.info(f"{'='*60}\n")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate answer: {str(e)}"
@@ -696,13 +687,12 @@ def generate_improved_resume(
     Takes user's information and generates a professional, ATS-optimized resume
     using AI to improve formatting, wording, and content based on best practices
     """
-    print(f"\n{'='*70}")
-    print(f"[EMOJI] IMPROVED RESUME GENERATION REQUEST")
-    print(f"{'='*70}")
-    print(f"User: {current_user.email}")
-    print(f"Target Role: {request.target_role}")
-    print(f"{'='*70}\n")
-    
+    logger.info(f"\n{'='*70}")
+    logger.info(f"IMPROVED RESUME GENERATION REQUEST")
+    logger.info(f"{'='*70}")
+    logger.info(f"User: {current_user.email}")
+    logger.info(f"Target Role: {request.target_role}")
+    logger.info(f"{'='*70}\n")
     try:
         # Generate improved resume using Gemini AI with selected template
         improved_resume = question_generator.generate_improved_resume(
@@ -717,19 +707,18 @@ def generate_improved_resume(
             template=request.template  # Pass selected template
         )
         
-        print(f"\n[SYMBOL] Improved resume generated successfully!")
-        print(f"Template used: {request.template}")
-        print(f"Length: {len(improved_resume)} characters")
-        print(f"{'='*70}\n")
-        
+        logger.info(f"\nImproved resume generated successfully!")
+        logger.info(f"Template used: {request.template}")
+        logger.info(f"Length: {len(improved_resume)} characters")
+        logger.info(f"{'='*70}\n")
         return {
             "improved_resume": improved_resume,
             "status": "success"
         }
     
     except Exception as e:
-        print(f"\n[SYMBOL] ERROR generating improved resume: {str(e)}")
-        print(f"{'='*70}\n")
+        logger.error(f"\nERROR generating improved resume: {str(e)}")
+        logger.info(f"{'='*70}\n")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate improved resume: {str(e)}"
@@ -768,7 +757,7 @@ def generate_interview_tips(
             return generate_fallback_tips(phase_type, is_day_of)
         
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-2.0-flash-exp')
+        model = genai.GenerativeModel('gemini-2.0-flash')
         
         # Create prompt based on timing
         timing = "day-of last-minute" if is_day_of else "24-hour preparation"
@@ -783,7 +772,7 @@ def generate_interview_tips(
         # Build notes context if provided - THIS IS KEY for personalization!
         notes_context = ""
         if user_notes:
-            notes_context = f"\n\n[EMOJI] **CANDIDATE'S PERSONAL CONTEXT/NOTES:**\n{user_notes[:500]}\n\n[SYMBOL] CRITICAL: Use the candidate's notes above to make tips HIGHLY PERSONALIZED! Address their specific background, experience level, career goals, and what they mentioned about this opportunity."
+            notes_context = f"\n\n**CANDIDATE'S PERSONAL CONTEXT/NOTES:**\n{user_notes[:500]}\n\nCRITICAL: Use the candidate's notes above to make tips HIGHLY PERSONALIZED! Address their specific background, experience level, career goals, and what they mentioned about this opportunity."
         
         prompt = f"""
 Generate {timing} tips for a candidate preparing for a {phase_type} for {job_title}{company_context}.
@@ -799,15 +788,15 @@ IMPORTANT REQUIREMENTS:
 4. Be encouraging and confidence-building
 5. {"Focus on last-minute preparation and mental readiness" if is_day_of else "Focus on thorough preparation over 24 hours"}
 
-For example, if candidate mentions they're switching from testing to another role, address transition strategies.
-If they mention experience level or specific technologies, incorporate those.
+If the candidate mentions switching careers, address transition strategies.
+If they mention specific technologies or experience level, incorporate those.
 
 Format your response as clean HTML list items only (no <ul> wrapper needed).
 Example format:
-<li><strong>Leverage your testing background:</strong> Emphasize your attention to detail and systematic approach from 4 years in QA</li>
-<li><strong>Prepare STAR stories:</strong> Have 2-3 specific examples ready showing your testing expertise and impact</li>
+<li><strong>Research the company thoroughly:</strong> Review their recent projects, tech stack, and engineering blog posts</li>
+<li><strong>Prepare STAR stories:</strong> Have 2-3 specific examples ready showing your impact with measurable results</li>
 
-Generate {len([i for i in range(5, 8)])} tips now:
+Generate 5-7 tips now:
 """
         
         response = model.generate_content(prompt)
@@ -822,7 +811,7 @@ Generate {len([i for i in range(5, 8)])} tips now:
         return f"<ul style='margin: 0; padding-left: 20px;'>{tips_html}</ul>"
     
     except Exception as e:
-        print(f"[SYMBOL] AI tip generation failed: {e}")
+        logger.error(f"AI tip generation failed: {e}")
         return generate_fallback_tips(phase_type, is_day_of)
 
 
@@ -892,12 +881,10 @@ async def extract_resume_skills(
                     resume_parts.append(f"Certifications: {resume_dict['certifications']}")
                 
                 resume_content = "\n\n".join(resume_parts)
-                print(f"[SYMBOL] Found resume data ({len(resume_content)} chars)")
-                print(f"[EMOJI] Resume preview (first 300 chars): {resume_content[:300]}")
-                
+                logger.info(f"Found resume data ({len(resume_content)} chars)")
+                logger.info(f"Resume preview (first 300 chars): {resume_content[:300]}")
             except Exception as e:
-                print(f"[SYMBOL]️ Error parsing resume_data: {e}")
-        
+                logger.error(f"Error parsing resume_data: {e}")
         # Method 2: Get content from EnhancedResume if Method 1 didn't work
         if not resume_content:
             enhanced_resume = db.query(EnhancedResume).filter(
@@ -907,18 +894,16 @@ async def extract_resume_skills(
             
             if enhanced_resume and enhanced_resume.enhanced_resume_text:
                 resume_content = enhanced_resume.enhanced_resume_text
-                print(f"[SYMBOL] Found enhanced resume ({len(resume_content)} chars)")
-                print(f"[EMOJI] Resume preview (first 300 chars): {resume_content[:300]}")
-        
+                logger.info(f"Found enhanced resume ({len(resume_content)} chars)")
+                logger.info(f"Resume preview (first 300 chars): {resume_content[:300]}")
         # Method 3: Use AI to intelligently extract skills from resume content
         if resume_content:
-            print("[EMOJI] Using AI to extract skills from resume...")
-            print(f"[EMOJI] Sending {len(resume_content)} chars to AI for analysis")
+            logger.info("Using AI to extract skills from resume...")
+            logger.info(f"Sending {len(resume_content)} chars to AI for analysis")
             user_skills = await _extract_skills_with_ai(resume_content)
             
             if user_skills:
-                print(f"[SYMBOL] AI extracted {len(user_skills)} skills from resume")
-                
+                logger.info(f"AI extracted {len(user_skills)} skills from resume")
                 # Estimate CTC based on extracted skills
                 ctc_estimation = await _estimate_ctc_from_skills(user_skills, resume_content)
                 
@@ -935,7 +920,7 @@ async def extract_resume_skills(
         
         # Method 4: Fallback - Simple text parsing if AI fails
         if not user_skills and resume_content:
-            print("[SYMBOL]️ AI failed, using keyword extraction fallback...")
+            logger.error("AI failed, using keyword extraction fallback...")
             # Use simple keyword extraction from resume text
             resume_text = resume_content.lower()
             
@@ -973,8 +958,7 @@ async def extract_resume_skills(
             user_skills = [x for x in user_skills if not (x.lower() in seen or seen.add(x.lower()))]
             
             if user_skills:
-                print(f"[SYMBOL] Keyword extraction found {len(user_skills)} skills")
-        
+                logger.info(f"Keyword extraction found {len(user_skills)} skills")
         # Method 5: Last resort - extract from job applications
         if not user_skills:
             applications = db.query(Application).filter(
@@ -1002,7 +986,7 @@ async def extract_resume_skills(
             "message": f"Extracted {len(user_skills)} skills from your profile" if user_skills else "No skills found. Try applying to jobs first!"
         }
     except Exception as e:
-        print(f"Error extracting skills: {str(e)}")
+        logger.error(f"Error extracting skills: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail=f"Failed to extract skills: {str(e)}"
@@ -1044,8 +1028,7 @@ async def get_skills_for_target_ctc(
                 
                 resume_content = "\n\n".join(resume_parts)
             except Exception as e:
-                print(f"[SYMBOL]️ Error parsing resume_data: {e}")
-        
+                logger.error(f"Error parsing resume_data: {e}")
         # Extract skills using AI
         if resume_content:
             user_skills = await _extract_skills_with_ai(resume_content)
@@ -1075,7 +1058,7 @@ async def get_skills_for_target_ctc(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[SYMBOL] Target CTC analysis error: {e}")
+        logger.error(f"Target CTC analysis error: {e}")
         raise HTTPException(
             status_code=500,
             detail=f"Failed to analyze target CTC: {str(e)}"
@@ -1169,7 +1152,7 @@ async def analyze_skills_gap(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[SYMBOL] Skills gap analysis error: {e}")
+        logger.error(f"Skills gap analysis error: {e}")
         raise HTTPException(
             status_code=500,
             detail=f"Failed to analyze skills gap: {str(e)}"
@@ -1220,7 +1203,7 @@ async def extract_skills_from_jobs(
         }
     
     except Exception as e:
-        print(f"[SYMBOL] Skill extraction error: {e}")
+        logger.error(f"Skill extraction error: {e}")
         raise HTTPException(
             status_code=500,
             detail=f"Failed to extract skills: {str(e)}"

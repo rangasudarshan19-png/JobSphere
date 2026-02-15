@@ -75,7 +75,7 @@ class Debouncer {
             const result = await fn();
 
             // Show success
-            button.innerText = '✅ Done!';
+            button.innerText = 'Done!';
             button.style.backgroundColor = '#4ade80';
 
             // Reset after delay
@@ -91,7 +91,7 @@ class Debouncer {
             return result;
         } catch (error) {
             // Show error
-            button.innerText = '❌ Error!';
+            button.innerText = 'Error!';
             button.style.backgroundColor = '#ef4444';
 
             // Reset after delay

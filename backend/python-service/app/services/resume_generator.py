@@ -10,6 +10,9 @@ from typing import Dict, List, Optional
 
 import google.generativeai as genai
 from app.services.multi_ai_service import multi_ai_service
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class ResumeGenerator:
@@ -17,9 +20,9 @@ class ResumeGenerator:
         self.gemini_keys = self._load_gemini_keys()
         self.current_key_index = 0
         if self.gemini_keys:
-            print(f" Resume Generator initialized with {len(self.gemini_keys)} Gemini account(s)")
+            logger.info(f" Resume Generator initialized with {len(self.gemini_keys)} Gemini account(s)")
         else:
-            print(" Resume Generator initialized without Gemini keys")
+            logger.info(" Resume Generator initialized without Gemini keys")
 
     def _load_gemini_keys(self) -> List[str]:
         """Load all available Gemini API keys"""
@@ -97,22 +100,23 @@ class ResumeGenerator:
         """
         Research company to understand culture, values, and resume preferences
         """
-        print(f"\n Researching company: {company_name}")
+        logger.info(f"\n Researching company: {company_name}")
 
-        prompt = f"""Analyze {company_name} company briefly. Return ONLY valid JSON:
+        prompt = f"""You are a senior career strategist with expertise in ATS-optimized resumes and hiring trends as of 2026.
 
+Analyze the company "{company_name}" and provide resume formatting recommendations. If you don't have reliable information about this company, base your analysis on similar companies in the same industry.
+
+Return ONLY valid JSON (no markdown, no code blocks):
 {{
-    "company_type": "Tech/Corporate/Startup/etc",
-    "culture_keywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"],
-    "recommended_template": "Modern/Professional/Creative",
-    "accepted_templates": ["template1", "template2"],
-    "resume_format_tips": ["tip1", "tip2", "tip3"],
-    "key_skills_to_highlight": ["skill1", "skill2", "skill3", "skill4"],
+    "company_type": "Tech/Corporate/Startup/Consulting/Finance/Healthcare/etc",
+    "culture_keywords": ["5 specific culture and value keywords for this company"],
+    "recommended_template": "Modern/Professional/Creative/ATS-Optimized",
+    "accepted_templates": ["primary choice", "secondary choice"],
+    "resume_format_tips": ["3 specific formatting tips tailored to this company's hiring style"],
+    "key_skills_to_highlight": ["4-6 skills this company values most based on their tech stack and culture"],
     "tone": "Professional/Conversational/Technical",
-    "template_reasoning": "Brief reason"
-}}
-
-No markdown, just JSON."""
+    "template_reasoning": "Brief explanation of why this template suits the company"
+}}"""
 
         if self.gemini_keys:
             try:
@@ -141,14 +145,14 @@ No markdown, just JSON."""
                         )
                         text = self._strip_json_block(response.text.strip())
                         result = json.loads(text)
-                        print(f" Gemini provided company research in <8s using {model_name}")
+                        logger.info(f" Gemini provided company research in <8s using {model_name}")
                         return result
                     except asyncio.TimeoutError:
-                        print(f" Gemini timeout with {model_name} - trying next")
+                        logger.info(f" Gemini timeout with {model_name} - trying next")
                     except Exception as e:
-                        print(f" Gemini failed with {model_name}: {str(e)[:100]}")
+                        logger.error(f" Gemini failed with {model_name}: {str(e)[:100]}")
             except Exception as e:
-                print(f" Gemini configuration failed: {str(e)[:100]}")
+                logger.error(f" Gemini configuration failed: {str(e)[:100]}")
 
         if multi_ai_service.providers:
             try:
@@ -161,12 +165,12 @@ No markdown, just JSON."""
                 if alt.get("success") and alt.get("text"):
                     text = self._strip_json_block(alt["text"].strip())
                     result = json.loads(text)
-                    print(" Company research generated via fallback provider")
+                    logger.info(" Company research generated via fallback provider")
                     return result
             except Exception as e:
-                print(f" Fallback AI research failed: {str(e)[:100]}")
+                logger.error(f" Fallback AI research failed: {str(e)[:100]}")
 
-        print(" Using default company profile")
+        logger.info(" Using default company profile")
         return {
             "company_type": "General",
             "culture_keywords": ["professional", "collaborative", "results-driven", "innovative", "excellence"],
@@ -190,7 +194,7 @@ No markdown, just JSON."""
         ai_suggestions: Optional[str] = None
     ) -> Dict:
         """Generate complete resume content optimized for the company"""
-        print("\n[AI] Attempting to generate AI-enhanced resume...")
+        logger.info("\n[AI] Attempting to generate AI-enhanced resume...")
 
         company_type = company_research.get("company_type", "General")
         keywords = company_research.get("culture_keywords", [])
@@ -211,26 +215,57 @@ No markdown, just JSON."""
             if isinstance(e, dict)
         ])
 
-        prompt = f"""You are an expert ATS resume writer. Enhance this resume data for a {company_type} role.
+        keywords_str = json.dumps(keywords) if isinstance(keywords, list) else str(keywords)
+
+        prompt = f"""You are a certified professional resume writer (CPRW) specializing in ATS-optimized resumes for {company_type} companies.
 
 TARGET ROLE: {job_title or 'Not specified'}
+COMPANY TYPE: {company_type}
 ADDITIONAL INSTRUCTIONS: {ai_suggestions or 'None'}
 
-CURRENT DATA:
-Experience: {exp_str}
-Skills: {skills_str}
-Education: {edu_str}
+CANDIDATE'S ACTUAL DATA:
+Experience:
+{exp_str if exp_str else 'No experience provided'}
 
-TASK: Create enhanced, impactful resume content. Return ONLY raw JSON (no markdown, no code blocks):
+Skills: {skills_str if skills_str else 'No skills provided'}
 
-{{"professional_summary": "2-3 sentence professional summary highlighting {company_type} expertise", "experience": [{{"title": "Software Engineer", "company": "TechCorp", "duration": "2021-Present", "achievements": ["Achievement 1", "Achievement 2"]}}], "skills": {{"technical": ["Python", "Java"], "soft": ["Leadership", "Communication"]}}, "education": [], "projects": [], "certifications": [], "keywords_optimized": {keywords}}}"""
+Education:
+{edu_str if edu_str else 'No education provided'}
 
-        print("[AI] Calling Gemini API...")
+CRITICAL RULES:
+1. DO NOT fabricate any work experience, companies, job titles, or achievements the candidate hasn't listed
+2. ONLY enhance and reword the candidate's actual data — never invent new roles or employers
+3. Quantify achievements where the candidate's data supports it (add metrics only if inferable)
+4. Use strong action verbs and industry-relevant keywords for ATS optimization
+5. Tailor the professional summary to the target role and company type
+
+Return ONLY raw JSON (no markdown, no code blocks) with this structure:
+{{
+  "professional_summary": "2-3 impactful sentences positioning the candidate for a {company_type} {job_title or 'professional'} role",
+  "experience": [
+    {{
+      "title": "<candidate's actual job title>",
+      "company": "<candidate's actual company>",
+      "duration": "<actual duration>",
+      "achievements": ["Enhanced achievement 1 with metrics", "Enhanced achievement 2"]
+    }}
+  ],
+  "skills": {{
+    "technical": ["relevant technical skills from candidate's data"],
+    "soft": ["relevant soft skills"]
+  }},
+  "education": [],
+  "projects": [],
+  "certifications": [],
+  "keywords_optimized": {keywords_str}
+}}"""
+
+        logger.info("[AI] Calling Gemini API...")
 
         if self.gemini_keys:
             try:
                 api_key = self.gemini_keys[0]
-                print(f"[AI] Using Gemini API key (length: {len(api_key)})")
+                logger.info(f"[AI] Using Gemini API key (length: {len(api_key)})")
                 genai.configure(api_key=api_key)
                 model_candidates = [
                     "gemini-1.5-flash-002",
@@ -244,7 +279,7 @@ TASK: Create enhanced, impactful resume content. Return ONLY raw JSON (no markdo
                 ]
                 for model_name in model_candidates:
                     try:
-                        print(f"[AI] Sending request to {model_name} with 10-second timeout...")
+                        logger.info(f"[AI] Sending request to {model_name} with 10-second timeout...")
                         model = genai.GenerativeModel(model_name)
                         response = await asyncio.wait_for(
                             asyncio.to_thread(
@@ -256,7 +291,7 @@ TASK: Create enhanced, impactful resume content. Return ONLY raw JSON (no markdo
                         )
                         text = self._strip_json_block(response.text.strip())
                         result = json.loads(text)
-                        print("[AI] Successfully parsed AI response!")
+                        logger.info("[AI] Successfully parsed AI response!")
 
                         if "experience" in result and result["experience"]:
                             for exp in result["experience"]:
@@ -273,13 +308,13 @@ TASK: Create enhanced, impactful resume content. Return ONLY raw JSON (no markdo
 
                         return result
                     except asyncio.TimeoutError:
-                        print(f"[AI] Timeout after 10 seconds with {model_name}")
+                        logger.info(f"[AI] Timeout after 10 seconds with {model_name}")
                     except Exception as e:
-                        print(f"[AI] Error with {model_name}: {str(e)}")
+                        logger.error(f"[AI] Error with {model_name}: {str(e)}")
             except Exception as e:
-                print(f"[AI] Error: {str(e)[:100]}")
+                logger.error(f"[AI] Error: {str(e)[:100]}")
         else:
-            print("[AI] No API keys available")
+            logger.info("[AI] No API keys available")
 
         if multi_ai_service.providers:
             try:
@@ -292,7 +327,7 @@ TASK: Create enhanced, impactful resume content. Return ONLY raw JSON (no markdo
                 if alt.get("success") and alt.get("text"):
                     text = self._strip_json_block(alt["text"].strip())
                     result = json.loads(text)
-                    print("[AI] Successfully parsed fallback provider response!")
+                    logger.info("[AI] Successfully parsed fallback provider response!")
 
                     if "experience" in result and result["experience"]:
                         for exp in result["experience"]:
@@ -309,9 +344,9 @@ TASK: Create enhanced, impactful resume content. Return ONLY raw JSON (no markdo
 
                     return result
             except Exception as e:
-                print(f"[AI] Fallback provider failed: {str(e)[:100]}")
+                logger.error(f"[AI] Fallback provider failed: {str(e)[:100]}")
 
-        print("[AI] Using fallback resume from user data")
+        logger.info("[AI] Using fallback resume from user data")
 
         experience = []
         for exp in experience_items[:3]:

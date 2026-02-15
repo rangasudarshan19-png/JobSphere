@@ -74,7 +74,7 @@
         <div class="navbar-container">
             <a class="navbar-brand" href="index.html"><img src="images/logo.svg" alt="" width="28" height="28"> JobSphere</a>
             <div class="navbar-end">
-                <a href="job-search.html" class="btn btn-ghost btn-sm">🔍 Search</a>
+                <a href="job-search.html" class="btn btn-ghost btn-sm">Search</a>
                 <a href="dashboard.html" class="btn btn-ghost btn-sm">← Dashboard</a>
                 <button class="btn btn-ghost btn-sm" onclick="Auth.logout()">Logout</button>
             </div>
@@ -84,15 +84,15 @@
     <main id="main" class="container" style="padding-top:90px;padding-bottom:60px">
         <!-- Hero -->
         <div class="hero-section">
-            <h1>📋 Job Tracking Board</h1>
+            <h1>Job Tracking Board</h1>
             <p>Manage your saved and applied jobs in one place. Toggle statuses, add notes, and jump back to the apply link.</p>
         </div>
 
         <!-- Filters -->
         <div class="filters" id="filterContainer">
             <span class="filter-chip active" data-filter="all">All</span>
-            <span class="filter-chip" data-filter="saved">💾 Saved</span>
-            <span class="filter-chip" data-filter="applied">✅ Applied</span>
+            <span class="filter-chip" data-filter="saved">Saved</span>
+            <span class="filter-chip" data-filter="applied">Applied</span>
         </div>
 
         <!-- Loading Skeleton -->
@@ -105,7 +105,7 @@
         <!-- Error State -->
         <div id="errorState" style="display:none">
             <div class="error-card">
-                <div class="error-card-icon">⚠️</div>
+                <div class="error-card-icon"></div>
                 <div class="error-card-content">
                     <h4>Failed to load board</h4>
                     <p id="errorMessage">Something went wrong. Please try again.</p>
@@ -115,7 +115,7 @@
 
         <!-- Empty State -->
         <div class="empty-state" id="emptyState" style="display:none">
-            <div class="empty-state-icon">📋</div>
+            <div class="empty-state-icon"></div>
             <div class="empty-state-title">No tracked jobs yet</div>
             <p>Save or apply to jobs from search results to see them here.</p>
             <a href="job-search.html" class="btn btn-primary" style="margin-top:12px">Go to Job Search</a>
@@ -187,17 +187,17 @@
                     </div>
                     <div class="tracker-chips">
                         ${job.match_score ? `<span class="tracker-chip match">Match ${job.match_score}%</span>` : ''}
-                        ${job.salary ? `<span class="tracker-chip salary">💰 ${esc(job.salary)}</span>` : ''}
+                        ${job.salary ? `<span class="tracker-chip salary">${esc(job.salary)}</span>` : ''}
                     </div>
                     <div class="status-pills">
-                        <span class="pill ${job.is_saved ? 'saved' : 'ghost'}" onclick="toggleSaved(${job.id}, ${!job.is_saved})">${job.is_saved ? '💾 Saved' : 'Not saved'}</span>
-                        <span class="pill ${job.is_applied ? 'applied' : 'ghost'}" onclick="toggleApplied(${job.id}, ${!job.is_applied})">${job.is_applied ? '✅ Applied' : 'Not applied'}</span>
+                        <span class="pill ${job.is_saved ? 'saved' : 'ghost'}" onclick="toggleSaved(${job.id}, ${!job.is_saved})">${job.is_saved ? 'Saved' : 'Not saved'}</span>
+                        <span class="pill ${job.is_applied ? 'applied' : 'ghost'}" onclick="toggleApplied(${job.id}, ${!job.is_applied})">${job.is_applied ? 'Applied' : 'Not applied'}</span>
                         ${appliedDate ? `<span class="tracker-chip">Applied: ${appliedDate}</span>` : ''}
                     </div>
                     <textarea class="tracker-notes" id="note-${job.id}" placeholder="Notes (interviewer, follow-up, reminders…)">${esc(job.notes)}</textarea>
                     <div class="tracker-actions">
-                        <button class="btn btn-ghost btn-sm" onclick="openJob('${esc(job.external_url)}')">🔗 Open Job</button>
-                        <button class="btn btn-primary btn-sm" onclick="saveNotes(${job.id})">💾 Save Notes</button>
+                        <button class="btn btn-ghost btn-sm" onclick="openJob('${esc(job.external_url)}')">Open Job</button>
+                        <button class="btn btn-primary btn-sm" onclick="saveNotes(${job.id})">Save Notes</button>
                     </div>
                 </div>
             `;

@@ -6,6 +6,9 @@ Free tier: 100 requests/month
 import os
 import httpx
 from typing import List, Dict, Optional
+import logging
+
+logger = logging.getLogger(__name__)
 
 # JSearch API configuration (RapidAPI)
 JSEARCH_API_KEY = os.getenv("JSEARCH_API_KEY")  # RapidAPI key
@@ -21,12 +24,11 @@ class JobSearchService:
         self.enabled = JSEARCH_API_KEY is not None
         
         if self.enabled:
-            print("[SYMBOL] JSearch API enabled for job searching (100 free searches/month)")
-            print(f"   API Key loaded: {self.api_key[:20]}...")
+            logger.info("JSearch API enabled for job searching (100 free searches/month)")
+            logger.info(f"   API Key loaded: {self.api_key[:20]}...")
         else:
-            print("[SYMBOL] JSEARCH_API_KEY not found in environment variables!")
-            print("   Add JSEARCH_API_KEY to your .env file and restart the server")
-    
+            logger.info("JSEARCH_API_KEY not found in environment variables!")
+            logger.info("   Add JSEARCH_API_KEY to your .env file and restart the server")
     async def search_jobs(
         self,
         query: str,
@@ -66,8 +68,7 @@ class JobSearchService:
                 "date_posted": date_posted
             }
             
-            print(f"[EMOJI] Searching REAL jobs via JSearch API: '{query}' in '{location or 'any location'}'")
-            
+            logger.info(f"Searching REAL jobs via JSearch API: '{query}' in '{location or 'any location'}'")
             async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.get(
                     f"{JSEARCH_BASE_URL}/search",
@@ -77,25 +78,24 @@ class JobSearchService:
                 
                 if response.status_code != 200:
                     error_msg = f"JSearch API error: {response.status_code} - {response.text}"
-                    print(f"[SYMBOL] {error_msg}")
+                    logger.error(f"{error_msg}")
                     raise Exception(error_msg)
                 
                 data = response.json()
                 jobs = data.get("data", [])
                 
                 if not jobs:
-                    print(f"[SYMBOL]️ No jobs found for query: {query} in {location}")
+                    logger.info(f"No jobs found for query: {query} in {location}")
                     return []
                 
-                print(f"[SYMBOL] Found {len(jobs)} REAL jobs from Indeed, LinkedIn, Glassdoor")
-                
+                logger.info(f"Found {len(jobs)} REAL jobs from Indeed, LinkedIn, Glassdoor")
                 # Transform to our format
                 transformed = [self._transform_job(job) for job in jobs]
-                print(f"   Transformed {len(transformed)} jobs successfully")
+                logger.info(f"   Transformed {len(transformed)} jobs successfully")
                 return transformed
         
         except Exception as e:
-            print(f"[SYMBOL] Job search failed: {e}")
+            logger.error(f"Job search failed: {e}")
             raise
     
     def _transform_job(self, job: Dict) -> Dict:

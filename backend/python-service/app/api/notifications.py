@@ -4,7 +4,7 @@ Notification API endpoints
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import time
 
 from app.utils.database import get_db
@@ -27,9 +27,8 @@ class NotificationResponse(BaseModel):
     read_at: Optional[str]
     email_sent: bool
     is_read: bool
-    
-    class Config:
-        from_attributes = True
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class NotificationPreferencesUpdate(BaseModel):
@@ -59,9 +58,8 @@ class NotificationPreferencesResponse(BaseModel):
     quiet_hours_enabled: bool
     quiet_hours_start: Optional[str]
     quiet_hours_end: Optional[str]
-    
-    class Config:
-        from_attributes = True
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 @router.get("/", response_model=List[NotificationResponse])

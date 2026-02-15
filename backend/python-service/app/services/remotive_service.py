@@ -18,7 +18,7 @@ class RemotiveJobSearchService:
     
     def __init__(self):
         self.enabled = True  # No API key required!
-        logger.info("[SYMBOL] Remotive API enabled (Unlimited FREE remote job searches)")
+        logger.info("Remotive API enabled (Unlimited FREE remote job searches)")
     
     async def search_jobs(
         self,
@@ -54,30 +54,30 @@ class RemotiveJobSearchService:
             if search:
                 params["search"] = search
             
-            logger.info(f"[EMOJI] Searching Remotive (Remote Jobs): '{search or category or 'all'}'")
+            logger.info(f"Searching Remotive (Remote Jobs): '{search or category or 'all'}'")
             
             async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.get(REMOTIVE_BASE_URL, params=params)
                 
                 if response.status_code != 200:
-                    logger.error(f"[SYMBOL] Remotive API error: {response.status_code}")
+                    logger.error(f"Remotive API error: {response.status_code}")
                     return []
                 
                 data = response.json()
                 jobs = data.get("jobs", [])
                 
                 if not jobs:
-                    logger.info(f"[SYMBOL]️ No remote jobs found on Remotive")
+                    logger.info(f"No remote jobs found on Remotive")
                     return []
                 
-                logger.info(f"[SYMBOL] Found {len(jobs)} remote jobs from Remotive")
+                logger.info(f"Found {len(jobs)} remote jobs from Remotive")
                 
                 # Transform to our format
                 transformed = [self._transform_job(job) for job in jobs]
                 return transformed
         
         except Exception as e:
-            logger.error(f"[SYMBOL] Remotive search failed: {e}")
+            logger.error(f"Remotive search failed: {e}")
             return []
     
     def _transform_job(self, job: Dict) -> Dict:

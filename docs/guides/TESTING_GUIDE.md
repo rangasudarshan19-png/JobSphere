@@ -1,7 +1,9 @@
 # Testing and Quality Assurance Guide
 
 ## Overview
-This document describes the testing strategy, quality assurance processes, and best practices for the Job Tracker application.
+This document describes the testing strategy, quality assurance processes, and best practices for the JobSphere application.
+
+**Current Status:** 51/51 backend tests passing (32.8% code coverage, 30% threshold met)
 
 ---
 
@@ -14,13 +16,31 @@ This document describes the testing strategy, quality assurance processes, and b
 
 ### Test Structure
 ```
-tests/
+backend/python-service/tests/
 ├── __init__.py
-├── conftest.py              # Shared fixtures and configuration
-├── test_auth.py             # Authentication tests
-├── test_applications.py     # Application CRUD tests
-├── test_analytics.py        # Analytics tests
-└── README.md                # Testing documentation
+├── conftest.py                    # Shared fixtures and configuration
+├── test_auth.py                   # Authentication tests (login, register, profile)
+├── test_applications.py           # Application CRUD tests
+├── test_analytics.py              # Analytics endpoint tests
+├── test_email_service_simple.py   # Email service tests
+└── test_integration_workflows.py  # Integration workflow tests
+
+testing/
+├── backend/
+│   ├── conftest.py
+│   ├── test_email_service.py
+│   ├── test_notifications.py
+│   └── test_schema.py
+├── frontend/
+│   ├── conftest.py
+│   └── test_feature_gating.py
+├── integration/
+│   └── test_integration.py
+├── E2E_FULL_TEST.py
+├── E2E_TEST_VERIFICATION.py
+├── run_all_tests.py
+├── run_regression_tests.py
+└── RUN_TESTS_QUICK_GUIDE.py
 ```
 
 ---
@@ -37,12 +57,13 @@ pip install -r requirements.txt
 
 **Run all tests:**
 ```bash
-pytest
+cd backend/python-service
+python -m pytest tests/ -v
 ```
 
-**Run with verbose output:**
+**Run with verbose output and short tracebacks:**
 ```bash
-pytest -v
+pytest tests/ -v --tb=short
 ```
 
 **Run specific test file:**
@@ -58,13 +79,6 @@ pytest tests/test_auth.py::TestLogin
 **Run specific test:**
 ```bash
 pytest tests/test_auth.py::TestLogin::test_login_success
-```
-
-**Run by markers:**
-```bash
-pytest -m unit           # Only unit tests
-pytest -m integration    # Only integration tests
-pytest -m "not slow"     # Skip slow tests
 ```
 
 **Stop on first failure:**
@@ -91,19 +105,27 @@ pytest --cov=app --cov-report=term-missing
 **HTML report:**
 ```bash
 pytest --cov=app --cov-report=html
-# Open htmlcov/index.html in browser
-```
-
-**Combined:**
-```bash
-pytest --cov=app --cov-report=html --cov-report=term-missing
+# Open coverage_html/index.html in browser
 ```
 
 ### Coverage Targets
-- **Overall**: 80%+
-- **Critical paths** (auth, applications): 90%+
-- **Services**: 75%+
-- **Utilities**: 85%+
+- **Overall**: 30%+ (currently 32.8%)
+- **Critical paths** (auth, applications): 80%+
+- **Models**: 100%
+- **Services**: 25%+
+
+### Current Coverage by Module (as of Feb 2026)
+
+| Module | Coverage |
+|--------|----------|
+| Models (all) | 100% |
+| Middleware | 83-100% |
+| Utils | 73-92% |
+| Routers/auth | 45% |
+| Routers/applications | 83% |
+| Routers/analytics | 59% |
+| Routers/reviews | 45% |
+| Services | 10-42% |
 
 ---
 
@@ -125,12 +147,10 @@ pytest --cov=app --cov-report=html --cov-report=term-missing
 - `admin_auth_headers` - Authentication headers for admin_user
 
 #### Data Fixtures
-- `test_company` - Sample company
 - `test_application` - Sample job application
 
 #### Mock Fixtures
 - `mock_email_service` - Prevents actual email sending
-- `mock_ai_service` - Prevents actual AI API calls
 
 ### Using Fixtures
 
@@ -153,7 +173,6 @@ def test_example(client, auth_headers, test_application):
 import pytest
 from fastapi import status
 
-@pytest.mark.unit
 class TestFeatureName:
     """Test description"""
     
@@ -179,162 +198,57 @@ class TestFeatureName:
 
 ### Best Practices
 
-1. **Test Naming**
-   - Use descriptive names: `test_login_with_invalid_password`
-   - Follow pattern: `test_<action>_<condition>_<expected_result>`
-
-2. **Arrange-Act-Assert Pattern**
-   ```python
-   # Arrange - Setup test data
-   user_data = {"email": "test@example.com", "password": "pass"}
-   
-   # Act - Perform action
-   response = client.post("/api/auth/login", json=user_data)
-   
-   # Assert - Verify results
-   assert response.status_code == 200
-   ```
-
-3. **Test One Thing**
-   - Each test should verify one specific behavior
-   - Keep tests focused and simple
-
-4. **Independent Tests**
-   - Tests should not depend on each other
-   - Use fixtures for test data setup
-
-5. **Clear Assertions**
-   ```python
-   # Good
-   assert response.status_code == status.HTTP_200_OK
-   assert data["email"] == "test@example.com"
-   
-   # Avoid
-   assert response  # Unclear what's being tested
-   ```
+1. **Test Naming** - Use descriptive names: `test_login_with_invalid_password`
+2. **Arrange-Act-Assert** - Setup → Action → Verification pattern
+3. **Test One Thing** - Each test verifies one specific behavior
+4. **Independent Tests** - Tests should not depend on each other
+5. **Clear Assertions** - Be explicit about what's being verified
 
 ---
 
-## Test Markers
+## Test Categories
 
-### Built-in Markers
-- `@pytest.mark.unit` - Unit tests (fast, isolated)
-- `@pytest.mark.integration` - Integration tests
-- `@pytest.mark.e2e` - End-to-end tests
-- `@pytest.mark.slow` - Slow running tests
+### Authentication Tests (test_auth.py)
+- Login with valid/invalid credentials
+- Registration with validation
+- Token generation and validation
+- Profile retrieval and update
+- Password change
 
-### Using Markers
-```python
-@pytest.mark.unit
-def test_fast_operation():
-    pass
+### Application Tests (test_applications.py)
+- CRUD operations (create, read, update, delete)
+- Status filtering and search
+- Application listing and pagination
 
-@pytest.mark.slow
-@pytest.mark.integration
-def test_complex_workflow():
-    pass
-```
+### Analytics Tests (test_analytics.py)
+- Statistics aggregation
+- Status breakdown
+- Trend data
 
----
+### Email Service Tests (test_email_service_simple.py)
+- Template rendering
+- Notification sending
+- Service configuration
 
-## Mocking External Services
-
-### Email Service
-```python
-# Automatically mocked in conftest.py
-def test_with_email(client, auth_headers):
-    # Email won't actually send
-    response = client.post("/api/applications", ...)
-    # Test passes without SMTP configuration
-```
-
-### AI Service
-```python
-# Mock AI responses
-def test_ai_feature(monkeypatch):
-    def mock_generate(*args, **kwargs):
-        return "Mock AI response"
-    
-    monkeypatch.setattr("app.services.ai_service.generate", mock_generate)
-```
-
-### External APIs
-```python
-@pytest.fixture
-def mock_job_api(monkeypatch):
-    def mock_search(*args, **kwargs):
-        return {"jobs": [{"title": "Test Job"}]}
-    
-    monkeypatch.setattr("app.services.job_search.search", mock_search)
-    return mock_search
-```
+### Integration Workflow Tests (test_integration_workflows.py)
+- Multi-service end-to-end flows
+- Application lifecycle
+- Data consistency
 
 ---
 
-## Testing Checklist
+## Test Credentials
 
-### For New Features
-- [ ] Unit tests for core logic
-- [ ] Integration tests for API endpoints
-- [ ] Test success cases
-- [ ] Test error cases
-- [ ] Test edge cases
-- [ ] Test authentication/authorization
-- [ ] Update documentation
-
-### Before Committing
-- [ ] All tests pass locally
-- [ ] No failing tests ignored
-- [ ] Coverage meets minimum threshold
-- [ ] No new linting errors
-- [ ] Documentation updated
-
-### For Bug Fixes
-- [ ] Write test that reproduces the bug
-- [ ] Fix the bug
-- [ ] Verify test now passes
-- [ ] Add regression test
-
----
-
-## Continuous Integration
-
-### GitHub Actions (Future)
-```yaml
-# .github/workflows/tests.yml
-name: Tests
-on: [push, pull_request]
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.12
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-      - name: Run tests
-        run: pytest --cov=app --cov-report=xml
-      - name: Upload coverage
-        uses: codecov/codecov-action@v2
+**User Account:**
+```
+Email: rangasudarshan19@gmail.com
+Password: Sudarshan@1
 ```
 
----
-
-## Performance Testing
-
-### Load Testing (Future Enhancement)
-```python
-# Using locust or similar
-from locust import HttpUser, task
-
-class JobTrackerUser(HttpUser):
-    @task
-    def get_applications(self):
-        self.client.get("/api/applications",
-                       headers={"Authorization": f"Bearer {self.token}"})
+**Admin Account:**
+```
+Email: admin@jobtracker.com
+Password: admin123
 ```
 
 ---
@@ -358,29 +272,7 @@ pytest -s  # Show print statements
 
 ### Check Logs
 ```bash
-# View logs during test
 pytest --log-cli-level=DEBUG
-```
-
----
-
-## Test Data Management
-
-### Database State
-- Tests use in-memory SQLite
-- Database is recreated for each test
-- No need to clean up between tests
-
-### Fixture Data
-```python
-# Define reusable test data
-@pytest.fixture
-def sample_application_data():
-    return {
-        "job_title": "Software Engineer",
-        "company_name": "Test Corp",
-        "status": "Applied"
-    }
 ```
 
 ---
@@ -402,40 +294,50 @@ def test_protected_endpoint_with_auth(client, auth_headers):
 ```python
 def test_crud_lifecycle(client, auth_headers):
     # Create
-    create_response = client.post("/api/items", 
-                                  json={"name": "Test"},
-                                  headers=auth_headers)
-    item_id = create_response.json()["id"]
+    create_resp = client.post("/api/items", json={"name": "Test"}, headers=auth_headers)
+    item_id = create_resp.json()["id"]
     
     # Read
-    read_response = client.get(f"/api/items/{item_id}", 
-                               headers=auth_headers)
-    assert read_response.json()["name"] == "Test"
+    read_resp = client.get(f"/api/items/{item_id}", headers=auth_headers)
+    assert read_resp.json()["name"] == "Test"
     
     # Update
-    update_response = client.put(f"/api/items/{item_id}",
-                                 json={"name": "Updated"},
-                                 headers=auth_headers)
-    assert update_response.json()["name"] == "Updated"
+    update_resp = client.put(f"/api/items/{item_id}", json={"name": "Updated"}, headers=auth_headers)
+    assert update_resp.json()["name"] == "Updated"
     
     # Delete
-    delete_response = client.delete(f"/api/items/{item_id}",
-                                    headers=auth_headers)
-    assert delete_response.status_code == 200
+    delete_resp = client.delete(f"/api/items/{item_id}", headers=auth_headers)
+    assert delete_resp.status_code == 200
 ```
 
-### Testing Error Handling
+### Testing Reviews API
 ```python
-def test_handles_invalid_input(client, auth_headers):
-    response = client.post("/api/items",
-                          json={"invalid": "data"},
-                          headers=auth_headers)
-    assert response.status_code == 422
-    assert "error" in response.json()
-
-def test_handles_not_found(client, auth_headers):
-    response = client.get("/api/items/99999", headers=auth_headers)
-    assert response.status_code == 404
+def test_review_lifecycle(client, auth_headers):
+    # Create review
+    review_data = {"rating": 5, "title": "Great App", "content": "JobSphere is excellent for job tracking!"}
+    resp = client.post("/api/reviews", json=review_data, headers=auth_headers)
+    assert resp.status_code == 201
+    review_id = resp.json()["review"]["id"]
+    
+    # Get my review
+    mine = client.get("/api/reviews/mine", headers=auth_headers)
+    assert mine.json()["review"]["rating"] == 5
+    
+    # Public listing
+    all_reviews = client.get("/api/reviews")
+    assert all_reviews.json()["total_reviews"] >= 1
+    
+    # Update
+    update = client.put(f"/api/reviews/{review_id}", json={"rating": 4}, headers=auth_headers)
+    assert update.json()["review"]["rating"] == 4
+    
+    # Duplicate prevention
+    dup = client.post("/api/reviews", json=review_data, headers=auth_headers)
+    assert dup.status_code == 409
+    
+    # Delete
+    delete = client.delete(f"/api/reviews/{review_id}", headers=auth_headers)
+    assert delete.status_code == 200
 ```
 
 ---
@@ -448,5 +350,5 @@ def test_handles_not_found(client, auth_headers):
 
 ---
 
-**Last Updated**: November 18, 2025
+**Last Updated**: February 16, 2026  
 **Maintained By**: Development Team

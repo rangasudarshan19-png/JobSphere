@@ -4,7 +4,7 @@ Centralized configuration for application-wide settings with validation
 import os
 from typing import Literal
 from dotenv import load_dotenv
-from pydantic import EmailStr, field_validator, Field
+from pydantic import ConfigDict, EmailStr, field_validator, Field
 from pydantic_settings import BaseSettings
 
 load_dotenv()
@@ -164,12 +164,12 @@ class Settings(BaseSettings):
             raise ValueError("GEMINI_API_KEY is required for production environment")
         return v
     
-    class Config:
-        """Pydantic configuration."""
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = True
-        extra = "allow"  # Allow extra environment variables
+    model_config = ConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+        extra="allow",  # Allow extra environment variables
+    )
 
 
 # Create global settings instance
